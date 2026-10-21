@@ -157,9 +157,9 @@ body.theme-dark {
   stroke-width: 4px;
   color: var(--text-faint);
   transition: transform 100ms ease-in-out;
-  transform: rotate(90deg);
+  transform: none;
 }
-.graph-controls .graph-control-section.is-collapsed > .tree-item-self .tree-item-icon .svg-icon { transform: rotate(0deg); }
+.graph-controls .graph-control-section.is-collapsed > .tree-item-self .tree-item-icon .svg-icon { transform: rotate(-90deg); }
 .graph-control-section-header {
   font-size: var(--font-ui-small, 13px);
   font-weight: var(--font-medium, 500);

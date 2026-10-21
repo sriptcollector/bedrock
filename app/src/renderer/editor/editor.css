@@ -29,11 +29,11 @@
 .cm-fold-indicator .collapse-indicator svg {
   width: 10px;
   height: 10px;
-  transform: rotate(90deg);
+  transform: none;
   transition: transform 0.1s ease-in-out;
 }
 .cm-fold-indicator.is-collapsed .collapse-indicator svg {
-  transform: rotate(0deg);
+  transform: rotate(-90deg);
 }
 .cm-line:hover .cm-fold-indicator .collapse-indicator,
 .cm-fold-indicator.is-collapsed .collapse-indicator {
@@ -426,10 +426,10 @@
 .markdown-rendered li > .list-collapse-indicator svg {
   width: 10px;
   height: 10px;
-  transform: rotate(90deg);
+  transform: none;
 }
 .markdown-rendered li > .list-collapse-indicator.is-collapsed svg {
-  transform: rotate(0deg);
+  transform: rotate(-90deg);
 }
 .markdown-rendered li:hover > .list-collapse-indicator,
 .markdown-rendered li > .list-collapse-indicator.is-collapsed {
@@ -449,10 +449,10 @@
 .markdown-preview-view .heading-collapse-indicator svg {
   width: 10px;
   height: 10px;
-  transform: rotate(90deg);
+  transform: none;
 }
 .markdown-preview-view .heading-collapse-indicator.is-collapsed svg {
-  transform: rotate(0deg);
+  transform: rotate(-90deg);
 }
 .markdown-preview-view h1:hover .heading-collapse-indicator,
 .markdown-preview-view h2:hover .heading-collapse-indicator,

@@ -31,7 +31,7 @@ export interface BacklinkState {
 /** Linked + unlinked mentions of one file, rendered into `parent`. */
 export class BacklinkComponent extends Component {
   file: TFile | null = null;
-  state: BacklinkState = { collapseAll: false, extraContext: false, sortOrder: "alphabetical", showSearch: false, searchQuery: "", backlinkCollapsed: false, unlinkedCollapsed: false };
+  state: BacklinkState = { collapseAll: false, extraContext: false, sortOrder: "alphabetical", showSearch: false, searchQuery: "", backlinkCollapsed: false, unlinkedCollapsed: true };
   navEl: HTMLElement;
   paneEl: HTMLElement;
   private btns: Record<string, HTMLElement> = {};
@@ -212,7 +212,10 @@ export async function computeLinked(app: any, file: TFile): Promise<ResultEntry[
     out.push({ file: sf, text: d.content, ranges });
   }
   // Canvas files with a card for this file.
+  // (canvas links are also merged into resolvedLinks, so skip canvases already listed above.)
+  const listed = new Set(out.map((e) => e.file.path));
   for (const cf of app.vault.getFiles().filter((f: TFile) => f.extension === "canvas")) {
+    if (listed.has(cf.path)) continue;
     try {
       const raw = await app.vault.cachedRead(cf);
       if (canvasFileRefs(raw).includes(file.path)) out.push({ file: cf, text: "", ranges: [] });

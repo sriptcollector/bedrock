@@ -8,7 +8,9 @@ const S = 'fill="none" stroke="currentColor" stroke-width="8.33" stroke-linecap=
 const CHAIN = `<g transform="translate(4 4) scale(2.9)"><path ${S.replace("8.33", "2.6")} d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/><path ${S.replace("8.33", "2.6")} d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/></g>`;
 
 export function registerSidebarIcons(): void {
-  addIcon("right-triangle", `<path ${S} d="M37 22 L65 50 L37 78"/>`);
+  // Fold triangle: points down when open; collapsed states rotate it -90deg (the original's
+  // convention, so theme CSS that rotates `.is-collapsed .right-triangle` keeps working).
+  addIcon("right-triangle", `<path ${S} d="M20 36 L50 66 L80 36"/>`);
   addIcon("links-coming-in", `${CHAIN}<path ${S} d="M92 62 L66 88 M66 64 L66 88 L90 88"/>`);
   addIcon("links-going-out", `${CHAIN}<path ${S} d="M66 88 L92 62 M70 62 L92 62 L92 84"/>`);
   addIcon("heading-glyph", `<path ${S} d="M28 20 V80 M72 20 V80 M28 50 H72"/>`);

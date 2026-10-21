@@ -114,6 +114,7 @@ export class MarkdownView extends TextFileView {
     this.inlineTitleEl = createDiv({ cls: "inline-title", attr: { contenteditable: "true", spellcheck: "false", tabindex: "-1", autocapitalize: "on" } });
     this.setupInlineTitle();
     this.properties = new PropertiesEditor(this.app, (fm) => this.writeFrontmatter(fm));
+    this.properties.getSourcePath = () => this.file?.path ?? "";
     const cfg = configFromVault(this.app.vault);
     this.sourceMode = !this.app.vault.getConfig("livePreview");
     this.cm = new EditorView({
@@ -172,7 +173,7 @@ export class MarkdownView extends TextFileView {
     return this.mode === "preview" ? this.previewMode : this.editMode;
   }
 
-  private makeState(doc: string): EditorState {
+  private makeState(doc: string, anchor = 0): EditorState {
     const cfg = configFromVault(this.app.vault);
     const exts: Extension[] = buildEditorExtensions(this, cfg, !this.sourceMode, this.app.workspace.editorExtensions.slice());
     exts.push(
@@ -201,7 +202,7 @@ export class MarkdownView extends TextFileView {
         drop: (e) => this.app.handleDrop?.(e, this) ?? false,
       }),
     );
-    return EditorState.create({ doc, extensions: exts });
+    return EditorState.create({ doc, extensions: exts, selection: { anchor: Math.min(anchor, doc.length) } });
   }
 
   getViewType(): string {
@@ -357,7 +358,9 @@ export class MarkdownView extends TextFileView {
     this.settingData = true;
     try {
       if (clear) {
-        this.cm.setState(this.makeState(data));
+        // A note opens with the cursor at the start of the first line after the frontmatter (the
+        // original does the same; a history/back navigation then restores the saved cursor).
+        this.cm.setState(this.makeState(data, getFrontMatterInfo(data).contentStart));
       } else {
         // Apply only the changed middle so the cursor and scroll stay put.
         const cur = this.cm.state.doc.toString();

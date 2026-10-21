@@ -99,6 +99,31 @@ function coerce(value: any, t: PropertyType): any {
   }
 }
 
+export interface ValueLink {
+  href: string;
+  display: string;
+  external: boolean;
+}
+
+/** A property value that is exactly one link: `[[note|alias]]`, `[text](url)` or a bare URL. */
+export function parseValueLink(text: string): ValueLink | null {
+  const s = text.trim();
+  let m = /^\[\[([^\[\]]+)\]\]$/.exec(s);
+  if (m) {
+    const bar = m[1].indexOf("|");
+    const href = (bar < 0 ? m[1] : m[1].slice(0, bar)).trim();
+    return { href, display: bar < 0 ? href : m[1].slice(bar + 1).trim(), external: false };
+  }
+  m = /^\[([^\[\]]*)\]\(([^()\s]+)\)$/.exec(s);
+  if (m) {
+    const external = /^[a-z][a-z0-9+.-]*:/i.test(m[2]);
+    const href = external ? m[2] : decodeURI(m[2]).replace(/\.md$/, "");
+    return { href, display: m[1] || href, external };
+  }
+  if (/^(https?|file|mailto|obsidian):\S+$/i.test(s)) return { href: s, display: s, external: true };
+  return null;
+}
+
 /**
  * Renders `frontmatter` into `el` and calls `onChange(next)` with a new object whenever the
  * person edits something. Keys keep their order.
@@ -113,7 +138,7 @@ export class PropertiesEditor {
     this.el = createDiv({ cls: "metadata-container", attr: { tabindex: "-1" } });
     const heading = this.el.createDiv("metadata-properties-heading");
     const fold = heading.createDiv("collapse-indicator collapse-icon");
-    setIcon(fold, "chevron-down");
+    setIcon(fold, "right-triangle");
     heading.createDiv({ cls: "metadata-properties-title", text: "Properties" });
     heading.addEventListener("click", () => {
       this.collapsed = !this.collapsed;
@@ -220,7 +245,7 @@ export class PropertiesEditor {
       this.commit();
       this.render();
     });
-    const valEl = row.createDiv("metadata-property-value");
+    const valEl = row.createDiv({ cls: "metadata-property-value", attr: { "data-property-type": t } });
     const set = (v: any) => {
       this.fm[key] = v;
       this.commit();
@@ -252,8 +277,13 @@ export class PropertiesEditor {
         const renderPills = () => {
           box.querySelectorAll(".multi-select-pill").forEach((p) => p.remove());
           list.forEach((item, i) => {
-            const pill = createDiv("multi-select-pill");
-            pill.createDiv({ cls: "multi-select-pill-content", text: String(item) });
+            const pill = createDiv({ cls: "multi-select-pill", attr: { tabindex: "0" } });
+            const lk = t === "multitext" ? parseValueLink(String(item)) : null;
+            const content = pill.createDiv({ cls: "multi-select-pill-content", text: lk ? lk.display : String(item) });
+            if (lk) {
+              content.setAttr("data-href", lk.href);
+              this.decorateLink(content, lk);
+            }
             const x = pill.createDiv("multi-select-pill-remove-button");
             setIcon(x, "x");
             x.addEventListener("click", () => {
@@ -297,22 +327,25 @@ export class PropertiesEditor {
         break;
       }
       default: {
-        const div = valEl.createDiv({ cls: "metadata-input-longtext", attr: { contenteditable: "true", tabindex: "0", placeholder: "Empty" } });
-        div.textContent = value == null ? "" : typeof value === "object" ? JSON.stringify(value) : String(value);
-        new StringSuggest(this.app, div, () => this.valuesFor(key, t), (v) => {
-          div.textContent = v;
-          div.blur();
-        });
-        div.addEventListener("blur", () => {
-          const v = div.textContent ?? "";
-          if (v !== String(this.fm[key] ?? "")) set(v);
-        });
-        div.addEventListener("keydown", (e) => {
-          if (e.key === "Enter" && !e.shiftKey) {
-            e.preventDefault();
-            div.blur();
+        const text = value == null ? "" : typeof value === "object" ? JSON.stringify(value) : String(value);
+        // A value that is just one link shows as a clickable link with a pencil to edit it.
+        if (!this.editingKey || this.editingKey !== key) {
+          const lk = parseValueLink(text);
+          if (lk) {
+            const wrap = valEl.createDiv("metadata-link");
+            const inner = wrap.createDiv({ cls: "metadata-link-inner", text: lk.display, attr: { "data-href": lk.href } });
+            this.decorateLink(inner, lk);
+            const flair = wrap.createDiv("metadata-link-flair");
+            setIcon(flair, "pencil");
+            flair.addEventListener("click", () => {
+              this.editingKey = key;
+              valEl.empty();
+              this.renderRowValue(key, value, valEl);
+            });
+            break;
           }
-        });
+        }
+        this.renderRowValue(key, value, valEl);
       }
     }
     keyEl.addEventListener("contextmenu", (e) => {
@@ -331,6 +364,80 @@ export class PropertiesEditor {
       );
       m.showAtMouseEvent(e);
     });
+  }
+
+  /** Key whose single-link text value is being edited (shown as raw text instead of a link). */
+  private editingKey: string | null = null;
+  /** Path of the note these properties belong to (link resolution and hover previews). */
+  getSourcePath: () => string = () => "";
+
+  private decorateLink(el: HTMLElement, lk: ValueLink): void {
+    const sourcePath = this.getSourcePath();
+    if (lk.external) {
+      el.addClass("external-link");
+      el.addEventListener("click", (e) => {
+        e.preventDefault();
+        window.open(lk.href);
+      });
+      return;
+    }
+    el.addClass("internal-link");
+    el.setAttr("draggable", "true");
+    const dest = this.app.metadataCache?.getFirstLinkpathDest?.(lk.href.split("#")[0], sourcePath);
+    if (!dest && lk.href.split("#")[0]) el.addClass("is-unresolved");
+    el.addEventListener("click", (e) => {
+      e.preventDefault();
+      e.stopPropagation();
+      this.app.workspace.openLinkText(lk.href, sourcePath, e.ctrlKey || e.metaKey);
+    });
+    el.addEventListener("mouseover", (e) =>
+      this.app.workspace.trigger("hover-link", { event: e, source: "properties", hoverParent: this, targetEl: el, linktext: lk.href, sourcePath }),
+    );
+  }
+
+  private renderRowValue(key: string, value: any, valEl: HTMLElement): void {
+    const t = this.types.get(key, value);
+    const set = (v: any) => {
+      this.fm[key] = v;
+      this.commit();
+    };
+    {
+      {
+        const div = valEl.createDiv({ cls: "metadata-input-longtext", attr: { contenteditable: "true", tabindex: "0", placeholder: "Empty" } });
+        div.textContent = value == null ? "" : typeof value === "object" ? JSON.stringify(value) : String(value);
+        if (this.editingKey === key) setTimeout(() => div.focus(), 0);
+        new StringSuggest(this.app, div, () => this.valuesFor(key, t), (v) => {
+          div.textContent = v;
+          div.blur();
+        });
+        div.addEventListener("blur", () => {
+          const v = div.textContent ?? "";
+          if (v !== String(this.fm[key] ?? "")) set(v);
+          if (this.editingKey === key) {
+            // Leaving the field shows a link-only value as a link again.
+            this.editingKey = null;
+            if (parseValueLink(v)) {
+              valEl.empty();
+              this.renderValueInto(key, valEl);
+            }
+          }
+        });
+        div.addEventListener("keydown", (e) => {
+          if (e.key === "Enter" && !e.shiftKey) {
+            e.preventDefault();
+            div.blur();
+          }
+        });
+      }
+    }
+  }
+
+  /** Re-render one row's value cell (text values only: link view or field). */
+  private renderValueInto(key: string, valEl: HTMLElement): void {
+    const row = valEl.parentElement;
+    if (!row) return;
+    this.renderRow(key, this.fm[key]);
+    row.replaceWith(this.listEl.lastElementChild as HTMLElement);
   }
 
   private typeMenu(e: MouseEvent, key: string): void {

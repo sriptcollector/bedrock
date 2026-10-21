@@ -260,9 +260,10 @@ async function mouse(act) {
   }
 }
 
-// --probe <scene> <js expression>: set up one scene, evaluate the expression, print the JSON result.
+// --probe <scene> <js expression | @file.js>: set up one scene, evaluate the expression, print the JSON result.
 if (process.argv.includes("--probe")) {
-  const [scene, expr] = [arg("--probe"), process.argv[process.argv.indexOf("--probe") + 2]];
+  let [scene, expr] = [arg("--probe"), process.argv[process.argv.indexOf("--probe") + 2]];
+  if (expr.startsWith("@")) expr = fs.readFileSync(expr.slice(1), "utf8"); // @file.js: expression from a file
   const sc = S.find((s) => s[0] === scene);
   if (themes[0] === "dark") await win.evaluate(() => window.app.changeTheme("obsidian"));
   if (fs.existsSync(path.join("C:/Users/orion/tbv-scratch/scripts/measure-lib.js"))) await win.evaluate(fs.readFileSync("C:/Users/orion/tbv-scratch/scripts/measure-lib.js", "utf8"));

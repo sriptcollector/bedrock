@@ -4,8 +4,8 @@
 // for cursor motion. Decorations are only mapped (not rebuilt) while the mouse button is down or
 // during IME composition, so dragging a selection doesn't make text jump. Line classes
 // (HyperMD-*) and token classes (cm-*) match the original so themes apply in both modes.
-import { RangeSet, RangeSetBuilder, StateEffect, StateField, type EditorState, type Extension, type Range } from "@codemirror/state";
-import { Decoration, EditorView, ViewPlugin, WidgetType, type DecorationSet, type ViewUpdate } from "@codemirror/view";
+import { EditorSelection, Prec, RangeSet, RangeSetBuilder, StateEffect, StateField, type EditorState, type Extension, type Range } from "@codemirror/state";
+import { Decoration, EditorView, ViewPlugin, WidgetType, keymap, type DecorationSet, type ViewUpdate } from "@codemirror/view";
 import { syntaxTree, LanguageDescription } from "@codemirror/language";
 import { languages } from "@codemirror/language-data";
 import type { SyntaxNodeRef, SyntaxNode } from "@lezer/common";
@@ -598,7 +598,11 @@ function buildInline(view: EditorView): InlineResult {
         if (m) {
           lineDeco(from, `HyperMD-header HyperMD-header-${m[1]}`);
           const marks = node.node.getChildren("HeaderMark");
-          for (const hm of marks) mark(hm.from, hm.to, `cm-formatting cm-formatting-header cm-formatting-header-${m[1]} cm-header cm-header-${m[1]}`);
+          // The opening mark's span covers "# " (the space after the hashes too), like the original.
+          for (const [i, hm] of marks.entries()) {
+            const end = i === 0 && hm.from === from && state.sliceDoc(hm.to, hm.to + 1) === " " ? hm.to + 1 : hm.to;
+            mark(hm.from, end, `cm-formatting cm-formatting-header cm-formatting-header-${m[1]} cm-header cm-header-${m[1]}`);
+          }
           if (lp && !lineTouched(state, from, to, focus)) {
             const first = marks[0];
             if (first && first.from === from) hideRange(first.from, state.sliceDoc(first.to, first.to + 1) === " " ? first.to + 1 : first.to);
@@ -1061,8 +1065,37 @@ export const hashtagDecorations = ViewPlugin.fromClass(
 /** Re-evaluate block widgets when focus changes (selection only reveals while focused). */
 const focusWatcher = EditorView.focusChangeEffect.of((_state, focusing) => focusChanged.of(focusing));
 
+/** ArrowUp/ArrowDown onto a line that is only a note embed (drawn as a widget until the cursor
+ *  arrives): land at the same column inside the revealed `![[…]]` source, like the original, not
+ *  at the widget's edge. */
+function embedLineVertical(forward: boolean) {
+  return (view: EditorView): boolean => {
+    if (!view.state.field(editorLivePreviewField, false)) return false;
+    const sel = view.state.selection;
+    if (sel.ranges.length !== 1 || !sel.main.empty) return false;
+    const head = sel.main.head;
+    const cur = view.state.doc.lineAt(head);
+    const dest = view.moveVertically(sel.main, forward);
+    const line = view.state.doc.lineAt(dest.head);
+    if (line.number !== cur.number + (forward ? 1 : -1)) return false;
+    const m = /^\s*!\[\[([^\]]+)\]\]\s*$/.exec(line.text);
+    if (!m) return false;
+    const info: any = view.state.field(editorInfoField, false);
+    if (isImageTarget(info?.app, splitAlias(m[1]).link, info?.file?.path ?? "")) return false;
+    const col = Math.min(head - cur.from, line.length);
+    view.dispatch({ selection: EditorSelection.cursor(line.from + col), scrollIntoView: true, userEvent: "select" });
+    return true;
+  };
+}
+const embedArrowKeys = Prec.high(
+  keymap.of([
+    { key: "ArrowUp", run: embedLineVertical(false) },
+    { key: "ArrowDown", run: embedLineVertical(true) },
+  ]),
+);
+
 export function livePreviewExtensions(): Extension[] {
-  return [revealedField, blockDecorationsField, inlineLivePreview, hashtagDecorations, focusWatcher, tableCursorCapture, listDrag];
+  return [revealedField, blockDecorationsField, inlineLivePreview, hashtagDecorations, focusWatcher, tableCursorCapture, listDrag, embedArrowKeys];
 }
 
 /** Extensions for the small editors inside table cells (inline live preview only). */
