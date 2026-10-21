@@ -1,16 +1,29 @@
-// Live preview: hide Markdown syntax except where the cursor/selection is, and render rich
-// elements inline (links, embeds, images, checkboxes, bullets, rules, math, callouts, tables,
-// mermaid, properties). Line classes (HyperMD-*) are added in both modes for theme compatibility.
-import { RangeSetBuilder, StateField, type EditorState, type Extension, type Range } from "@codemirror/state";
+// Live preview: hide Markdown syntax per token group unless the selection touches it (only while
+// the editor has focus), and render rich elements in place (links, embeds, images, checkboxes,
+// bullets, rules, math, callouts, tables, HTML, mermaid, properties). Hidden ranges are atomic
+// for cursor motion. Decorations are only mapped (not rebuilt) while the mouse button is down or
+// during IME composition, so dragging a selection doesn't make text jump. Line classes
+// (HyperMD-*) and token classes (cm-*) match the original so themes apply in both modes.
+import { RangeSet, RangeSetBuilder, StateEffect, StateField, type EditorState, type Extension, type Range } from "@codemirror/state";
 import { Decoration, EditorView, ViewPlugin, WidgetType, type DecorationSet, type ViewUpdate } from "@codemirror/view";
-import { syntaxTree } from "@codemirror/language";
-import type { SyntaxNodeRef } from "@lezer/common";
+import { syntaxTree, LanguageDescription } from "@codemirror/language";
+import { languages } from "@codemirror/language-data";
+import type { SyntaxNodeRef, SyntaxNode } from "@lezer/common";
 import { editorInfoField, editorLivePreviewField } from "./fields";
 import { renderMathToString, escapeHtml } from "../markdown/parser";
-import { renderEmbed, renderMarkdownInto, decorateCallout, loadMermaid, renderHtml } from "../markdown/renderer";
+import { renderEmbed, renderMarkdownInto, decorateCallout, loadMermaid, sanitize } from "../markdown/renderer";
 import { Component } from "../api/events";
 import { splitAlias, parseLinktext } from "../../core/links";
 import { Keymap } from "../commands/keymap";
+import { setIcon } from "../dom/icons";
+import { TableWidget, tableCursorCapture } from "./table";
+import { IMAGE_EXTS } from "../views/simple-views";
+import { HIGHLIGHT_COLORS } from "./formatting";
+import { listDrag } from "./list-drag";
+
+export const refreshLivePreview = StateEffect.define<null>();
+/** Show the source of the embed/image starting at this position (the "edit" button). */
+export const revealEmbed = StateEffect.define<number | null>();
 
 // ---------- helpers ----------
 function selectionTouches(state: EditorState, from: number, to: number, hasFocus: boolean): boolean {
@@ -28,6 +41,58 @@ function lineTouched(state: EditorState, from: number, to: number, hasFocus: boo
 
 const hide = Decoration.replace({});
 
+/** The task box of a list item: GFM's [ ]/[x] or any single-character status like [/] or [-]. */
+function taskMarkerOf(state: EditorState, item: SyntaxNode): { from: number; to: number; ch: string } | null {
+  const marker = item.getChild("Task")?.getChild("TaskMarker");
+  // "- [ ]" with nothing after the box is a plain bullet in the original.
+  if (marker) return marker.to === state.doc.lineAt(marker.from).to ? null : { from: marker.from, to: marker.to, ch: state.sliceDoc(marker.from + 1, marker.from + 2) };
+  const mark = item.getChild("ListMark");
+  if (!mark) return null;
+  const start = state.sliceDoc(mark.to, mark.to + 1) === " " ? mark.to + 1 : -1;
+  if (start < 0) return null;
+  const m = /^\[([^\]\n])\](?=[ \t])/.exec(state.sliceDoc(start, Math.min(state.doc.lineAt(start).to, start + 4)));
+  return m ? { from: start, to: start + 3, ch: m[1] } : null;
+}
+
+/** List items inside block quotes keep their source (the original doesn't render them there). */
+function inQuote(node: SyntaxNode): boolean {
+  for (let p = node.parent; p; p = p.parent) if (p.name === "Blockquote") return true;
+  return false;
+}
+
+/** "-" alone on a line (no space after the marker) stays plain text, like the original. */
+function isBareMarker(state: EditorState, item: SyntaxNode): boolean {
+  const mark = item.getChild("ListMark");
+  return !!mark && mark.to === state.doc.lineAt(mark.from).to && item.to === mark.to;
+}
+const COLOR_BY_EMOJI = new Map(Object.entries(HIGHLIGHT_COLORS).map(([k, v]) => [v, k]));
+const EMOJI_RE = new RegExp("^(" + Object.values(HIGHLIGHT_COLORS).join("|") + ")", "u");
+const isExternal = (href: string) => /^[a-z][a-z0-9+.-]*:/i.test(href);
+
+function languageLabel(lang: string): string {
+  if (!lang) return "";
+  const d = LanguageDescription.matchLanguageName(languages, lang, true);
+  return d ? d.name : lang;
+}
+
+function editButton(el: HTMLElement, onEdit: (e: MouseEvent) => void): void {
+  const actions = el.createDiv("embed-actions");
+  const btn = actions.createDiv({ cls: "embed-action edit-block-button", attr: { "aria-label": "Edit this block" } });
+  setIcon(btn, "code-xml");
+  btn.addEventListener("mousedown", (e) => {
+    e.preventDefault();
+    e.stopPropagation();
+    onEdit(e);
+  });
+}
+
+function isImageTarget(app: any, link: string, sourcePath: string): boolean {
+  const { path } = parseLinktext(link);
+  const ext = (path.split(".").pop() ?? "").toLowerCase();
+  if (!IMAGE_EXTS.includes(ext)) return false;
+  return !!app?.metadataCache?.getFirstLinkpathDest(path, sourcePath);
+}
+
 // ---------- widgets ----------
 class CheckboxWidget extends WidgetType {
   constructor(readonly checked: boolean, readonly pos: number) {
@@ -39,7 +104,6 @@ class CheckboxWidget extends WidgetType {
   toDOM(view: EditorView) {
     const wrap = createEl("label", { cls: "task-list-label", attr: { contenteditable: "false" } });
     const cb = wrap.createEl("input", { type: "checkbox", cls: "task-list-item-checkbox" });
-    cb.setAttr("data-task", this.checked ? "x" : " ");
     cb.checked = this.checked;
     cb.addEventListener("mousedown", (e) => e.preventDefault());
     cb.addEventListener("click", (e) => {
@@ -51,15 +115,6 @@ class CheckboxWidget extends WidgetType {
   }
   ignoreEvent() {
     return true;
-  }
-}
-
-class BulletWidget extends WidgetType {
-  eq() {
-    return true;
-  }
-  toDOM() {
-    return createSpan({ cls: "list-bullet", text: "-" });
   }
 }
 
@@ -75,34 +130,119 @@ class HrWidget extends WidgetType {
 }
 
 class MathWidget extends WidgetType {
-  constructor(readonly src: string, readonly display: boolean) {
+  constructor(readonly src: string, readonly display: boolean, readonly from = -1) {
     super();
   }
   eq(o: MathWidget) {
-    return o.src === this.src && o.display === this.display;
+    return o.src === this.src && o.display === this.display && o.from === this.from;
   }
-  toDOM() {
-    const el = this.display ? createDiv("math math-block cm-embed-block") : createSpan("math math-inline");
+  toDOM(view: EditorView) {
+    const el = this.display ? createDiv("math math-block cm-embed-block") : createSpan("math math-inline is-loaded");
     el.innerHTML = renderMathToString(this.src, this.display);
+    if (this.display && this.from >= 0) {
+      el.setAttr("contenteditable", "false");
+      editButton(el, () => {
+        view.dispatch({ selection: { anchor: this.from + 2 } });
+        view.focus();
+      });
+    }
     return el;
   }
-  ignoreEvent() {
-    return false;
+  ignoreEvent(e: Event) {
+    return !this.display || e.type !== "mousedown";
   }
 }
 
-class LinkWidget extends WidgetType {
-  constructor(readonly text: string, readonly href: string, readonly internal: boolean, readonly unresolved: boolean) {
+class EmbedWidget extends WidgetType {
+  private comp = new Component();
+  constructor(readonly src: string, readonly alt: string, readonly app: any, readonly sourcePath: string, readonly from: number, readonly block: boolean) {
     super();
   }
-  eq(o: LinkWidget) {
-    return o.text === this.text && o.href === this.href && o.unresolved === this.unresolved;
+  eq(o: EmbedWidget) {
+    return o.src === this.src && o.alt === this.alt && o.sourcePath === this.sourcePath && o.from === this.from && o.block === this.block;
   }
-  toDOM() {
-    const s = createSpan(this.internal ? "cm-hmd-internal-link" : "cm-link");
-    const a = s.createSpan({ cls: "cm-underline" + (this.unresolved ? " is-unresolved" : ""), text: this.text });
-    a.setAttr("data-href", this.href);
-    if (!this.internal) s.addClass("external-link");
+  toDOM(view: EditorView) {
+    const el = createSpan({ cls: "internal-embed cm-embed-block", attr: { src: this.src, alt: this.alt, contenteditable: "false", tabindex: "-1" } });
+    if (this.block) el.addClass("is-block");
+    this.comp.load();
+    renderEmbed(this.app, el, this.sourcePath, this.comp, 1).then(() => {
+      editButton(el, () => {
+        view.dispatch({ selection: { anchor: this.from + 3 }, effects: revealEmbed.of(this.from) });
+        view.focus();
+      });
+      el.querySelectorAll("img, video, audio, iframe").forEach((m) => m.addEventListener("load", () => view.requestMeasure()));
+      enableImageResize(el, view, this.from);
+      view.requestMeasure();
+    });
+    return el;
+  }
+  get estimatedHeight() {
+    return this.block ? 120 : -1;
+  }
+  destroy() {
+    this.comp.unload();
+  }
+  ignoreEvent(e: Event) {
+    return e.type !== "mousedown" || !!(e.target as HTMLElement).closest?.(".markdown-embed-content, .embed-action, .markdown-embed-link, .image-resize-corner, audio, video, iframe, a");
+  }
+}
+
+/** Drag the image's bottom-right corner to set its width (writes ![[img|W]] / ![alt|W](src)). */
+function enableImageResize(el: HTMLElement, view: EditorView, from: number): void {
+  const img = el.querySelector<HTMLImageElement>("img");
+  if (!img || !el.hasClass("image-embed")) return;
+  let wrap = img.parentElement!;
+  if (!wrap.hasClass("image-wrapper")) {
+    wrap = createDiv("image-wrapper");
+    img.replaceWith(wrap);
+    wrap.appendChild(img);
+  }
+  const corner = wrap.createDiv("image-resize-corner");
+  corner.addEventListener("mousedown", (e) => {
+    e.preventDefault();
+    e.stopPropagation();
+    const startX = e.clientX;
+    const startW = img.getBoundingClientRect().width;
+    const onMove = (ev: MouseEvent) => {
+      img.style.width = Math.max(16, Math.round(startW + ev.clientX - startX)) + "px";
+    };
+    const onUp = (ev: MouseEvent) => {
+      window.removeEventListener("mousemove", onMove, true);
+      window.removeEventListener("mouseup", onUp, true);
+      const w = Math.max(16, Math.round(startW + ev.clientX - startX));
+      const line = view.state.doc.lineAt(from);
+      const text = view.state.sliceDoc(from, line.to);
+      const wiki = /^!\[\[([^\]|]+)(\|[^\]]*)?\]\]/.exec(text);
+      if (wiki) {
+        const insert = `![[${wiki[1]}|${w}]]`;
+        view.dispatch({ changes: { from, to: from + wiki[0].length, insert } });
+        return;
+      }
+      const md = /^!\[([^\]]*?)(\|\d+(?:x\d+)?)?\]\(/.exec(text);
+      if (md) view.dispatch({ changes: { from: from + 2, to: from + 2 + md[1].length + (md[2]?.length ?? 0), insert: `${md[1]}|${w}` } });
+    };
+    window.addEventListener("mousemove", onMove, true);
+    window.addEventListener("mouseup", onUp, true);
+  });
+}
+
+class ExternalImageWidget extends WidgetType {
+  constructor(readonly src: string, readonly alt: string, readonly from: number) {
+    super();
+  }
+  eq(o: ExternalImageWidget) {
+    return o.src === this.src && o.alt === this.alt && o.from === this.from;
+  }
+  toDOM(view: EditorView) {
+    const m = this.alt.match(/^(.*?)\|(\d+)(?:x(\d+))?$/);
+    const s = createSpan({ cls: "cm-external-image", attr: { contenteditable: "false" } });
+    const img = s.createEl("img", { attr: { src: this.src, alt: m ? m[1] : this.alt, referrerpolicy: "no-referrer" } });
+    if (m) {
+      img.setAttr("width", m[2]);
+      if (m[3]) img.setAttr("height", m[3]);
+    }
+    img.addEventListener("load", () => view.requestMeasure());
+    enableImageResize(s, view, this.from);
     return s;
   }
   ignoreEvent() {
@@ -110,66 +250,54 @@ class LinkWidget extends WidgetType {
   }
 }
 
-class EmbedWidget extends WidgetType {
-  private comp = new Component();
-  constructor(readonly src: string, readonly alt: string, readonly app: any, readonly sourcePath: string) {
-    super();
-  }
-  eq(o: EmbedWidget) {
-    return o.src === this.src && o.alt === this.alt && o.sourcePath === this.sourcePath;
-  }
-  toDOM(view: EditorView) {
-    const span = createSpan({ cls: "internal-embed cm-embed-block", attr: { src: this.src, alt: this.alt } });
-    this.comp.load();
-    renderEmbed(this.app, span, this.sourcePath, this.comp, 1).then(() => view.requestMeasure());
-    span.querySelectorAll("img").forEach((img) => img.addEventListener("load", () => view.requestMeasure()));
-    span.addEventListener("load", () => view.requestMeasure(), true);
-    return span;
-  }
-  destroy() {
-    this.comp.unload();
-  }
-  ignoreEvent(e: Event) {
-    return e.type !== "mousedown";
-  }
-}
-
 class RenderedBlockWidget extends WidgetType {
   private comp = new Component();
-  constructor(readonly source: string, readonly kind: "callout" | "table", readonly app: any, readonly sourcePath: string, readonly from: number) {
+  constructor(readonly source: string, readonly kind: "callout" | "html", readonly app: any, readonly sourcePath: string, readonly from: number) {
     super();
   }
   eq(o: RenderedBlockWidget) {
-    return o.source === this.source && o.kind === this.kind;
+    return o.source === this.source && o.kind === this.kind && o.from === this.from;
   }
   toDOM(view: EditorView) {
-    const el = createDiv(`cm-embed-block markdown-rendered cm-${this.kind}`);
+    const el = createDiv(this.kind === "html" ? "cm-html-embed cm-embed-block" : "cm-embed-block markdown-rendered cm-callout");
     el.setAttr("contenteditable", "false");
+    el.setAttr("tabindex", "-1");
     this.comp.load();
-    if (this.kind === "table") {
-      el.addClass("cm-table-widget");
-      el.innerHTML = renderHtml(this.source);
-      view.requestMeasure();
+    if (this.kind === "html") {
+      const tpl = document.createElement("template");
+      tpl.innerHTML = this.source;
+      sanitize(tpl.content);
+      el.appendChild(tpl.content);
     } else {
       renderMarkdownInto(this.app, this.source, el, this.sourcePath, this.comp, { embedDepth: 1 }).then(() => {
         el.querySelectorAll<HTMLElement>(".callout").forEach((c) => decorateCallout(c));
         view.requestMeasure();
       });
     }
-    const edit = el.createDiv({ cls: "edit-block-button", attr: { "aria-label": "Edit this block" } });
-    edit.setText("</>");
-    edit.addEventListener("mousedown", (e) => {
+    editButton(el, () => {
+      view.dispatch({ selection: { anchor: this.from + (this.kind === "callout" ? 2 : 0) } });
+      view.focus();
+    });
+    // Clicking the callout body (not a link/fold) puts the cursor in its source, like the original.
+    el.addEventListener("mousedown", (e) => {
+      const t = e.target as HTMLElement;
+      if (t.closest("a, .callout-fold, .edit-block-button, input, .internal-embed")) return;
+      if (this.kind === "callout" && t.closest(".callout-title") && el.querySelector(".callout.is-collapsible")) return;
       e.preventDefault();
-      view.dispatch({ selection: { anchor: this.from + 1 } });
+      const pos = view.posAtCoords({ x: e.clientX, y: e.clientY }) ?? this.from;
+      view.dispatch({ selection: { anchor: Math.max(this.from, Math.min(pos, this.from + this.source.length)) } });
       view.focus();
     });
     return el;
   }
+  get estimatedHeight() {
+    return 24 * (this.source.split("\n").length + 1);
+  }
   destroy() {
     this.comp.unload();
   }
-  ignoreEvent(e: Event) {
-    return !(e.target as HTMLElement).closest?.(".edit-block-button") && e.type !== "mousedown";
+  ignoreEvent() {
+    return true;
   }
 }
 
@@ -178,30 +306,72 @@ class MermaidWidget extends WidgetType {
     super();
   }
   eq(o: MermaidWidget) {
-    return o.src === this.src;
+    return o.src === this.src && o.from === this.from;
   }
   toDOM(view: EditorView) {
-    const el = createDiv("cm-embed-block mermaid");
+    const el = createDiv({ cls: "cm-embed-block mermaid", attr: { contenteditable: "false" } });
     loadMermaid()
       .then((m) => m.render("bedrock-lp-mermaid-" + Math.random().toString(36).slice(2), this.src))
       .then(({ svg }: any) => {
         el.innerHTML = svg;
+        editButton(el, () => {
+          view.dispatch({ selection: { anchor: this.from + 3 } });
+          view.focus();
+        });
         view.requestMeasure();
       })
       .catch((e: any) => el.setText(String(e?.message ?? e)));
     return el;
   }
+  ignoreEvent() {
+    return true;
+  }
+}
+
+class InlineHtmlWidget extends WidgetType {
+  constructor(readonly html: string) {
+    super();
+  }
+  eq(o: InlineHtmlWidget) {
+    return o.html === this.html;
+  }
+  toDOM() {
+    const s = createSpan({ cls: "cm-html-embed cm-inline-html" });
+    const tpl = document.createElement("template");
+    tpl.innerHTML = this.html;
+    sanitize(tpl.content);
+    s.appendChild(tpl.content);
+    return s;
+  }
+  ignoreEvent() {
+    return false;
+  }
+}
+
+class HighlightSwatchWidget extends WidgetType {
+  constructor(readonly color: string) {
+    super();
+  }
+  eq(o: HighlightSwatchWidget) {
+    return o.color === this.color;
+  }
+  toDOM() {
+    const s = createSpan({ cls: "cm-highlight-color-widget", attr: { "data-highlight": this.color, contenteditable: "false" } });
+    s.createEl("img", { cls: "highlight-swatch", attr: { src: "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg'/%3E", draggable: "false", "data-highlight": this.color } });
+    s.appendText("\u200b");
+    return s;
+  }
 }
 
 class CodeFlairWidget extends WidgetType {
-  constructor(readonly lang: string) {
+  constructor(readonly label: string) {
     super();
   }
   eq(o: CodeFlairWidget) {
-    return o.lang === this.lang;
+    return o.label === this.label;
   }
   toDOM() {
-    return createSpan({ cls: "code-block-flair", text: this.lang });
+    return createSpan({ cls: "code-block-flair", text: this.label, attr: { "aria-label": "Copy" } });
   }
 }
 
@@ -219,7 +389,39 @@ class HiddenBlockWidget extends WidgetType {
 }
 
 // ---------- block-level decorations (state field) ----------
-function buildBlockDecorations(state: EditorState): DecorationSet {
+const VOID_HTML = /^(br|hr|img|input|wbr)$/i;
+
+/** True when the node is the only thing on its line (an embed that should render as a block). */
+function isWholeLine(state: EditorState, from: number, to: number): boolean {
+  const line = state.doc.lineAt(from);
+  return line.to >= to && !state.sliceDoc(line.from, from).trim() && !state.sliceDoc(to, line.to).trim();
+}
+
+/** Embeds/images that are alone on their line render as block widgets (handled by the state field). */
+function blockEmbedTarget(state: EditorState, node: SyntaxNode): { link: string; alt: string; md: boolean } | null {
+  if (node.name !== "Embed" && node.name !== "Image") return null;
+  if (!isWholeLine(state, node.from, node.to)) return null;
+  const text = state.sliceDoc(node.from, node.to);
+  if (node.name === "Embed") {
+    const { link, alias } = splitAlias(text.slice(3, -2));
+    return { link, alt: alias ?? "", md: false };
+  }
+  const mm = text.match(/^!\[([^\]]*)\]\(\s*<?([^)\s>]*)>?\s*\)$/);
+  if (!mm || isExternal(mm[2])) return null;
+  let p = mm[2];
+  try {
+    p = decodeURI(p);
+  } catch {
+    /* keep */
+  }
+  return { link: p, alt: mm[1], md: true };
+}
+
+interface BlockCtx {
+  revealed: number | null;
+}
+
+function buildBlockDecorations(state: EditorState, ctx: BlockCtx): DecorationSet {
   const lp = state.field(editorLivePreviewField, false) ?? true;
   const owner = state.field(editorInfoField, false);
   const app = owner?.app;
@@ -243,9 +445,21 @@ function buildBlockDecorations(state: EditorState): DecorationSet {
       }
       if (!lp) return false;
       if (name === "Table") {
-        if (!lineTouched(state, from, to, focus)) {
-          decos.push(Decoration.replace({ widget: new RenderedBlockWidget(state.sliceDoc(from, to), "table", app, sourcePath, from), block: true }).range(from, to));
+        // Tables are always edited through the table widget (a table that ends the note without a
+        // newline stays source, like the original).
+        if (to >= state.doc.length) return false;
+        const first = state.doc.lineAt(from);
+        const last = state.doc.lineAt(to);
+        const widget = new TableWidget(state.sliceDoc(from, to), from, app, sourcePath, () => (owner?.tableCellExtensions?.() ?? []));
+        if (selectionTouches(state, from, to, true)) {
+          // Cursor inside the table source (editing a cell): the widget covers the whole range.
+          decos.push(Decoration.replace({ widget, block: true }).range(first.from, last.to));
+          return false;
         }
+        const rows = last.number - first.number;
+        decos.push(Decoration.line({ class: `HyperMD-table-2 HyperMD-table-row HyperMD-table-row-${rows <= 1 ? 0 : rows}` }).range(first.from));
+        decos.push(Decoration.replace({}).range(from, to));
+        decos.push(Decoration.widget({ widget, block: true, side: 1 }).range(to));
         return false;
       }
       if (name === "Blockquote") {
@@ -257,56 +471,123 @@ function buildBlockDecorations(state: EditorState): DecorationSet {
         return true;
       }
       if (name === "BlockMath") {
-        if (!lineTouched(state, from, to, focus)) {
-          const src = state.sliceDoc(from, to).trim().replace(/^\$\$|\$\$$/g, "");
-          decos.push(Decoration.replace({ widget: new MathWidget(src, true), block: true }).range(from, to));
+        const raw = state.sliceDoc(from, to).trim();
+        if (raw.length < 4 || !raw.endsWith("$$")) return false; // unclosed $$: plain text
+        const src = raw.replace(/^\$\$|\$\$$/g, "");
+        if (!lineTouched(state, from, to, focus)) decos.push(Decoration.replace({ widget: new MathWidget(src, true, from), block: true }).range(from, to));
+        else decos.push(Decoration.widget({ widget: new MathWidget(src, true, -1), block: true, side: 1 }).range(to));
+        return false;
+      }
+      if (name === "HTMLBlock") {
+        if (!lineTouched(state, from, to, focus) && !/^\s*<!--/.test(state.sliceDoc(from, from + 8))) {
+          decos.push(Decoration.replace({ widget: new RenderedBlockWidget(state.sliceDoc(from, to), "html", app, sourcePath, from), block: true }).range(from, state.doc.lineAt(to).to));
         }
         return false;
       }
       if (name === "FencedCode") {
         const info = node.node.getChild("CodeInfo");
         const lang = info ? state.sliceDoc(info.from, info.to).trim() : "";
-        if (lang === "mermaid" && !lineTouched(state, from, to, focus)) {
+        if (lang === "mermaid" && app?.vault?.getConfig?.("mermaid") === true) {
           const text = node.node.getChild("CodeText");
           const src = text ? state.sliceDoc(text.from, text.to) : "";
-          decos.push(Decoration.replace({ widget: new MermaidWidget(src, from), block: true }).range(from, to));
+          if (!lineTouched(state, from, to, focus)) decos.push(Decoration.replace({ widget: new MermaidWidget(src, from), block: true }).range(from, to));
+          else decos.push(Decoration.widget({ widget: new MermaidWidget(src, from), block: true, side: 1 }).range(to));
         }
         return false;
       }
-      return name === "BulletList" || name === "OrderedList" || name === "ListItem" || name === "Paragraph";
+      if (name === "Paragraph") {
+        // An embed alone on its line renders as a block.
+        let child = node.node.firstChild;
+        for (; child; child = child.nextSibling) {
+          const t = app ? blockEmbedTarget(state, child) : null;
+          if (!t) continue;
+          const image = isImageTarget(app, t.link, sourcePath);
+          const touched = selectionTouches(state, child.from, child.to, focus);
+          const revealed = ctx.revealed === child.from;
+          const widget = new EmbedWidget(t.link, t.alt, app, sourcePath, child.from, true);
+          const line = state.doc.lineAt(child.from);
+          if ((image && !revealed) || (!image && !touched)) decos.push(Decoration.replace({ widget }).range(child.from, child.to));
+          else decos.push(Decoration.widget({ widget, block: true, side: 1 }).range(line.to));
+        }
+        return false;
+      }
+      return name === "BulletList" || name === "OrderedList" || name === "ListItem";
     },
   });
   owner?.onFrontmatterHidden?.(headerPlaced);
   return Decoration.set(decos, true);
 }
 
+const revealedField = StateField.define<number | null>({
+  create: () => null,
+  update(v, tr) {
+    for (const e of tr.effects) if (e.is(revealEmbed)) return e.value;
+    if (v === null) return null;
+    const mapped = tr.changes.mapPos(v);
+    if (tr.selection) {
+      const line = tr.newDoc.lineAt(mapped);
+      const head = tr.newSelection.main.head;
+      if (head < line.from || head > line.to) return null;
+    }
+    return mapped;
+  },
+});
+
 export const blockDecorationsField = StateField.define<DecorationSet>({
-  create: (s) => buildBlockDecorations(s),
+  create: (s) => buildBlockDecorations(s, { revealed: s.field(revealedField, false) ?? null }),
   update(value, tr) {
     const treeChanged = syntaxTree(tr.startState) !== syntaxTree(tr.state);
     const lpChanged = tr.startState.field(editorLivePreviewField, false) !== tr.state.field(editorLivePreviewField, false);
-    if (tr.docChanged || tr.selection || treeChanged || lpChanged || tr.effects.some((e) => e.is(refreshLivePreview))) return buildBlockDecorations(tr.state);
+    if (tr.docChanged || tr.selection || treeChanged || lpChanged || tr.effects.some((e) => e.is(refreshLivePreview) || e.is(revealEmbed) || e.is(focusChanged)))
+      return buildBlockDecorations(tr.state, { revealed: tr.state.field(revealedField, false) ?? null });
     return value;
   },
   provide: (f) => EditorView.decorations.from(f),
 });
 
-import { StateEffect } from "@codemirror/state";
-export const refreshLivePreview = StateEffect.define<null>();
+/** Dispatched when the editor gains or loses focus so block widgets re-evaluate selection reveal. */
+export const focusChanged = StateEffect.define<boolean>();
 
 // ---------- inline decorations (view plugin) ----------
-function buildInline(view: EditorView): DecorationSet {
+interface InlineResult {
+  decorations: DecorationSet;
+  atomic: RangeSet<Decoration>;
+}
+
+function quoteDepth(text: string): number {
+  const m = /^(\s*>\s?)+/.exec(text);
+  return m ? (m[0].match(/>/g) ?? []).length : 0;
+}
+
+function buildInline(view: EditorView): InlineResult {
   const state = view.state;
   const lp = state.field(editorLivePreviewField, false) ?? true;
   const owner = state.field(editorInfoField, false);
   const app = owner?.app;
   const sourcePath = owner?.file?.path ?? "";
   const focus = view.hasFocus;
+  const tabSize = state.tabSize;
   const decos: Range<Decoration>[] = [];
+  const atomic: Range<Decoration>[] = [];
+  const hideRange = (a: number, b: number) => {
+    if (b <= a) return;
+    decos.push(hide.range(a, b));
+    atomic.push(hide.range(a, b));
+  };
+  const replaceWith = (a: number, b: number, widget: WidgetType) => {
+    const d = Decoration.replace({ widget });
+    decos.push(d.range(a, b));
+    atomic.push(d.range(a, b));
+  };
+  const mark = (a: number, b: number, cls: string, attrs?: Record<string, string>) => {
+    if (b > a) decos.push(Decoration.mark({ class: cls, attributes: attrs }).range(a, b));
+  };
   const lineDeco = (pos: number, cls: string, attrs?: Record<string, string>) => {
     const l = state.doc.lineAt(pos);
     decos.push(Decoration.line({ class: cls, attributes: attrs }).range(l.from));
   };
+  const seenQuoteLines = new Set<number>();
+
   for (const { from: vf, to: vt } of view.visibleRanges) {
     syntaxTree(state).iterate({
       from: vf,
@@ -316,31 +597,32 @@ function buildInline(view: EditorView): DecorationSet {
         const m = name.match(/^ATXHeading(\d)$/);
         if (m) {
           lineDeco(from, `HyperMD-header HyperMD-header-${m[1]}`);
+          const marks = node.node.getChildren("HeaderMark");
+          for (const hm of marks) mark(hm.from, hm.to, `cm-formatting cm-formatting-header cm-formatting-header-${m[1]} cm-header cm-header-${m[1]}`);
           if (lp && !lineTouched(state, from, to, focus)) {
-            const mark = node.node.getChild("HeaderMark");
-            if (mark && mark.from === from) {
-              const after = state.sliceDoc(mark.to, mark.to + 1) === " " ? mark.to + 1 : mark.to;
-              decos.push(hide.range(mark.from, after));
-            }
-            // closing #'s
-            const marks = node.node.getChildren("HeaderMark");
-            if (marks.length > 1) {
-              const last = marks[marks.length - 1];
-              decos.push(hide.range(Math.max(from, last.from - 1), last.to));
-            }
+            const first = marks[0];
+            if (first && first.from === from) hideRange(first.from, state.sliceDoc(first.to, first.to + 1) === " " ? first.to + 1 : first.to);
+            if (marks.length > 1) hideRange(marks[marks.length - 1].from, marks[marks.length - 1].to);
           }
           return true;
         }
         if (name === "SetextHeading1" || name === "SetextHeading2") {
-          lineDeco(from, `HyperMD-header HyperMD-header-${name.endsWith("1") ? 1 : 2}`);
+          const level = name.endsWith("1") ? 1 : 2;
+          const last = state.doc.lineAt(to);
+          for (let p = from; p <= to; ) {
+            const l = state.doc.lineAt(p);
+            decos.push(Decoration.line({ class: l.number === last.number ? `HyperMD-header-line HyperMD-header-line-${level}` : `HyperMD-header HyperMD-header-${level}` }).range(l.from));
+            p = l.to + 1;
+          }
           return true;
         }
         if (name === "Frontmatter") {
-          if (!lp) for (let p = from; p <= to; ) {
-            const l = state.doc.lineAt(p);
-            decos.push(Decoration.line({ class: "HyperMD-frontmatter" }).range(l.from));
-            p = l.to + 1;
-          }
+          if (!lp)
+            for (let p = from; p <= to; ) {
+              const l = state.doc.lineAt(p);
+              decos.push(Decoration.line({ class: "HyperMD-frontmatter" }).range(l.from));
+              p = l.to + 1;
+            }
           return false;
         }
         if (name === "FencedCode") {
@@ -353,42 +635,77 @@ function buildInline(view: EditorView): DecorationSet {
           }
           if (lp && !lineTouched(state, from, to, focus)) {
             const info = node.node.getChild("CodeInfo");
-            const lang = info ? state.sliceDoc(info.from, info.to) : "";
-            if (first.length) decos.push(Decoration.replace({ widget: lang ? new CodeFlairWidget(lang) : undefined }).range(first.from, first.to));
-            if (last.number !== first.number && /^\s*(`{3,}|~{3,})\s*$/.test(last.text)) decos.push(hide.range(last.from, last.to));
+            const lang = info ? state.sliceDoc(info.from, info.to).trim() : "";
+            const label = languageLabel(lang);
+            const closed = last.number !== first.number && /^\s*(`{3,}|~{3,})\s*$/.test(last.text);
+            if (first.length && closed) {
+              if (label) replaceWith(first.from, first.to, new CodeFlairWidget(label));
+              else hideRange(first.from, first.to);
+            }
+            if (last.number !== first.number && /^\s*(`{3,}|~{3,})\s*$/.test(last.text)) hideRange(last.from, last.to);
+          }
+          return false;
+        }
+        if (name === "BlockMath") {
+          for (let p = from; p <= to; ) {
+            const l = state.doc.lineAt(p);
+            decos.push(Decoration.line({ class: "HyperMD-math" }).range(l.from));
+            p = l.to + 1;
           }
           return false;
         }
         if (name === "Blockquote") {
           for (let p = from; p <= to; ) {
             const l = state.doc.lineAt(p);
-            decos.push(Decoration.line({ class: "HyperMD-quote HyperMD-quote-1" }).range(l.from));
+            if (!seenQuoteLines.has(l.number)) {
+              seenQuoteLines.add(l.number);
+              const depth = Math.max(1, quoteDepth(l.text));
+              decos.push(Decoration.line({ class: `HyperMD-quote HyperMD-quote-${depth}` }).range(l.from));
+            }
             p = l.to + 1;
           }
           return true;
         }
         if (name === "QuoteMark") {
-          // Parity (Obsidian 1.14.4): the ">" stays in the text but turns transparent unless the
-          // cursor is on that line; the line's left border draws the quote.
-          decos.push(Decoration.mark({ class: "cm-formatting cm-formatting-quote" }).range(from, to));
-          if (lp && !lineTouched(state, from, to, focus)) decos.push(Decoration.mark({ class: "cm-transparent" }).range(from, to));
+          const depth = quoteDepth(state.doc.lineAt(from).text);
+          mark(from, to, `cm-formatting cm-formatting-quote cm-formatting-quote-${depth} cm-quote cm-quote-${depth}`);
+          if (lp && !lineTouched(state, from, to, focus)) mark(from, to, "cm-transparent");
           return false;
         }
         if (name === "ListItem") {
+          if (inQuote(node.node) || isBareMarker(state, node.node)) return false;
           const l = state.doc.lineAt(from);
           let depth = 0;
           for (let p = node.node.parent; p; p = p.parent) if (p.name === "BulletList" || p.name === "OrderedList") depth++;
-          lineDeco(from, `HyperMD-list-line HyperMD-list-line-${depth} cm-line-list`);
-          const task = node.node.getChild("Task");
-          if (task) {
-            const marker = task.getChild("TaskMarker");
-            if (marker) {
-              const ch = state.sliceDoc(marker.from + 1, marker.from + 2);
-              decos.push(Decoration.line({ class: "HyperMD-task-line", attributes: { "data-task": ch } }).range(l.from));
-              const listMark = node.node.getChild("ListMark");
-              if (lp && !selectionTouches(state, listMark ? listMark.from : marker.from, marker.to, focus)) {
-                decos.push(Decoration.replace({ widget: new CheckboxWidget(ch !== " ", marker.from) }).range(marker.from, marker.to));
+          if (l.from === from || !state.sliceDoc(l.from, from).replace(/>\s?/g, "").trim()) {
+            lineDeco(from, `HyperMD-list-line HyperMD-list-line-${depth}`);
+            // Indentation guides: each indent unit becomes a .cm-indent span.
+            const ws = /^[ \t]*/.exec(state.sliceDoc(l.from, from))![0];
+            if (ws.length) {
+              let p = l.from;
+              let col = 0;
+              let level = 0;
+              let unitStart = p;
+              for (const ch of ws) {
+                col = ch === "\t" ? col + tabSize - (col % tabSize) : col + 1;
+                p++;
+                if (col % tabSize === 0) {
+                  level++;
+                  mark(unitStart, p, `cm-hmd-list-indent cm-hmd-list-indent-${level}`);
+                  mark(unitStart, p, "cm-indent");
+                  unitStart = p;
+                }
               }
+            }
+          }
+          const marker = taskMarkerOf(state, node.node);
+          if (marker) {
+            const ch = marker.ch;
+            decos.push(Decoration.line({ class: "HyperMD-task-line", attributes: { "data-task": ch } }).range(l.from));
+            mark(marker.from, marker.to, "cm-formatting cm-formatting-task");
+            const listMark = node.node.getChild("ListMark");
+            if (lp && !selectionTouches(state, listMark ? listMark.from : marker.from, marker.to, focus)) {
+              replaceWith(marker.from, marker.to, new CheckboxWidget(ch !== " ", marker.from));
             }
           }
           return true;
@@ -396,24 +713,51 @@ function buildInline(view: EditorView): DecorationSet {
         if (name === "ListMark") {
           const parent = node.node.parent?.parent;
           const isBullet = parent?.name === "BulletList";
-          const hasTask = !!node.node.parent?.getChild("Task");
-          decos.push(Decoration.mark({ class: "cm-formatting cm-formatting-list " + (isBullet ? "cm-formatting-list-ul" : "cm-formatting-list-ol") }).range(from, to));
-          const taskMarker = node.node.parent?.getChild("Task")?.getChild("TaskMarker");
-          const revealTo = hasTask && taskMarker ? taskMarker.to : to;
-          if (lp && isBullet && !selectionTouches(state, from, revealTo, focus)) {
-            if (hasTask) decos.push(hide.range(from, Math.min(to + 1, state.doc.lineAt(from).to)));
-            else decos.push(Decoration.replace({ widget: new BulletWidget() }).range(from, to));
+          let depth = 0;
+          for (let p = node.node.parent; p; p = p.parent) if (p.name === "BulletList" || p.name === "OrderedList") depth++;
+          const after = state.sliceDoc(to, to + 1) === " " ? to + 1 : to;
+          mark(from, after, `cm-formatting cm-formatting-list ${isBullet ? "cm-formatting-list-ul" : "cm-formatting-list-ol"} cm-list-${depth}`);
+          const taskMarker = node.node.parent ? taskMarkerOf(state, node.node.parent) : null;
+          const revealTo = taskMarker ? taskMarker.to : to;
+          if (lp && isBullet) {
+            if (!selectionTouches(state, from, revealTo, focus)) {
+              if (taskMarker) hideRange(from, Math.min(after, taskMarker.from));
+              else mark(from, to, "list-bullet");
+            }
           }
           return false;
         }
         if (name === "HorizontalRule") {
           lineDeco(from, "HyperMD-hr");
-          if (lp && !lineTouched(state, from, to, focus)) decos.push(Decoration.replace({ widget: new HrWidget() }).range(from, to));
+          if (lp && !lineTouched(state, from, to, focus)) replaceWith(from, to, new HrWidget());
+          return false;
+        }
+        if (name === "FootnoteDefinition") {
+          lineDeco(from, "HyperMD-footnote");
+          const marks = node.node.getChildren("FootnoteMark");
+          const label = node.node.getChild("FootnoteLabel");
+          if (label) mark(label.from, label.to, "cm-hmd-footnote cm-link");
+          if (lp && marks.length === 2 && !selectionTouches(state, from, marks[1].to, focus)) {
+            hideRange(marks[0].from, marks[0].to);
+            hideRange(marks[1].from, marks[1].to);
+            if (label) mark(label.from, label.to, "cm-underline");
+          }
+          return true;
+        }
+        if (name === "FootnoteReference") {
+          const marks = node.node.getChildren("FootnoteMark");
+          if (marks[0]) mark(marks[0].from, marks[0].to, "cm-formatting cm-formatting-link cm-formatting-link-start");
+          if (marks[1]) mark(marks[1].from, marks[1].to, "cm-formatting cm-formatting-link cm-formatting-link-end");
+          return false;
+        }
+        if (name === "Comment") {
+          mark(from, Math.min(to, from + 2), "cm-comment-start cm-formatting");
+          if (to - from >= 4 && state.sliceDoc(to - 2, to) === "%%") mark(to - 2, to, "cm-comment-end cm-formatting");
           return false;
         }
         if (!lp) {
           if (name === "WikiLink" || name === "Embed") {
-            decos.push(Decoration.mark({ attributes: { "data-href": splitAlias(state.sliceDoc(from, to).replace(/^!?\[\[|\]\]$/g, "")).link } }).range(from, to));
+            mark(from, to, "", { "data-href": splitAlias(state.sliceDoc(from, to).replace(/^!?\[\[|\]\]$/g, "")).link });
             return false;
           }
           return true;
@@ -424,134 +768,254 @@ function buildInline(view: EditorView): DecorationSet {
           case "Emphasis":
           case "StrongEmphasis":
           case "Strikethrough":
-          case "Highlight":
           case "InlineCode": {
-            if (!touched) {
-              const markName = name === "InlineCode" ? "CodeMark" : name === "Strikethrough" ? "StrikethroughMark" : name === "Highlight" ? "HighlightMark" : "EmphasisMark";
-              let c = node.node.firstChild;
-              for (; c; c = c.nextSibling) if (c.name === markName && (c.from === from || c.to === to)) decos.push(hide.range(c.from, c.to));
+            const markName = name === "InlineCode" ? "CodeMark" : name === "Strikethrough" ? "StrikethroughMark" : "EmphasisMark";
+            const fcls = name === "InlineCode" ? "cm-formatting-code" : name === "Strikethrough" ? "cm-formatting-strikethrough" : name === "StrongEmphasis" ? "cm-formatting-strong" : "cm-formatting-em";
+            for (let c = node.node.firstChild; c; c = c.nextSibling) {
+              if (c.name !== markName || (c.from !== from && c.to !== to)) continue;
+              mark(c.from, c.to, "cm-formatting " + fcls);
+              if (!touched) hideRange(c.from, c.to);
             }
-            if (name === "InlineCode") decos.push(Decoration.mark({ class: "cm-inline-code" }).range(from, to));
+            if (name === "InlineCode") mark(from, to, "cm-inline-code");
             return true;
           }
+          case "Highlight": {
+            const marks = node.node.getChildren("HighlightMark");
+            const open = marks.find((c) => c.from === from);
+            const close = marks.find((c) => c.to === to);
+            let contentFrom = open ? open.to : from;
+            const em = EMOJI_RE.exec(state.sliceDoc(contentFrom, contentFrom + 4));
+            if (em) {
+              const color = COLOR_BY_EMOJI.get(em[0]);
+              mark(contentFrom + em[0].length, close ? close.from : to, `cm-highlight cm-highlight-${color}`);
+              if (!touched) hideRange(contentFrom, contentFrom + em[0].length);
+              else replaceWith(contentFrom, contentFrom + em[0].length, new HighlightSwatchWidget(color ?? ""));
+              contentFrom += em[0].length;
+            }
+            for (const c of [open, close]) if (c && !touched) hideRange(c.from, c.to);
+            return true;
+          }
+          case "Escape": {
+            mark(from + 1, to, "cm-escape cm-hmd-escape-char");
+            if (!touched) hideRange(from, from + 1);
+            return false;
+          }
           case "WikiLink": {
-            if (touched) return false;
             const inner = state.sliceDoc(from + 2, to - 2);
             const { link, alias } = splitAlias(inner);
-            const display = alias ?? link.replace(/#\^?/g, (x) => (x === "#" ? " > " : " > ^")).replace(/^ > /, "");
             const unresolved = !!app && !!parseLinktext(link).path && !app.metadataCache.getFirstLinkpathDest(parseLinktext(link).path, sourcePath);
-            decos.push(Decoration.replace({ widget: new LinkWidget(display, link, true, unresolved) }).range(from, to));
+            const textFrom = alias !== undefined ? to - 2 - alias.length : from + 2;
+            const attrs = { "data-href": link };
+            if (touched) {
+              mark(from, from + 2, "cm-formatting-link cm-formatting-link-start");
+              mark(to - 2, to, "cm-formatting-link cm-formatting-link-end");
+              if (alias !== undefined) {
+                mark(from + 2, textFrom - 1, "cm-hmd-internal-link cm-link-has-alias");
+                mark(textFrom - 1, textFrom, "cm-hmd-internal-link cm-link-alias-pipe");
+                mark(textFrom, to - 2, "cm-hmd-internal-link cm-link-alias");
+              }
+              return false;
+            }
+            hideRange(from, textFrom);
+            hideRange(to - 2, to);
+            mark(textFrom, to - 2, "cm-hmd-internal-link" + (alias !== undefined ? " cm-link-alias" : ""));
+            mark(textFrom, to - 2, "cm-underline" + (unresolved ? " is-unresolved" : ""), attrs);
             return false;
           }
           case "Embed": {
-            if (touched) return false;
+            if (blockEmbedTarget(state, node.node)) return false;
             const inner = state.sliceDoc(from + 3, to - 2);
             const { link, alias } = splitAlias(inner);
-            if (app) decos.push(Decoration.replace({ widget: new EmbedWidget(link, alias ?? "", app, sourcePath) }).range(from, to));
+            if (!app) return false;
+            const widget = new EmbedWidget(link, alias ?? "", app, sourcePath, from, false);
+            if (isImageTarget(app, link, sourcePath) || !touched) replaceWith(from, to, widget);
+            else decos.push(Decoration.widget({ widget, side: 1 }).range(to));
             return false;
           }
           case "Link": {
-            if (touched) return false;
-            const text = state.sliceDoc(from, to);
-            const mm = text.match(/^\[([\s\S]*)\]\(\s*<?([^)\s>]*)>?(?:\s+"[^"]*")?\s*\)$/);
-            if (!mm) return true;
-            const href = mm[2];
-            const internal = !/^[a-z][a-z0-9+.-]*:/i.test(href);
-            let target = href;
-            try {
-              target = decodeURI(href);
-            } catch {
-              /* keep */
+            const marks = node.node.getChildren("LinkMark");
+            const url = node.node.getChild("URL");
+            if (marks.length < 2 || !url) return true;
+            const textFrom = marks[0].to;
+            const textTo = marks[1].from;
+            let href = state.sliceDoc(url.from, url.to).replace(/^<|>$/g, "");
+            const external = isExternal(href);
+            if (!external)
+              try {
+                href = decodeURI(href);
+              } catch {
+                /* keep */
+              }
+            if (touched) {
+              mark(url.from, url.to, "cm-string cm-url");
+              return true;
             }
-            decos.push(Decoration.replace({ widget: new LinkWidget(mm[1], target, internal, false) }).range(from, to));
-            return false;
+            hideRange(from, textFrom);
+            hideRange(textTo, to);
+            mark(textFrom, textTo, external ? "cm-link external-link" : "cm-hmd-internal-link");
+            mark(textFrom, textTo, "cm-underline", { "data-href": href });
+            return true;
           }
           case "Image": {
-            if (touched) return false;
+            if (blockEmbedTarget(state, node.node)) return false;
             const text = state.sliceDoc(from, to);
-            const mm = text.match(/^!\[([^\]]*)\]\(\s*<?([^)\s>]*)>?\s*\)$/);
+            const mm = text.match(/^!\[([^\]]*)\]\(\s*<?([^)\s>]*)>?(?:\s+"[^"]*")?\s*\)$/);
             if (!mm || !app) return false;
             const src = mm[2];
-            if (/^[a-z][a-z0-9+.-]*:/i.test(src) && !/^file:/i.test(src)) {
-              decos.push(Decoration.replace({ widget: new ExternalImageWidget(src, mm[1]) }).range(from, to));
-            } else {
+            if (isExternal(src) && !/^file:/i.test(src)) replaceWith(from, to, new ExternalImageWidget(src, mm[1], from));
+            else {
               let p = src;
               try {
                 p = decodeURI(src);
               } catch {
                 /* keep */
               }
-              decos.push(Decoration.replace({ widget: new EmbedWidget(p, mm[1], app, sourcePath) }).range(from, to));
+              const widget = new EmbedWidget(p, mm[1], app, sourcePath, from, false);
+              if (isImageTarget(app, p, sourcePath) || !touched) replaceWith(from, to, widget);
+              else decos.push(Decoration.widget({ widget, side: 1 }).range(to));
+            }
+            return false;
+          }
+          case "Autolink": {
+            const url = node.node.getChild("URL");
+            if (url) {
+              mark(url.from, url.to, "cm-url cm-link external-link");
+              if (!touched) {
+                hideRange(from, url.from);
+                hideRange(url.to, to);
+                mark(url.from, url.to, "cm-underline", { "data-href": state.sliceDoc(url.from, url.to) });
+              }
+            }
+            return false;
+          }
+          case "URL": {
+            if (node.node.parent?.name === "Paragraph" || node.node.parent?.name === "ListItem") {
+              mark(from, to, "cm-url cm-link external-link");
+              if (!touched) mark(from, to, "cm-underline", { "data-href": state.sliceDoc(from, to) });
             }
             return false;
           }
           case "InlineMath": {
-            if (touched) return false;
+            if (touched) {
+              mark(from, to, "cm-math");
+              return false;
+            }
             const src = state.sliceDoc(from, to);
             const display = src.startsWith("$$");
-            decos.push(Decoration.replace({ widget: new MathWidget(display ? src.slice(2, -2) : src.slice(1, -1), display) }).range(from, to));
+            replaceWith(from, to, new MathWidget(display ? src.slice(2, -2) : src.slice(1, -1), display));
             return false;
           }
-          case "URL":
-          case "Autolink":
+          case "HTMLTag": {
+            const tagText = state.sliceDoc(from, to);
+            const open = /^<([a-zA-Z][\w-]*)\b[^>]*?(\/?)>$/.exec(tagText);
+            if (!open) return false;
+            const tag = open[1];
+            if (open[2] === "/" || VOID_HTML.test(tag)) {
+              if (!touched) replaceWith(from, to, new InlineHtmlWidget(tagText));
+              return false;
+            }
+            // Find the matching closing tag among the following siblings.
+            let depth = 0;
+            for (let s = node.node.nextSibling; s; s = s.nextSibling) {
+              if (s.name !== "HTMLTag") continue;
+              const t = state.sliceDoc(s.from, s.to);
+              if (new RegExp(`^<${tag}\\b`, "i").test(t)) depth++;
+              else if (new RegExp(`^</${tag}\\s*>$`, "i").test(t)) {
+                if (depth === 0) {
+                  if (!selectionTouches(state, from, s.to, focus) && state.doc.lineAt(from).number === state.doc.lineAt(s.to).number) replaceWith(from, s.to, new InlineHtmlWidget(state.sliceDoc(from, s.to)));
+                  break;
+                }
+                depth--;
+              }
+            }
             return false;
+          }
         }
         return true;
       },
     });
   }
-  return Decoration.set(decos, true);
-}
-
-class ExternalImageWidget extends WidgetType {
-  constructor(readonly src: string, readonly alt: string) {
-    super();
-  }
-  eq(o: ExternalImageWidget) {
-    return o.src === this.src && o.alt === this.alt;
-  }
-  toDOM(view: EditorView) {
-    const m = this.alt.match(/^(.*?)\|(\d+)(?:x(\d+))?$/);
-    const img = createEl("img", { attr: { src: this.src, alt: m ? m[1] : this.alt, referrerpolicy: "no-referrer" } });
-    if (m) img.setAttr("width", m[2]);
-    img.addEventListener("load", () => view.requestMeasure());
-    const s = createSpan("image-embed");
-    s.appendChild(img);
-    return s;
-  }
+  return { decorations: Decoration.set(decos, true), atomic: RangeSet.of(atomic, true) };
 }
 
 export const inlineLivePreview = ViewPlugin.fromClass(
   class {
     decorations: DecorationSet;
-    constructor(view: EditorView) {
-      this.decorations = buildInline(view);
+    atomic: RangeSet<Decoration>;
+    mouseDown = false;
+    dirty = false;
+    private onUp = () => {
+      if (!this.mouseDown) return;
+      this.mouseDown = false;
+      if (this.dirty) {
+        this.dirty = false;
+        // Rebuild after the click has settled the selection.
+        requestAnimationFrame(() => this.view.dispatch({ effects: refreshLivePreview.of(null) }));
+      }
+    };
+    constructor(readonly view: EditorView) {
+      const r = buildInline(view);
+      this.decorations = r.decorations;
+      this.atomic = r.atomic;
+      view.dom.ownerDocument.addEventListener("mouseup", this.onUp, true);
     }
     update(u: ViewUpdate) {
       const lpChanged = u.startState.field(editorLivePreviewField, false) !== u.state.field(editorLivePreviewField, false);
-      if (u.docChanged || u.viewportChanged || u.selectionSet || u.focusChanged || lpChanged || syntaxTree(u.startState) !== syntaxTree(u.state) || u.transactions.some((t) => t.effects.some((e) => e.is(refreshLivePreview)))) {
-        this.decorations = buildInline(u.view);
+      const forced = u.transactions.some((t) => t.effects.some((e) => e.is(refreshLivePreview)));
+      const relevant = u.docChanged || u.viewportChanged || u.selectionSet || u.focusChanged || lpChanged || forced || syntaxTree(u.startState) !== syntaxTree(u.state);
+      if (!relevant) return;
+      // While the mouse is down (drag-selecting) or during IME composition, only map.
+      if (!forced && !lpChanged && (this.mouseDown || u.view.composing) && !u.viewportChanged) {
+        this.decorations = this.decorations.map(u.changes);
+        this.atomic = this.atomic.map(u.changes);
+        this.dirty = true;
+        return;
       }
+      const r = buildInline(u.view);
+      this.decorations = r.decorations;
+      this.atomic = r.atomic;
+    }
+    destroy() {
+      this.view.dom.ownerDocument.removeEventListener("mouseup", this.onUp, true);
     }
   },
   {
     decorations: (v) => v.decorations,
+    provide: (plugin) => EditorView.atomicRanges.of((view) => view.plugin(plugin)?.atomic ?? RangeSet.empty),
     eventHandlers: {
       mousedown(e: MouseEvent, view: EditorView) {
         const t = e.target as HTMLElement;
         const lp = view.state.field(editorLivePreviewField, false);
         const owner = view.state.field(editorInfoField, false);
         const linkEl = t.closest<HTMLElement>("[data-href]");
-        if (!linkEl || !owner?.app || e.button !== 0) return false;
-        const isWidget = !!t.closest(".cm-hmd-internal-link, .cm-link");
-        // Live preview: plain click opens a rendered link. Source mode: Mod+click opens.
-        if ((lp && isWidget) || Keymap.isModifier(e, "Mod")) {
-          e.preventDefault();
-          const href = linkEl.getAttribute("data-href")!;
-          if (/^[a-z][a-z0-9+.-]*:/i.test(href)) owner.app.openExternal(href);
-          else owner.app.workspace.openLinkText(href, owner.file?.path ?? "", Keymap.isModEvent(e) || false);
-          return true;
+        if (e.button === 0 && linkEl && owner?.app) {
+          const rendered = !!t.closest(".cm-underline");
+          // Live preview: a click on a rendered link opens it. Source mode: Mod+click opens.
+          if ((lp && rendered) || Keymap.isModifier(e, "Mod")) {
+            e.preventDefault();
+            const href = linkEl.getAttribute("data-href")!;
+            if (isExternal(href)) owner.app.openExternal?.(href) ?? window.open(href);
+            else owner.app.workspace.openLinkText(href, owner.file?.path ?? "", Keymap.isModEvent(e) || false);
+            return true;
+          }
         }
+        if (e.button === 0) {
+          (this as any).mouseDown = true;
+        }
+        return false;
+      },
+      mouseover(e: MouseEvent, view: EditorView) {
+        // Page preview: links in the editor raise "hover-link" (source "editor").
+        const el = (e.target as HTMLElement).closest?.<HTMLElement>("[data-href]");
+        const owner = view.state.field(editorInfoField, false);
+        if (!el || !owner?.app) return false;
+        const href = el.getAttribute("data-href")!;
+        if (isExternal(href)) return false;
+        owner.app.workspace.trigger("hover-link", { event: e, source: "editor", hoverParent: owner, targetEl: el, linktext: href, sourcePath: owner.file?.path ?? "" });
+        return false;
+      },
+      compositionend(_e: Event, view: EditorView) {
+        view.dispatch({ effects: refreshLivePreview.of(null) });
         return false;
       },
     },
@@ -577,8 +1041,8 @@ export const hashtagDecorations = ViewPlugin.fromClass(
           enter: (n) => {
             if (n.name === "Hashtag") {
               const tag = view.state.sliceDoc(n.from + 1, n.to);
-              b.add(n.from, n.from + 1, Decoration.mark({ class: "cm-formatting cm-formatting-hashtag cm-hashtag-begin", attributes: { "data-tag": tag } }));
-              b.add(n.from + 1, n.to, Decoration.mark({ class: "cm-hashtag-end", attributes: { "data-tag": tag } }));
+              b.add(n.from, n.from + 1, Decoration.mark({ class: "cm-formatting cm-formatting-hashtag cm-hashtag cm-hashtag-begin cm-meta", attributes: { "data-tag": tag } }));
+              b.add(n.from + 1, n.to, Decoration.mark({ class: "cm-hashtag cm-hashtag-end cm-meta", attributes: { "data-tag": tag } }));
             }
           },
         });
@@ -589,8 +1053,16 @@ export const hashtagDecorations = ViewPlugin.fromClass(
   { decorations: (v) => v.decorations },
 );
 
+/** Re-evaluate block widgets when focus changes (selection only reveals while focused). */
+const focusWatcher = EditorView.focusChangeEffect.of((_state, focusing) => focusChanged.of(focusing));
+
 export function livePreviewExtensions(): Extension[] {
-  return [blockDecorationsField, inlineLivePreview, hashtagDecorations];
+  return [revealedField, blockDecorationsField, inlineLivePreview, hashtagDecorations, focusWatcher, tableCursorCapture, listDrag];
+}
+
+/** Extensions for the small editors inside table cells (inline live preview only). */
+export function cellLivePreviewExtensions(): Extension[] {
+  return [inlineLivePreview, hashtagDecorations];
 }
 
 export { escapeHtml };

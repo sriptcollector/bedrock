@@ -3,6 +3,31 @@
 // .obsidian/types.json like Obsidian; untyped keys are inferred from their values.
 import { setIcon } from "../dom/icons";
 import { Menu } from "../ui/menu";
+import { AbstractInputSuggest } from "./suggest";
+import { prepareFuzzySearch } from "../ui/search";
+
+/** Fuzzy-ranked string suggestions under a property key or value input. */
+class StringSuggest extends AbstractInputSuggest<string> {
+  constructor(app: any, el: HTMLInputElement | HTMLDivElement, private source: () => string[], pick: (v: string) => void) {
+    super(app, el);
+    this.onSelect((v) => pick(v));
+  }
+  protected getSuggestions(query: string): string[] {
+    const all = [...new Set(this.source())];
+    const q = query.trim();
+    if (!q) return all.sort((a, b) => a.localeCompare(b)).slice(0, 50);
+    const f = prepareFuzzySearch(q);
+    return all
+      .map((v) => ({ v, r: f(v) }))
+      .filter((x) => x.r && x.v !== q)
+      .sort((a, b) => b.r!.score - a.r!.score)
+      .map((x) => x.v)
+      .slice(0, 50);
+  }
+  renderSuggestion(v: string, el: HTMLElement): void {
+    el.setText(v);
+  }
+}
 
 export type PropertyType = "text" | "multitext" | "number" | "checkbox" | "date" | "datetime" | "tags" | "aliases";
 
@@ -105,6 +130,19 @@ export class PropertiesEditor {
     return this.app.propertyTypes;
   }
 
+  toggleCollapsed(): void {
+    this.collapsed = !this.collapsed;
+    this.el.toggleClass("is-collapsed", this.collapsed);
+  }
+
+  private propertyNames(): string[] {
+    return Object.keys(this.app.metadataCache?.getAllPropertyInfos?.() ?? {});
+  }
+  private valuesFor(key: string, t: PropertyType): string[] {
+    if (t === "tags") return Object.keys(this.app.metadataCache?.getTags?.() ?? {}).map((x) => x.replace(/^#/, ""));
+    return (this.app.metadataCache?.getFrontmatterPropertyValuesForKey?.(key) ?? []).filter((v: string) => v && v.length < 200);
+  }
+
   hasFocus(): boolean {
     return this.el.contains(document.activeElement);
   }
@@ -132,6 +170,10 @@ export class PropertiesEditor {
     setIcon(keyEl.createSpan("metadata-property-icon"), "text");
     const input = keyEl.createEl("input", { cls: "metadata-property-key-input", attr: { type: "text", placeholder: "Property name" } });
     input.focus();
+    new StringSuggest(this.app, input, () => this.propertyNames().filter((n) => !(n in this.fm)), (v) => {
+      input.value = v;
+      input.blur();
+    });
     const done = () => {
       k = input.value.trim();
       row.remove();
@@ -162,6 +204,10 @@ export class PropertiesEditor {
     setIcon(icon, typeIcon(t));
     icon.addEventListener("click", (e) => this.typeMenu(e, key));
     const keyInput = keyEl.createEl("input", { cls: "metadata-property-key-input", attr: { type: "text", value: key, autocapitalize: "none", spellcheck: "false" } });
+    new StringSuggest(this.app, keyInput, () => this.propertyNames().filter((n) => !(n in this.fm)), (v) => {
+      keyInput.value = v;
+      keyInput.dispatchEvent(new Event("change"));
+    });
     keyInput.addEventListener("change", () => {
       const nk = keyInput.value.trim();
       if (!nk || nk === key || nk in this.fm) {
@@ -241,13 +287,22 @@ export class PropertiesEditor {
             renderPills();
           }
         });
-        input.addEventListener("blur", addFromInput);
+        input.addEventListener("blur", () => setTimeout(addFromInput, 120));
+        new StringSuggest(this.app, input, () => this.valuesFor(key, t).filter((v) => !list.includes(v)), (v) => {
+          input.textContent = v;
+          addFromInput();
+          input.focus();
+        });
         renderPills();
         break;
       }
       default: {
         const div = valEl.createDiv({ cls: "metadata-input-longtext", attr: { contenteditable: "true", tabindex: "0", placeholder: "Empty" } });
         div.textContent = value == null ? "" : typeof value === "object" ? JSON.stringify(value) : String(value);
+        new StringSuggest(this.app, div, () => this.valuesFor(key, t), (v) => {
+          div.textContent = v;
+          div.blur();
+        });
         div.addEventListener("blur", () => {
           const v = div.textContent ?? "";
           if (v !== String(this.fm[key] ?? "")) set(v);

@@ -12,7 +12,7 @@ Legend: **[later]** = not needed for the first release. **[ours]** = Bedrock doe
 - [ ] One window per open vault; window size and position remembered per vault
 - [x] Hidden native title bar by default; tab row is the drag area; our own minimize / maximize / close buttons at top right
 - [ ] Window frame setting: hidden (default), app frame, native frame (needs restart)
-- [ ] Popout windows for any tab ("Open in new window", "Move to new window"); they share the same app state
+- [x] Popout windows for any tab ("Open in new window", "Move to new window"); they share the same app state
 - [ ] Settings opens in its own window by default (900x700), with an option to show it as an in-app dialog
 - [ ] Plugin browser and theme browser open in their own windows (1100x800)
 - [ ] Vault picker window (800x650): list of known vaults on the left with a per-vault menu (reveal, rename, remove from list), right side with "create new vault", "open folder as vault", "open synced vault" [ours: Toolbay account vault], language picker
@@ -79,15 +79,15 @@ Legend: **[later]** = not needed for the first release. **[ours]** = Bedrock doe
 - [x] Inline title: file name shown as an editable title above the note (setting, on by default)
 
 ### Live Preview behaviour
-- [ ] Markdown symbols hidden when the cursor is not touching them; revealed per token group (not whole line) when the cursor or selection touches them, only while the editor has focus
+- [x] Markdown symbols hidden when the cursor is not touching them; revealed per token group (not whole line) when the cursor or selection touches them, only while the editor has focus
 - [x] Heading `#` marks shown only when the cursor is on the heading line
-- [ ] Hidden ranges are skipped by the cursor (atomic); clicks inside them land at the edge
+- [x] Hidden ranges are skipped by the cursor (atomic); clicks inside them land at the edge
 - [x] Links show only their display text; full syntax appears when the cursor enters the link
 - [x] List bullets drawn as dots; numbered lists keep numbers; task boxes are clickable checkboxes
 - [x] Quotes drawn with a left border
-- [ ] Block widgets when the cursor is outside: properties form, tables, callouts, embeds, images, math, Mermaid, HTML; each with an "edit this block" button
+- [x] Block widgets when the cursor is outside: properties form, tables, callouts, embeds, images, math, Mermaid, HTML; each with an "edit this block" button
 - [ ] No flicker while dragging a selection or typing with an input method (decorations mapped, not rebuilt)
-- [ ] Same `cm-*` token classes and `HyperMD-*` line classes as Obsidian so themes work
+- [x] Same `cm-*` token classes and `HyperMD-*` line classes as Obsidian so themes work
 
 ### Syntax support
 - [x] CommonMark + GitHub tables, task lists, strikethrough, autolinks
@@ -98,7 +98,7 @@ Legend: **[later]** = not needed for the first release. **[ours]** = Bedrock doe
 - [x] Footnotes (reference and inline)
 - [ ] Math with `$...$` and `$$...$$` (MathJax-compatible output)
 - [ ] Mermaid code blocks, off by default (setting) and gated by a per-vault "allow" prompt
-- [ ] Code blocks with syntax highlighting, language label, copy button
+- [x] Code blocks with syntax highlighting, language label, copy button
 - [x] Callouts `> [!type] title` with `+`/`-` fold markers; 13 types and their aliases; custom types fall back to note; nested callouts
 - [x] Block ids `^id`; horizontal rules; HTML blocks (sanitized)
 - [x] Frontmatter YAML at the top
@@ -106,27 +106,27 @@ Legend: **[later]** = not needed for the first release. **[ours]** = Bedrock doe
 ### Editing aids
 - [x] Auto-pair brackets and quotes (setting)
 - [x] Auto-pair Markdown symbols (setting)
-- [ ] Smart lists: continue lists on Enter, fix indentation and numbering (setting)
+- [x] Smart lists: continue lists on Enter, fix indentation and numbering (setting)
 - [x] Indent with tabs or 4 spaces (setting); tab visual width (setting)
-- [ ] Fold headings and indented lists (settings); fold all / unfold all; fold state remembered
-- [ ] Line numbers (setting, off); indentation guides (setting, on); readable line length 700 px (setting, on); right-to-left (setting)
+- [x] Fold headings and indented lists (settings); fold all / unfold all; fold state remembered
+- [x] Line numbers (setting, off); indentation guides (setting, on); readable line length 700 px (setting, on); right-to-left (setting)
 - [x] Strict line breaks (setting, off)
 - [ ] Spellcheck (setting, on) with language list
-- [ ] Link autocomplete after `[[` (files, headings with `#`, blocks with `^`, aliases); create link to a new note
+- [x] Link autocomplete after `[[` (files, headings with `#`, blocks with `^`, aliases); create link to a new note
 - [x] Tag autocomplete after `#`
 - [ ] Slash command menu after `/` (when the plugin is on)
 - [ ] Paste HTML as Markdown (setting, on); paste as plain text
 - [ ] Drag files in to link or embed them
-- [ ] Multiple cursors (Alt+click, add cursor above/below)
+- [x] Multiple cursors (Alt+click, add cursor above/below)
 - [x] Find and replace bar inside the note (match case, regex, whole word)
-- [ ] Table editing in Live Preview: cell editing, add/move/delete rows and columns, alignment, row and column handles
+- [x] Table editing in Live Preview: cell editing, add/move/delete rows and columns, alignment, row and column handles
 - [ ] Properties form: add, rename, retype, reorder, delete properties; value editors per type; list pills; tag pills; date picker; links inside values
-- [ ] Highlight colors (red, orange, yellow, green, blue, purple) for highlights
+- [x] Highlight colors (red, orange, yellow, green, blue, purple) for highlights
 - [x] Vim key bindings (setting) [later]
 
 ### Reading view
-- [ ] Sections rendered lazily near the viewport (fast on long notes)
-- [ ] Clickable links, tags, checkboxes; hover preview; copy button on code blocks; foldable headings and callouts
+- [x] Sections rendered lazily near the viewport (fast on long notes)
+- [x] Clickable links, tags, checkboxes; hover preview; copy button on code blocks; foldable headings and callouts
 - [x] Post-processor hooks for plugins (`registerMarkdownPostProcessor`, code block processors)
 - [ ] Backlinks at the bottom of notes (option, off)
 - [ ] Note classes from the `cssclasses` property
@@ -226,7 +226,7 @@ Legend: **[later]** = not needed for the first release. **[ours]** = Bedrock doe
 - [x] Random note [later]
 - [ ] Word count in the status bar (words and characters, selection-aware)
 - [x] File recovery: snapshots at most every 5 minutes, kept 7 days, outside the vault; snapshot browser with diff, restore, copy; clear history
-- [ ] Export note to PDF (page size, orientation, margins, scale)
+- [x] Export note to PDF (page size, orientation, margins, scale)
 - [ ] Slides (present a note split by `---`) [later]
 - [ ] Audio recorder (record into the vault) [later]
 - [x] Bases (`.base` table and card views over properties, with sort, group, filter, formulas) [later]
@@ -568,91 +568,91 @@ Every command id below must exist with the same id so `hotkeys.json`, plugins an
 
 #### `editor` (85)
 
-- [ ] `editor:add-cursor-above` Add cursor above [editor]
-- [ ] `editor:add-cursor-below` Add cursor below [editor]
-- [ ] `editor:attach-file` Insert attachment [editor]
-- [ ] `editor:clear-formatting` Clear formatting [editor]
-- [ ] `editor:context-menu` Show context menu under cursor [editor]
-- [ ] `editor:cycle-list-checklist` Cycle bullet/checkbox [editor]
-- [ ] `editor:delete-paragraph` Delete paragraph (Ctrl + D) [editor]
-- [ ] `editor:download-attachments` Download attachments for current file
-- [ ] `editor:focus` Focus on last note
-- [ ] `editor:focus-bottom` Focus on tab group below
-- [ ] `editor:focus-left` Focus on tab group to the left
-- [ ] `editor:focus-right` Focus on tab group to the right
-- [ ] `editor:focus-top` Focus on tab group above
-- [ ] `editor:fold-all` Fold all headings and lists [editor]
-- [ ] `editor:fold-less` Fold less [editor]
-- [ ] `editor:fold-more` Fold more [editor]
-- [ ] `editor:follow-link` Follow link under cursor (Alt + Enter)
-- [ ] `editor:indent-list` Indent list item [editor]
-- [ ] `editor:insert-callout` Insert callout [editor]
-- [ ] `editor:insert-codeblock` Insert code block [editor]
-- [ ] `editor:insert-embed` Add embed [editor]
-- [ ] `editor:insert-footnote` Insert footnote [editor]
-- [ ] `editor:insert-horizontal-rule` Insert horizontal rule [editor]
-- [ ] `editor:insert-link` Insert Markdown link (Ctrl + K) [editor]
-- [ ] `editor:insert-mathblock` Insert math block [editor]
-- [ ] `editor:insert-table` Insert table [editor]
-- [ ] `editor:insert-tag` Add tag [editor]
-- [ ] `editor:insert-wikilink` Add internal link [editor]
-- [ ] `editor:open-link-in-new-leaf` Open link under cursor in new tab (Ctrl + Enter)
-- [ ] `editor:open-link-in-new-split` Open link under cursor to the right (Ctrl + Alt + Enter)
-- [ ] `editor:open-link-in-new-window` Open link under cursor in new window (Ctrl + Alt + Shift + Enter)
-- [ ] `editor:open-search` Search current file (Ctrl + F)
-- [ ] `editor:open-search-replace` Search & replace in current file (Ctrl + H)
-- [ ] `editor:rename-heading` Rename this heading... [editor]
-- [ ] `editor:save-file` Save current file (Ctrl + S)
-- [ ] `editor:set-heading` Toggle heading [editor]
-- [ ] `editor:set-heading-0` Remove heading [editor]
-- [ ] `editor:set-heading-1` Set as heading 1 [editor]
-- [ ] `editor:set-heading-2` Set as heading 2 [editor]
-- [ ] `editor:set-heading-3` Set as heading 3 [editor]
-- [ ] `editor:set-heading-4` Set as heading 4 [editor]
-- [ ] `editor:set-heading-5` Set as heading 5 [editor]
-- [ ] `editor:set-heading-6` Set as heading 6 [editor]
-- [ ] `editor:swap-line-down` Move line down [editor]
-- [ ] `editor:swap-line-up` Move line up [editor]
-- [ ] `editor:table-col-after` Table: Add column to the right [editor]
-- [ ] `editor:table-col-align-center` Table: Align center [editor]
-- [ ] `editor:table-col-align-left` Table: Align left [editor]
-- [ ] `editor:table-col-align-right` Table: Align right [editor]
-- [ ] `editor:table-col-before` Table: Add column to the left [editor]
-- [ ] `editor:table-col-copy` Table: Duplicate column [editor]
-- [ ] `editor:table-col-delete` Table: Delete column [editor]
-- [ ] `editor:table-col-left` Table: Move column left [editor]
-- [ ] `editor:table-col-right` Table: Move column right [editor]
-- [ ] `editor:table-row-after` Table: Add row below [editor]
-- [ ] `editor:table-row-before` Table: Add row above [editor]
-- [ ] `editor:table-row-copy` Table: Duplicate row [editor]
-- [ ] `editor:table-row-delete` Table: Delete row [editor]
-- [ ] `editor:table-row-down` Table: Move row down [editor]
-- [ ] `editor:table-row-up` Table: Move row up [editor]
-- [ ] `editor:toggle-blockquote` Toggle blockquote [editor]
-- [ ] `editor:toggle-bold` Toggle bold (Ctrl + B) [editor]
-- [ ] `editor:toggle-bullet-list` Toggle bullet list [editor]
-- [ ] `editor:toggle-checklist-status` Toggle checkbox status (Ctrl + L) [editor]
-- [ ] `editor:toggle-code` Toggle code [editor]
-- [ ] `editor:toggle-comments` Toggle comment (Ctrl + /) [editor]
-- [ ] `editor:toggle-fold` Toggle fold on the current line [editor]
-- [ ] `editor:toggle-fold-properties` Toggle fold properties in current file
-- [ ] `editor:toggle-highlight` Toggle highlight [editor]
-- [ ] `editor:toggle-highlight-blue` Toggle blue highlight [editor]
-- [ ] `editor:toggle-highlight-green` Toggle green highlight [editor]
-- [ ] `editor:toggle-highlight-orange` Toggle orange highlight [editor]
-- [ ] `editor:toggle-highlight-purple` Toggle purple highlight [editor]
-- [ ] `editor:toggle-highlight-red` Toggle red highlight [editor]
-- [ ] `editor:toggle-highlight-yellow` Toggle yellow highlight [editor]
-- [ ] `editor:toggle-inline-math` Toggle inline math [editor]
-- [ ] `editor:toggle-italics` Toggle italic (Ctrl + I) [editor]
-- [ ] `editor:toggle-line-numbers` Toggle line numbers
-- [ ] `editor:toggle-numbered-list` Toggle numbered list [editor]
-- [ ] `editor:toggle-readable-line-length` Toggle readable line length
-- [ ] `editor:toggle-source` Toggle Live Preview/Source mode
-- [ ] `editor:toggle-spellcheck` Toggle spellcheck
-- [ ] `editor:toggle-strikethrough` Toggle strikethrough [editor]
-- [ ] `editor:unfold-all` Unfold all headings and lists [editor]
-- [ ] `editor:unindent-list` Unindent list item [editor]
+- [x] `editor:add-cursor-above` Add cursor above [editor]
+- [x] `editor:add-cursor-below` Add cursor below [editor]
+- [x] `editor:attach-file` Insert attachment [editor]
+- [x] `editor:clear-formatting` Clear formatting [editor]
+- [x] `editor:context-menu` Show context menu under cursor [editor]
+- [x] `editor:cycle-list-checklist` Cycle bullet/checkbox [editor]
+- [x] `editor:delete-paragraph` Delete paragraph (Ctrl + D) [editor]
+- [x] `editor:download-attachments` Download attachments for current file
+- [x] `editor:focus` Focus on last note
+- [x] `editor:focus-bottom` Focus on tab group below
+- [x] `editor:focus-left` Focus on tab group to the left
+- [x] `editor:focus-right` Focus on tab group to the right
+- [x] `editor:focus-top` Focus on tab group above
+- [x] `editor:fold-all` Fold all headings and lists [editor]
+- [x] `editor:fold-less` Fold less [editor]
+- [x] `editor:fold-more` Fold more [editor]
+- [x] `editor:follow-link` Follow link under cursor (Alt + Enter)
+- [x] `editor:indent-list` Indent list item [editor]
+- [x] `editor:insert-callout` Insert callout [editor]
+- [x] `editor:insert-codeblock` Insert code block [editor]
+- [x] `editor:insert-embed` Add embed [editor]
+- [x] `editor:insert-footnote` Insert footnote [editor]
+- [x] `editor:insert-horizontal-rule` Insert horizontal rule [editor]
+- [x] `editor:insert-link` Insert Markdown link (Ctrl + K) [editor]
+- [x] `editor:insert-mathblock` Insert math block [editor]
+- [x] `editor:insert-table` Insert table [editor]
+- [x] `editor:insert-tag` Add tag [editor]
+- [x] `editor:insert-wikilink` Add internal link [editor]
+- [x] `editor:open-link-in-new-leaf` Open link under cursor in new tab (Ctrl + Enter)
+- [x] `editor:open-link-in-new-split` Open link under cursor to the right (Ctrl + Alt + Enter)
+- [x] `editor:open-link-in-new-window` Open link under cursor in new window (Ctrl + Alt + Shift + Enter)
+- [x] `editor:open-search` Search current file (Ctrl + F)
+- [x] `editor:open-search-replace` Search & replace in current file (Ctrl + H)
+- [x] `editor:rename-heading` Rename this heading... [editor]
+- [x] `editor:save-file` Save current file (Ctrl + S)
+- [x] `editor:set-heading` Toggle heading [editor]
+- [x] `editor:set-heading-0` Remove heading [editor]
+- [x] `editor:set-heading-1` Set as heading 1 [editor]
+- [x] `editor:set-heading-2` Set as heading 2 [editor]
+- [x] `editor:set-heading-3` Set as heading 3 [editor]
+- [x] `editor:set-heading-4` Set as heading 4 [editor]
+- [x] `editor:set-heading-5` Set as heading 5 [editor]
+- [x] `editor:set-heading-6` Set as heading 6 [editor]
+- [x] `editor:swap-line-down` Move line down [editor]
+- [x] `editor:swap-line-up` Move line up [editor]
+- [x] `editor:table-col-after` Table: Add column to the right [editor]
+- [x] `editor:table-col-align-center` Table: Align center [editor]
+- [x] `editor:table-col-align-left` Table: Align left [editor]
+- [x] `editor:table-col-align-right` Table: Align right [editor]
+- [x] `editor:table-col-before` Table: Add column to the left [editor]
+- [x] `editor:table-col-copy` Table: Duplicate column [editor]
+- [x] `editor:table-col-delete` Table: Delete column [editor]
+- [x] `editor:table-col-left` Table: Move column left [editor]
+- [x] `editor:table-col-right` Table: Move column right [editor]
+- [x] `editor:table-row-after` Table: Add row below [editor]
+- [x] `editor:table-row-before` Table: Add row above [editor]
+- [x] `editor:table-row-copy` Table: Duplicate row [editor]
+- [x] `editor:table-row-delete` Table: Delete row [editor]
+- [x] `editor:table-row-down` Table: Move row down [editor]
+- [x] `editor:table-row-up` Table: Move row up [editor]
+- [x] `editor:toggle-blockquote` Toggle blockquote [editor]
+- [x] `editor:toggle-bold` Toggle bold (Ctrl + B) [editor]
+- [x] `editor:toggle-bullet-list` Toggle bullet list [editor]
+- [x] `editor:toggle-checklist-status` Toggle checkbox status (Ctrl + L) [editor]
+- [x] `editor:toggle-code` Toggle code [editor]
+- [x] `editor:toggle-comments` Toggle comment (Ctrl + /) [editor]
+- [x] `editor:toggle-fold` Toggle fold on the current line [editor]
+- [x] `editor:toggle-fold-properties` Toggle fold properties in current file
+- [x] `editor:toggle-highlight` Toggle highlight [editor]
+- [x] `editor:toggle-highlight-blue` Toggle blue highlight [editor]
+- [x] `editor:toggle-highlight-green` Toggle green highlight [editor]
+- [x] `editor:toggle-highlight-orange` Toggle orange highlight [editor]
+- [x] `editor:toggle-highlight-purple` Toggle purple highlight [editor]
+- [x] `editor:toggle-highlight-red` Toggle red highlight [editor]
+- [x] `editor:toggle-highlight-yellow` Toggle yellow highlight [editor]
+- [x] `editor:toggle-inline-math` Toggle inline math [editor]
+- [x] `editor:toggle-italics` Toggle italic (Ctrl + I) [editor]
+- [x] `editor:toggle-line-numbers` Toggle line numbers
+- [x] `editor:toggle-numbered-list` Toggle numbered list [editor]
+- [x] `editor:toggle-readable-line-length` Toggle readable line length
+- [x] `editor:toggle-source` Toggle Live Preview/Source mode
+- [x] `editor:toggle-spellcheck` Toggle spellcheck
+- [x] `editor:toggle-strikethrough` Toggle strikethrough [editor]
+- [x] `editor:unfold-all` Unfold all headings and lists [editor]
+- [x] `editor:unindent-list` Unindent list item [editor]
 
 #### `file-explorer` (8)
 
@@ -795,12 +795,12 @@ Every command id below must exist with the same id so `hotkeys.json`, plugins an
 - [ ] `workspace:close-others` Close all other tabs
 - [ ] `workspace:close-others-tab-group` Close others in tab group
 - [ ] `workspace:close-tab-group` Close this tab group
-- [ ] `workspace:close-window` Close window (Ctrl + Shift + W)
+- [x] `workspace:close-window` Close window (Ctrl + Shift + W)
 - [ ] `workspace:copy-full-path` Copy current file path from system root
 - [ ] `workspace:copy-path` Copy current file path from vault folder
 - [ ] `workspace:copy-url` Copy Obsidian URL for current file
 - [ ] `workspace:edit-file-title` Rename file (F2)
-- [ ] `workspace:export-pdf` Export to PDF...
+- [x] `workspace:export-pdf` Export to PDF...
 - [ ] `workspace:goto-last-tab` Go to last tab (Ctrl + 9)
 - [ ] `workspace:goto-tab-1` Go to tab #1 (Ctrl + 1)
 - [ ] `workspace:goto-tab-2` Go to tab #2 (Ctrl + 2)
@@ -810,11 +810,11 @@ Every command id below must exist with the same id so `hotkeys.json`, plugins an
 - [ ] `workspace:goto-tab-6` Go to tab #6 (Ctrl + 6)
 - [ ] `workspace:goto-tab-7` Go to tab #7 (Ctrl + 7)
 - [ ] `workspace:goto-tab-8` Go to tab #8 (Ctrl + 8)
-- [ ] `workspace:move-to-new-window` Move current tab to new window
+- [x] `workspace:move-to-new-window` Move current tab to new window
 - [ ] `workspace:new-tab` New tab (Ctrl + T)
-- [ ] `workspace:new-window` New window
+- [x] `workspace:new-window` New window
 - [ ] `workspace:next-tab` Go to next tab (Ctrl + Tab, Ctrl + PageDown)
-- [ ] `workspace:open-in-new-window` Open current tab in new window
+- [x] `workspace:open-in-new-window` Open current tab in new window
 - [ ] `workspace:previous-tab` Go to previous tab (Ctrl + Shift + Tab, Ctrl + PageUp)
 - [ ] `workspace:show-trash` Show trash
 - [ ] `workspace:split-horizontal` Split down
@@ -843,19 +843,19 @@ Every command id below must exist with the same id so `hotkeys.json`, plugins an
 - [ ] F1 / F1: `app:open-help`
 - [ ] Ctrl + , / Cmd + ,: `app:open-settings`
 - [ ] Ctrl + P / Cmd + P: `command-palette:open`
-- [ ] Ctrl + D / Cmd + D: `editor:delete-paragraph`
-- [ ] Alt + Enter / Option + Enter: `editor:follow-link`
-- [ ] Ctrl + K / Cmd + K: `editor:insert-link`
-- [ ] Ctrl + Enter / Cmd + Enter: `editor:open-link-in-new-leaf`
-- [ ] Ctrl + Alt + Enter / Cmd + Option + Enter: `editor:open-link-in-new-split`
-- [ ] Ctrl + Alt + Shift + Enter / Cmd + Option + Shift + Enter: `editor:open-link-in-new-window`
-- [ ] Ctrl + F / Cmd + F: `editor:open-search`
-- [ ] Ctrl + H / Cmd + H: `editor:open-search-replace`
-- [ ] Ctrl + S / Cmd + S: `editor:save-file`
-- [ ] Ctrl + B / Cmd + B: `editor:toggle-bold`
-- [ ] Ctrl + L / Cmd + L: `editor:toggle-checklist-status`
-- [ ] Ctrl + / / Cmd + /: `editor:toggle-comments`
-- [ ] Ctrl + I / Cmd + I: `editor:toggle-italics`
+- [x] Ctrl + D / Cmd + D: `editor:delete-paragraph`
+- [x] Alt + Enter / Option + Enter: `editor:follow-link`
+- [x] Ctrl + K / Cmd + K: `editor:insert-link`
+- [x] Ctrl + Enter / Cmd + Enter: `editor:open-link-in-new-leaf`
+- [x] Ctrl + Alt + Enter / Cmd + Option + Enter: `editor:open-link-in-new-split`
+- [x] Ctrl + Alt + Shift + Enter / Cmd + Option + Shift + Enter: `editor:open-link-in-new-window`
+- [x] Ctrl + F / Cmd + F: `editor:open-search`
+- [x] Ctrl + H / Cmd + H: `editor:open-search-replace`
+- [x] Ctrl + S / Cmd + S: `editor:save-file`
+- [x] Ctrl + B / Cmd + B: `editor:toggle-bold`
+- [x] Ctrl + L / Cmd + L: `editor:toggle-checklist-status`
+- [x] Ctrl + / / Cmd + /: `editor:toggle-comments`
+- [x] Ctrl + I / Cmd + I: `editor:toggle-italics`
 - [ ] Ctrl + N / Cmd + N: `file-explorer:new-file`
 - [ ] Ctrl + Shift + N / Cmd + Shift + N: `file-explorer:new-file-in-new-pane`
 - [ ] Ctrl + Shift + F / Cmd + Shift + F: `global-search:open`
@@ -864,7 +864,7 @@ Every command id below must exist with the same id so `hotkeys.json`, plugins an
 - [ ] Ctrl + E / Cmd + E: `markdown:toggle-preview`
 - [ ] Ctrl + O / Cmd + O: `switcher:open`
 - [ ] Ctrl + W / Cmd + W: `workspace:close`
-- [ ] Ctrl + Shift + W / Cmd + Shift + W: `workspace:close-window`
+- [x] Ctrl + Shift + W / Cmd + Shift + W: `workspace:close-window`
 - [ ] F2 / F2: `workspace:edit-file-title`
 - [ ] Ctrl + 9 / Cmd + 9: `workspace:goto-last-tab`
 - [ ] Ctrl + 1 / Cmd + 1: `workspace:goto-tab-1`

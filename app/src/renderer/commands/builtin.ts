@@ -9,6 +9,7 @@ import { foldAll, unfoldAll, toggleFold } from "@codemirror/language";
 import { openSearchPanel } from "@codemirror/search";
 import { Notice } from "../ui/notice";
 import { EditorSelection } from "@codemirror/state";
+import { registerEditorCommands } from "../editor/commands";
 
 const hk = (mods: Hotkey["modifiers"], key: string): Hotkey[] => [{ modifiers: mods, key }];
 
@@ -378,4 +379,6 @@ export function registerBuiltinCommands(app: App): void {
     app.vault.setConfig("readableLineLength", !app.vault.getConfig("readableLineLength"));
     app.workspace.updateOptions();
   });
+  // The full editor command set (replaces the basic versions above, same ids).
+  registerEditorCommands(app);
 }

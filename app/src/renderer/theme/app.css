@@ -1,6 +1,7 @@
 /* Bedrock default theme. Written from scratch on the public CSS variable and class names that
    Obsidian themes and snippets target, so community themes apply on top of it. */
 @import "./settings.css";
+@import "../editor/editor.css";
 
 /* ---------------------------------------------------------------- tokens */
 body {

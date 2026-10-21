@@ -40,8 +40,8 @@ const electronPath = (await import("electron")).default;
 const app = await electron.launch({ executablePath: electronPath, args: [appDir, "--vault", vault], env: { ...process.env, BEDROCK_USER_DATA: userData, BEDROCK_NO_UPDATE: "1" } });
 const errors = [];
 const win = await app.firstWindow();
-win.on("console", (m) => m.type() === "error" && errors.push(m.text()));
-win.on("pageerror", (e) => errors.push(String(e)));
+win.on("console", (m) => m.type() === "error" && errors.push(m.text() + (process.env.STACK ? " @ " + JSON.stringify(m.location()) : "")));
+win.on("pageerror", (e) => errors.push(String(e) + (process.env.STACK ? " @ " + e.stack : "")));
 await app.evaluate(({ BrowserWindow }) => {
   const w = BrowserWindow.getAllWindows()[0];
   w.unmaximize();
