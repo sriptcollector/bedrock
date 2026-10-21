@@ -39,11 +39,11 @@ export class Vault extends Events {
   static DEFAULT_CONFIG: Record<string, any> = {
     promptDelete: true,
     trashOption: "system", // "system" | "local" | "none"
-    alwaysUpdateLinks: true,
+    alwaysUpdateLinks: false, // Obsidian default: off, so it asks before updating links
     newLinkFormat: "shortest",
     useMarkdownLinks: false,
     newFileLocation: "root", // "root" | "current" | "folder"
-    newFileFolderPath: "",
+    newFileFolderPath: "/",
     attachmentFolderPath: "/",
     showLineNumber: false,
     readableLineLength: true,

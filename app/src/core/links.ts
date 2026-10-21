@@ -29,8 +29,8 @@ export function stripHeadingForLink(h: string): string {
  * Index for resolving link paths. Files are looked up by lowercase name (with and without the
  * extension). Resolution order (matches Obsidian's observable behaviour):
  *  1. "./x" or "../x": relative to the source note's folder.
- *  2. an exact vault path (with ".md" added when the link has no extension);
- *  3. the same path relative to the source note's folder;
+ *  2. the path relative to the source note's folder (with ".md" added when it has no extension);
+ *  3. an exact vault path;
  *  4. any file whose name matches and whose path ends with the link path; when several match,
  *     prefer one in the source note's folder, then the shortest path, then alphabetical.
  * Links are case-insensitive.
@@ -94,12 +94,12 @@ export class LinkIndex {
       return this.exact(resolveRelative(folder, lp));
     }
     if (lp.startsWith("/")) lp = lp.replace(/^\/+/, "");
-    const direct = this.exact(lp);
-    if (direct) return direct;
     if (folder) {
       const rel = this.exact(folder + "/" + lp);
       if (rel) return rel;
     }
+    const direct = this.exact(lp);
+    if (direct) return direct;
     const name = basename(lp).toLowerCase();
     const cands = this.byName.get(name);
     if (!cands || !cands.length) return null;
@@ -143,9 +143,9 @@ export class LinkIndex {
     }
     const name = basename(target);
     const key = strip(name);
-    // Unique by name (and the name resolves back to this file) -> just the name.
-    if (this.resolve(key, sourcePath) === target && this.sameName(target).length <= 1) return key;
-    if (this.resolve(key, sourcePath) === target && dirname(target) === dirname(sourcePath)) return key;
+    // Verified against Obsidian 1.14.4: the bare name only when no other file shares it
+    // (even a same-folder target gets its full path when the name is ambiguous).
+    if (this.sameName(target).length <= 1) return key;
     return strip(target);
   }
 }

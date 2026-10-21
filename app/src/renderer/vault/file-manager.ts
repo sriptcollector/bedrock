@@ -110,7 +110,8 @@ export class FileManager {
   async renameFile(file: TAbstractFile, newPath: string): Promise<void> {
     newPath = normalizePath(newPath);
     const mc = this.app.metadataCache;
-    const update = this.vault.getConfig("alwaysUpdateLinks") !== false;
+    // "Automatically update internal links" off (the default) means: ask each time.
+    let update = true;
     const moved: TFile[] = [];
     if (file instanceof TFile) moved.push(file);
     else if (file instanceof TFolder) Vault.recurseChildren(file, (f) => f instanceof TFile && moved.push(f));
@@ -130,6 +131,15 @@ export class FileManager {
           if (target && (movedOld.has(target) || movedOld.has(src))) hits.push({ source: src, ref, target });
         }
       }
+    }
+    if (hits.length && !this.vault.getConfig("alwaysUpdateLinks")) {
+      const notes = new Set(hits.map((h) => h.source)).size;
+      update = await this.app.ui.confirm({
+        title: "Update links",
+        body: `Update ${hits.length} link${hits.length === 1 ? "" : "s"} in ${notes} note${notes === 1 ? "" : "s"}?`,
+        cta: "Update",
+        dontAskAgain: () => this.vault.setConfig("alwaysUpdateLinks", true),
+      });
     }
     const oldPrefix = file.path;
     await this.vault.rename(file, newPath);

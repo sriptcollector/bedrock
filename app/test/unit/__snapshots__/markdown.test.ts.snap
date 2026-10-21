@@ -1,0 +1,194 @@
+// Vitest Snapshot v1, https://vitest.dev/guide/snapshot.html
+
+exports[`markdown renderer > autolink 1`] = `
+"<p data-line="0">Visit <a href="https://example.com" class="external-link" target="_blank" rel="noopener nofollow">https://example.com</a> today</p>
+"
+`;
+
+exports[`markdown renderer > block id hidden 1`] = `
+"<p data-line="0">A paragraph</p>
+"
+`;
+
+exports[`markdown renderer > block math 1`] = `
+"<div class="math math-block is-loaded" data-line="0"><span class="katex-display"><span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML" display="block"><semantics><mrow><mfrac><mi>a</mi><mi>b</mi></mfrac></mrow><annotation encoding="application/x-tex">
+\\frac{a}{b}
+</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="katex-base"><span class="katex-strut" style="height:1.7936em;vertical-align:-0.686em;"></span><span class="mord"><span class="mopen nulldelimiter"></span><span class="mfrac"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:1.1076em;"><span style="top:-2.314em;"><span class="pstrut" style="height:3em;"></span><span class="mord"><span class="mord mathnormal">b</span></span></span><span style="top:-3.23em;"><span class="pstrut" style="height:3em;"></span><span class="frac-line" style="border-bottom-width:0.04em;"></span></span><span style="top:-3.677em;"><span class="pstrut" style="height:3em;"></span><span class="mord"><span class="mord mathnormal">a</span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.686em;"><span></span></span></span></span></span><span class="mclose nulldelimiter"></span></span></span></span></span></span></div>
+"
+`;
+
+exports[`markdown renderer > callout 1`] = `
+"<div data-callout-metadata="" data-callout-fold="" data-callout="note" data-line="0" class="callout"><div class="callout-title" dir="auto"><div class="callout-icon"></div><div class="callout-title-inner">Note</div></div><div class="callout-content"><p data-line="0">Body text</p>
+</div></div>
+"
+`;
+
+exports[`markdown renderer > callout metadata 1`] = `
+"<div data-callout-metadata="wide" data-callout-fold="" data-callout="info" data-line="0" class="callout"><div class="callout-title" dir="auto"><div class="callout-icon"></div><div class="callout-title-inner">Title</div></div><div class="callout-content"><p data-line="0">x</p>
+</div></div>
+"
+`;
+
+exports[`markdown renderer > callout open fold 1`] = `
+"<div data-callout-metadata="" data-callout-fold="+" data-callout="tip" data-line="0" class="callout is-collapsible"><div class="callout-title" dir="auto"><div class="callout-icon"></div><div class="callout-title-inner">Open</div><div class="callout-fold"></div></div><div class="callout-content"><p data-line="0">Content</p>
+</div></div>
+"
+`;
+
+exports[`markdown renderer > callout with title and fold 1`] = `
+"<div data-callout-metadata="" data-callout-fold="-" data-callout="warning" data-line="0" class="callout is-collapsible is-collapsed"><div class="callout-title" dir="auto"><div class="callout-icon"></div><div class="callout-title-inner">Be careful</div><div class="callout-fold is-collapsed"></div></div><div class="callout-content" style="display: none;"><p data-line="0">Hidden <strong>body</strong></p>
+</div></div>
+"
+`;
+
+exports[`markdown renderer > code fence 1`] = `
+"<pre class="language-js" data-line="0"><code data-line="0" class="language-js">const a = 1;
+</code></pre>
+"
+`;
+
+exports[`markdown renderer > comments 1`] = `
+"<p data-line="0">visible  visible</p>
+<p data-line="6">after</p>
+"
+`;
+
+exports[`markdown renderer > embeds 1`] = `
+"<p data-line="0"><span alt="Note" src="Note" class="internal-embed" tabindex="-1"></span> <span alt="300" src="image.png" class="internal-embed" tabindex="-1"></span> <span alt="Note#Heading" src="Note#Heading" class="internal-embed" tabindex="-1"></span> <span alt="Note#^block" src="Note#^block" class="internal-embed" tabindex="-1"></span> <span alt="clip.mp3" src="clip.mp3" class="internal-embed" tabindex="-1"></span> <span alt="doc.pdf#page=2" src="doc.pdf#page=2" class="internal-embed" tabindex="-1"></span></p>
+"
+`;
+
+exports[`markdown renderer > emphasis 1`] = `
+"<p data-line="0"><strong>bold</strong> <em>italic</em> <em>also</em> <em><strong>both</strong></em> <s>strike</s> <mark>highlight</mark> <code>code</code></p>
+"
+`;
+
+exports[`markdown renderer > footnotes 1`] = `
+"<p data-line="0">Text<sup class="footnote-ref"><a href="#fn1" id="fnref1">[1]</a></sup> and inline<sup class="footnote-ref"><a href="#fn2" id="fnref2">[2]</a></sup>.</p>
+<hr class="footnotes-sep">
+<section class="footnotes">
+<ol class="footnotes-list">
+<li id="fn1" class="footnote-item"><p data-line="2">The note. <a href="#fnref1" class="footnote-backref">↩︎</a></p>
+</li>
+<li id="fn2" class="footnote-item"><p>inline note <a href="#fnref2" class="footnote-backref">↩︎</a></p>
+</li>
+</ol>
+</section>
+"
+`;
+
+exports[`markdown renderer > headings 1`] = `
+"<h1 data-heading="H1" dir="auto" data-line="0">H1</h1>
+<h2 data-heading="H2" dir="auto" data-line="1">H2</h2>
+<h6 data-heading="H6" dir="auto" data-line="2">H6</h6>
+<h2 data-heading="Setext" dir="auto" data-line="4">Setext</h2>
+"
+`;
+
+exports[`markdown renderer > highlight with inner markup 1`] = `
+"<p data-line="0"><mark><strong>bold</strong> inside</mark></p>
+"
+`;
+
+exports[`markdown renderer > horizontal rule 1`] = `
+"<p data-line="0">a</p>
+<hr data-line="2">
+<p data-line="4">b</p>
+"
+`;
+
+exports[`markdown renderer > html 1`] = `"<div class="x">raw <b>html</b></div>"`;
+
+exports[`markdown renderer > inline math 1`] = `
+"<p data-line="0">Euler: <span class="math math-inline is-loaded"><span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><msup><mi>e</mi><mrow><mi>i</mi><mi>π</mi></mrow></msup><mo>+</mo><mn>1</mn><mo>=</mo><mn>0</mn></mrow><annotation encoding="application/x-tex">e^{i\\pi}+1=0</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="katex-base"><span class="katex-strut" style="height:0.908em;vertical-align:-0.0833em;"></span><span class="mord"><span class="mord mathnormal">e</span><span class="msupsub"><span class="vlist-t"><span class="vlist-r"><span class="vlist" style="height:0.8247em;"><span style="top:-3.063em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="katex-sizing reset-size6 size3 mtight"><span class="mord mtight"><span class="mord mathnormal mtight" style="margin-right:0.0359em;">iπ</span></span></span></span></span></span></span></span></span><span class="mspace" style="margin-right:0.2222em;"></span><span class="mbin">+</span><span class="mspace" style="margin-right:0.2222em;"></span></span><span class="katex-base"><span class="katex-strut" style="height:0.6444em;"></span><span class="mord">1</span><span class="mspace" style="margin-right:0.2778em;"></span><span class="mrel">=</span><span class="mspace" style="margin-right:0.2778em;"></span></span><span class="katex-base"><span class="katex-strut" style="height:0.6444em;"></span><span class="mord">0</span></span></span></span></span> and not $ 5 or <span class="math math-inline is-loaded"><span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mn>5</mn></mrow><annotation encoding="application/x-tex">5</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="katex-base"><span class="katex-strut" style="height:0.6444em;"></span><span class="mord">5</span></span></span></span></span></p>
+"
+`;
+
+exports[`markdown renderer > line breaks 1`] = `
+"<p data-line="0">line one<br>
+line two</p>
+"
+`;
+
+exports[`markdown renderer > markdown links and images 1`] = `
+"<p data-line="0"><a href="https://example.com" class="external-link" target="_blank" rel="noopener nofollow">ext</a> <a href="Other%20Note.md" data-href="Other Note.md" class="internal-link" target="_blank" rel="noopener nofollow">local</a> <span class="internal-embed" src="pic.png" alt="alt|200x100" data-md-image="1"></span> <img src="https://x.com/a.png" alt="web" referrerpolicy="no-referrer"></p>
+"
+`;
+
+exports[`markdown renderer > mermaid 1`] = `
+"<div class="mermaid-pending" data-line="0" data-source="graph TD; A--&gt;B
+"></div>
+"
+`;
+
+exports[`markdown renderer > nested callout 1`] = `
+"<div data-callout-metadata="" data-callout-fold="" data-callout="question" data-line="0" class="callout"><div class="callout-title" dir="auto"><div class="callout-icon"></div><div class="callout-title-inner">Outer</div></div><div class="callout-content"><div data-callout-metadata="" data-callout-fold="" data-callout="example" data-line="1" class="callout"><div class="callout-title" dir="auto"><div class="callout-icon"></div><div class="callout-title-inner">Inner</div></div><div class="callout-content"><p data-line="1">text</p>
+</div></div>
+</div></div>
+"
+`;
+
+exports[`markdown renderer > ordered and nested lists 1`] = `
+"<ol data-line="0">
+<li data-line="0">one</li>
+<li data-line="1">two
+<ul data-line="2">
+<li data-line="2">sub
+<ul data-line="3">
+<li data-line="3">subsub</li>
+</ul>
+</li>
+</ul>
+</li>
+</ol>
+"
+`;
+
+exports[`markdown renderer > plain blockquote 1`] = `
+"<blockquote data-line="0">
+<p data-line="0">just a quote<br>
+second line</p>
+</blockquote>
+"
+`;
+
+exports[`markdown renderer > table 1`] = `
+"<table data-line="0">
+<thead data-line="0">
+<tr data-line="0">
+<th style="text-align:left">A</th>
+<th style="text-align:right">B</th>
+</tr>
+</thead>
+<tbody data-line="2">
+<tr data-line="2">
+<td style="text-align:left"><a data-href="x" href="x" class="internal-link" target="_blank" rel="noopener nofollow">y</a></td>
+<td style="text-align:right">2</td>
+</tr>
+</tbody>
+</table>
+"
+`;
+
+exports[`markdown renderer > tags 1`] = `
+"<p data-line="0"><a href="#tag" class="tag" target="_blank" rel="noopener nofollow">#tag</a> <a href="#nested/tag" class="tag" target="_blank" rel="noopener nofollow">#nested/tag</a> <a href="#with-dash" class="tag" target="_blank" rel="noopener nofollow">#with-dash</a> not#tag #123 (<a href="#paren" class="tag" target="_blank" rel="noopener nofollow">#paren</a>)</p>
+"
+`;
+
+exports[`markdown renderer > task list 1`] = `
+"<ul class="contains-task-list contains-task-list contains-task-list" data-line="0">
+<li class="task-list-item" data-task=" " data-line="0"><input data-line="0" type="checkbox" class="task-list-item-checkbox">open</li>
+<li class="task-list-item is-checked" data-task="x" data-line="1"><input data-line="1" type="checkbox" class="task-list-item-checkbox" checked>done</li>
+<li class="task-list-item is-checked" data-task="?" data-line="2"><input data-line="2" type="checkbox" class="task-list-item-checkbox" checked>custom
+<ul class="contains-task-list" data-line="3">
+<li class="task-list-item" data-task=" " data-line="3"><input data-line="3" type="checkbox" class="task-list-item-checkbox">nested</li>
+</ul>
+</li>
+</ul>
+"
+`;
+
+exports[`markdown renderer > wikilinks 1`] = `
+"<p data-line="0"><a data-href="Note" href="Note" class="internal-link" target="_blank" rel="noopener nofollow">Note</a> <a data-href="Note" href="Note" class="internal-link" target="_blank" rel="noopener nofollow">Alias</a> <a data-href="Note#Heading" href="Note#Heading" class="internal-link" target="_blank" rel="noopener nofollow">Note &gt; Heading</a> <a data-href="Note#^block" href="Note#^block" class="internal-link" target="_blank" rel="noopener nofollow">Note &gt; ^block</a> <a data-href="#Local heading" href="#Local heading" class="internal-link" target="_blank" rel="noopener nofollow">Local heading</a></p>
+"
+`;

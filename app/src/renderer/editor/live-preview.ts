@@ -37,8 +37,9 @@ class CheckboxWidget extends WidgetType {
     return o.checked === this.checked && o.pos === this.pos;
   }
   toDOM(view: EditorView) {
-    const wrap = createSpan("task-list-item-checkbox-wrap");
+    const wrap = createEl("label", { cls: "task-list-label", attr: { contenteditable: "false" } });
     const cb = wrap.createEl("input", { type: "checkbox", cls: "task-list-item-checkbox" });
+    cb.setAttr("data-task", this.checked ? "x" : " ");
     cb.checked = this.checked;
     cb.addEventListener("mousedown", (e) => e.preventDefault());
     cb.addEventListener("click", (e) => {
@@ -58,7 +59,7 @@ class BulletWidget extends WidgetType {
     return true;
   }
   toDOM() {
-    return createSpan({ cls: "list-bullet", text: "•" });
+    return createSpan({ cls: "list-bullet", text: "-" });
   }
 }
 
@@ -204,24 +205,16 @@ class CodeFlairWidget extends WidgetType {
   }
 }
 
-/** The inline title + properties header at the top of the note (owned by the MarkdownView). */
-class HeaderWidget extends WidgetType {
-  constructor(readonly owner: any, readonly withProperties: boolean) {
-    super();
-  }
-  eq(o: HeaderWidget) {
-    return o.owner === this.owner && o.withProperties === this.withProperties;
-  }
-  toDOM() {
-    const wrap = createDiv("cm-note-header");
-    this.owner?.mountHeader?.(wrap, this.withProperties);
-    return wrap;
-  }
-  ignoreEvent() {
+/** Zero-height stand-in for the frontmatter block in live preview (properties show above). */
+class HiddenBlockWidget extends WidgetType {
+  eq() {
     return true;
   }
+  toDOM() {
+    return createDiv("cm-frontmatter-hidden");
+  }
   get estimatedHeight() {
-    return 60;
+    return 0;
   }
 }
 
@@ -241,9 +234,9 @@ function buildBlockDecorations(state: EditorState): DecorationSet {
       const { from, to, name } = node;
       if (name === "Document") return true;
       if (name === "Frontmatter") {
-        if (lp && owner && from === 0) {
+        if (lp && owner && from === 0 && owner.app?.vault.getConfig("propertiesInDocument") !== "source") {
           const end = Math.min(state.doc.length, to);
-          decos.push(Decoration.replace({ widget: new HeaderWidget(owner, true), block: true }).range(0, end));
+          decos.push(Decoration.replace({ widget: new HiddenBlockWidget(), block: true }).range(0, end));
           headerPlaced = true;
         }
         return false;
@@ -283,7 +276,7 @@ function buildBlockDecorations(state: EditorState): DecorationSet {
       return name === "BulletList" || name === "OrderedList" || name === "ListItem" || name === "Paragraph";
     },
   });
-  if (!headerPlaced && owner) decos.unshift(Decoration.widget({ widget: new HeaderWidget(owner, false), block: true, side: -1 }).range(0));
+  owner?.onFrontmatterHidden?.(headerPlaced);
   return Decoration.set(decos, true);
 }
 
@@ -375,10 +368,10 @@ function buildInline(view: EditorView): DecorationSet {
           return true;
         }
         if (name === "QuoteMark") {
-          if (lp && !lineTouched(state, from, to, focus)) {
-            const end = state.sliceDoc(to, to + 1) === " " ? to + 1 : to;
-            decos.push(Decoration.replace({}).range(from, end));
-          }
+          // Parity (Obsidian 1.14.4): the ">" stays in the text but turns transparent unless the
+          // cursor is on that line; the line's left border draws the quote.
+          decos.push(Decoration.mark({ class: "cm-formatting cm-formatting-quote" }).range(from, to));
+          if (lp && !lineTouched(state, from, to, focus)) decos.push(Decoration.mark({ class: "cm-transparent" }).range(from, to));
           return false;
         }
         if (name === "ListItem") {
@@ -392,7 +385,8 @@ function buildInline(view: EditorView): DecorationSet {
             if (marker) {
               const ch = state.sliceDoc(marker.from + 1, marker.from + 2);
               decos.push(Decoration.line({ class: "HyperMD-task-line", attributes: { "data-task": ch } }).range(l.from));
-              if (lp && !selectionTouches(state, marker.from, marker.to, focus)) {
+              const listMark = node.node.getChild("ListMark");
+              if (lp && !selectionTouches(state, listMark ? listMark.from : marker.from, marker.to, focus)) {
                 decos.push(Decoration.replace({ widget: new CheckboxWidget(ch !== " ", marker.from) }).range(marker.from, marker.to));
               }
             }
@@ -404,7 +398,9 @@ function buildInline(view: EditorView): DecorationSet {
           const isBullet = parent?.name === "BulletList";
           const hasTask = !!node.node.parent?.getChild("Task");
           decos.push(Decoration.mark({ class: "cm-formatting cm-formatting-list " + (isBullet ? "cm-formatting-list-ul" : "cm-formatting-list-ol") }).range(from, to));
-          if (lp && isBullet && !selectionTouches(state, from, to + 1, focus)) {
+          const taskMarker = node.node.parent?.getChild("Task")?.getChild("TaskMarker");
+          const revealTo = hasTask && taskMarker ? taskMarker.to : to;
+          if (lp && isBullet && !selectionTouches(state, from, revealTo, focus)) {
             if (hasTask) decos.push(hide.range(from, Math.min(to + 1, state.doc.lineAt(from).to)));
             else decos.push(Decoration.replace({ widget: new BulletWidget() }).range(from, to));
           }

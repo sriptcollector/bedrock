@@ -119,7 +119,47 @@ export class MarkdownView extends TextFileView {
     });
     this.editor = new Editor(this.cm, this);
     void cfg;
+    this.wrapEditorDom();
     this.applyAppearance();
+  }
+
+  sizerEl: HTMLElement;
+  editorHeaderEl: HTMLElement;
+  private fmHidden = false;
+
+  /**
+   * Give the editor Obsidian's DOM shape (.cm-scroller > .cm-sizer > [inline title, properties,
+   * .cm-contentContainer > .cm-content]) because themes style those elements. CodeMirror only
+   * needs contentDOM to stay inside scrollDOM; gutters insert themselves before the sizer.
+   */
+  private wrapEditorDom(): void {
+    const scroller = this.cm.scrollDOM;
+    this.sizerEl = createDiv("cm-sizer");
+    const container = createDiv("cm-contentContainer");
+    scroller.insertBefore(this.sizerEl, this.cm.contentDOM);
+    this.editorHeaderEl = this.sizerEl.createDiv("cm-note-header");
+    this.sizerEl.appendChild(container);
+    container.appendChild(this.cm.contentDOM);
+    const sizer = this.sizerEl;
+    const nativeInsert = Node.prototype.insertBefore;
+    (scroller as any).insertBefore = function (node: Node, ref: Node | null) {
+      if (ref && ref.parentNode !== this) ref = sizer;
+      return nativeInsert.call(this, node, ref);
+    };
+    this.mountEditorHeader();
+  }
+
+  /** Called by live preview when it hides (or shows) the YAML block. */
+  onFrontmatterHidden(hidden: boolean): void {
+    if (hidden === this.fmHidden) return;
+    this.fmHidden = hidden;
+    queueMicrotask(() => this.mountEditorHeader());
+  }
+
+  private mountEditorHeader(): void {
+    if (!this.editorHeaderEl || this.mode !== "source") return;
+    this.editorHeaderEl.empty();
+    this.mountHeader(this.editorHeaderEl, this.fmHidden && !this.sourceMode);
   }
 
   get editMode(): any {
@@ -292,6 +332,7 @@ export class MarkdownView extends TextFileView {
 
   private refreshHeader(): void {
     this.cm.dispatch({ effects: refreshLivePreview.of(null) });
+    this.mountEditorHeader();
   }
 
   private setupInlineTitle(): void {

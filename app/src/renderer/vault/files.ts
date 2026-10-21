@@ -8,10 +8,10 @@ export interface FileStats {
 }
 
 export abstract class TAbstractFile {
-  vault: Vault;
-  path: string;
-  name: string;
-  parent: TFolder | null;
+  declare vault: Vault;
+  declare path: string;
+  declare name: string;
+  declare parent: TFolder | null;
   deleted = false;
 
   constructor(vault: Vault, path: string) {
@@ -33,8 +33,9 @@ export abstract class TAbstractFile {
 
 export class TFile extends TAbstractFile {
   stat: FileStats = { ctime: 0, mtime: 0, size: 0 };
-  basename: string;
-  extension: string;
+  // `declare`: set by setPath() inside the base constructor, so no field initializer may reset them.
+  declare basename: string;
+  declare extension: string;
 
   setPath(path: string): void {
     super.setPath(path);

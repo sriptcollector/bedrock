@@ -103,6 +103,13 @@ async function uiPhase(vault: string): Promise<any> {
     smokeTest: true,
     selftest: true,
   }));
+  for (const ch of ["bedrock:set-title", "bedrock:window-state", "bedrock:get-account"]) {
+    try {
+      ipcMain.handle(ch, () => null);
+    } catch {
+      /* already registered */
+    }
+  }
   await win.loadFile(path.join(__dirname, "renderer", "index.html"));
   const r = await result;
   const mem = await win.webContents.executeJavaScript("(()=>{const m=performance.memory;return m?{usedJSHeapMB:Math.round(m.usedJSHeapSize/1048576)}:null})()").catch(() => null);

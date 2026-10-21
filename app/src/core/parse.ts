@@ -52,7 +52,9 @@ export function getFrontMatterInfo(content: string): FrontMatterInfo {
 }
 
 export function parseYaml(src: string): any {
-  return YAML.parse(src, { strict: false, uniqueKeys: false, prettyErrors: false, logLevel: "silent" } as any);
+  const doc = YAML.parseDocument(src, { uniqueKeys: false, prettyErrors: false } as any);
+  if (doc.errors.length) throw doc.errors[0];
+  return doc.toJS();
 }
 
 export function stringifyYaml(obj: any): string {

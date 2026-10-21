@@ -4,7 +4,7 @@
 import { Events } from "../api/events";
 
 export class CustomCss extends Events {
-  baseTheme = "obsidian"; // "obsidian" (dark) | "moonstone" (light) | "system"
+  baseTheme = "system"; // "obsidian" (dark) | "moonstone" (light) | "system"
   theme = "";
   themes: string[] = [];
   snippets: string[] = [];
@@ -35,7 +35,7 @@ export class CustomCss extends Events {
     } catch {
       this.data = {};
     }
-    this.baseTheme = this.data.theme ?? "obsidian";
+    this.baseTheme = this.data.theme ?? "system";
     this.theme = this.data.cssTheme ?? "";
     this.accentColor = this.data.accentColor ?? "";
     this.fontSize = this.data.baseFontSize ?? 16;

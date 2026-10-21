@@ -1010,15 +1010,28 @@ body.mod-macos .workspace-ribbon.mod-left .sidebar-toggle-button {
   overflow: auto;
 }
 .markdown-source-view .cm-content {
-  padding: 16px 0 50vh;
+  padding: 0 0 50vh;
   caret-color: var(--text-normal);
 }
-.markdown-source-view.is-readable-line-width .cm-content,
-.markdown-source-view.is-readable-line-width .cm-note-header {
+.markdown-source-view .cm-sizer {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  padding-top: 16px;
+}
+.markdown-source-view.is-readable-line-width .cm-sizer {
   max-width: var(--file-line-width);
   margin-left: auto;
   margin-right: auto;
   width: 100%;
+}
+.markdown-source-view .cm-contentContainer {
+  flex: 1;
+  min-width: 0;
+}
+.cm-frontmatter-hidden {
+  height: 0;
 }
 .markdown-source-view .cm-line {
   padding: 0;
@@ -1300,8 +1313,23 @@ body.mod-macos .workspace-ribbon.mod-left .sidebar-toggle-button {
 .list-bullet {
   display: inline-block;
   width: 1.2em;
-  color: var(--text-muted);
+  color: transparent;
   text-align: center;
+  position: relative;
+}
+.list-bullet::after {
+  content: "";
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  width: var(--list-bullet-size);
+  height: var(--list-bullet-size);
+  margin: calc(var(--list-bullet-size) / -2) 0 0 calc(var(--list-bullet-size) / -2);
+  border-radius: 50%;
+  background: var(--text-muted);
+}
+.cm-transparent {
+  color: transparent;
 }
 .task-list-item-checkbox {
   width: var(--checkbox-size);
@@ -1373,8 +1401,8 @@ body.mod-macos .workspace-ribbon.mod-left .sidebar-toggle-button {
   max-width: 100%;
 }
 /* inline title and header */
-.cm-note-header {
-  padding-top: 8px;
+.cm-note-header:empty {
+  display: none;
 }
 .inline-title {
   font-size: var(--inline-title-size);

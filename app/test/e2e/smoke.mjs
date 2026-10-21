@@ -120,6 +120,7 @@ try {
     // Rename updates links.
     await win.evaluate(async () => {
       const f = window.app.vault.getFileByPath("Beta.md");
+      window.app.vault.setConfig("alwaysUpdateLinks", true); // default is "ask"; skip the dialog here
       await window.app.fileManager.renameFile(f, "Beta renamed.md");
     });
     await win.waitForTimeout(500);
