@@ -52,6 +52,16 @@ const builds = [
     external: ["electron"],
   },
   {
+    // The `bedrock` command line and stdio MCP server (run by the installed shim in Node mode).
+    ...common,
+    entryPoints: { cli: path.join(app, "src/cli/entry.ts") },
+    outdir: out,
+    platform: "node",
+    format: "cjs",
+    target: "node22",
+    banner: { js: "#!/usr/bin/env node" },
+  },
+  {
     ...common,
     entryPoints: { "index-worker": path.join(app, "src/core/index-worker.ts") },
     outdir: out,
@@ -94,6 +104,14 @@ function copyStatic() {
   for (const f of ["icon.png", "tray.png", "tray@2x.png", "trayTemplate.png", "trayTemplate@2x.png", "icon.ico"]) {
     if (fs.existsSync(path.join(icons, f))) fs.copyFileSync(path.join(icons, f), path.join(out, f));
   }
+  // Command-line shims shipped next to the executable (electron-builder extraFiles -> <install>/bin).
+  const bin = path.join(out, "bin");
+  fs.mkdirSync(bin, { recursive: true });
+  const exe = brand.exeName + ".exe";
+  fs.writeFileSync(
+    path.join(bin, brand.exeName + ".cmd"),
+    ["@echo off", "setlocal", "set ELECTRON_RUN_AS_NODE=1", `"%~dp0..\\${exe}" "%~dp0..\\resources\\app.asar\\dist\\cli.js" %*`, "exit /b %ERRORLEVEL%", ""].join("\r\n"),
+  );
   const credit = path.join(root, brand.inspiredBy?.logoUrl ?? "-");
   if (brand.inspiredBy?.logoUrl && fs.existsSync(credit)) {
     fs.copyFileSync(credit, path.join(out, "renderer", "inspired-by" + path.extname(credit)));

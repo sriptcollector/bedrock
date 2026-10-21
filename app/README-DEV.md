@@ -15,6 +15,9 @@ node app/test/e2e/smoke.mjs --vault <dir>   smoke test against a COPY of a real 
 npx electron app --selftest <vault> [--no-ui]   headless index benchmark (JSON on stdout)
 npm run icons -w app        re-render assets/icon.svg + tray.svg into build-res/
 npm run dist -w app         installer (+ rewrites ../toolbay.json)
+node dist/cli.js help       the `bedrock` command in development (also: npx electron app --cli help)
+node test/e2e/agents-e2e.mjs   agent access end to end (MCP HTTP + stdio, REST, sync, settings)
+node scripts/agent-openapi.mjs regenerate the OpenAPI block in docs/AGENT-API.md
 ```
 
 Env: `BEDROCK_USER_DATA=<dir>` (separate app data, used by tests), `BEDROCK_NO_UPDATE=1`,
@@ -34,6 +37,12 @@ src/main/              Electron main process
   tray.ts              tray Show/Hide/Quit
   updater.ts           electron-updater against GitHub releases (packaged builds only)
   selftest.ts          --selftest: core index in main process + real UI in a hidden window
+  agents/              agent access (docs/AGENT-API.md): tools.ts (tool list, zod), mcp.ts (MCP server,
+                       @modelcontextprotocol/sdk), http.ts (127.0.0.1 REST + /mcp, token, Host/Origin
+                       checks), settings.ts (token/port/running.json in app data), clients.ts (Connect
+                       buttons + snippets), host.ts (Electron side), openapi.ts (spec for the docs)
+src/cli/               `bedrock` command + stdio MCP server (dist/cli.js, run in Node mode by the
+                       bin/bedrock.cmd shim, `<exe> --cli`, `<exe> --mcp`); backend.ts = app or folder
   sync/                sync host: runs packages/sync for the one vault (host.ts), keychain.ts,
                        selective.ts (selective sync rule). Design + sign-in decision: docs/SYNC.md §11
 src/preload/           tiny bridge (window.bedrockNative); the renderer has Node anyway
@@ -44,6 +53,8 @@ src/core/              pure TS, no DOM/Electron (runs in workers, main, tests)
   scan.ts              scanVault, indexFiles (worker_threads pool, batch fallback)
   index-worker.ts      worker entry
   resolve.ts           resolvedLinks / unresolvedLinks for one file
+  agent-ops.ts         vault operations for agents (search, read/write, move with link updates, tags,
+                       properties, daily note), path safety; used by MCP, REST and the CLI
 src/renderer/
   main.ts              boot: DOM helpers, shared module map for plugins, new App()
   app.ts               App: wires everything, window chrome, startup sequence, paste/drop attachments

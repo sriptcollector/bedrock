@@ -30,6 +30,7 @@ import { PropertyTypes } from "./editor/properties";
 import { mountSyncUi } from "./sync-ui";
 import { InternalPlugins } from "./core-plugins/manager";
 import { applyConfigDirOverride, startSettingsFeatures, afterLayoutSettingsFeatures } from "./settings/bootstrap";
+import { mountAgentsUi } from "./settings/agents-tab";
 import { scanVault } from "../core/scan";
 import type { WorkspaceLeaf } from "./workspace/leaf";
 import type { ViewState } from "./workspace/view";
@@ -168,6 +169,7 @@ export class App {
     void afterLayoutSettingsFeatures(this);
     this.watcher.start();
     mountSyncUi(this);
+    mountAgentsUi(this);
 
     if (this.boot.openFile) this.openAbsolutePath(this.boot.openFile);
     this.native.on(IPC.openPath, (p: string) => this.openAbsolutePath(p));

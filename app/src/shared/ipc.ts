@@ -17,12 +17,16 @@ export const IPC = {
   vaultList: "bedrock:vault-list",
   pickFolder: "bedrock:pick-folder",
   syncCall: "bedrock:sync-call", // {op, ...args}: see main/sync/host.ts and shared/sync.ts
+  agentCall: "bedrock:agent-call", // Settings › Connect an AI agent (main/agents/host.ts)
+  agentBridgeReady: "bedrock:agent-bridge-ready", // renderer -> main (send): the vault bridge is listening
+  agentResponse: "bedrock:agent-response", // renderer -> main (send): {id, ok, value | error}
   // main -> renderer (send)
   windowStateChanged: "bedrock:window-state-changed",
   openPath: "bedrock:open-path",
   command: "bedrock:command",
   syncUpdate: "bedrock:sync-update", // SyncSnapshot
   syncEvent: "bedrock:sync-event", // SyncUiEvent
+  agentRequest: "bedrock:agent-request", // {id, op, args}: an agent write/open in the main vault window
 } as const;
 
 export interface BootInfo {

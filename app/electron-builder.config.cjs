@@ -9,7 +9,7 @@ module.exports = {
   executableName: brand.exeName,
   copyright: "Copyright © Toolbay contributors. MIT License.",
   directories: { output: "release", buildResources: "build-res" },
-  files: ["dist/**/*", "!dist/**/*.map", "package.json"],
+  files: ["dist/**/*", "!dist/**/*.map", "!dist/bin/**", "package.json"],
   asar: true,
   asarUnpack: ["**/*.node", "dist/index-worker.js"],
   extraMetadata: { main: "dist/main.js", name: brand.name, version: pkg.version },
@@ -18,6 +18,9 @@ module.exports = {
     target: [{ target: "nsis", arch: ["x64"] }],
     icon: "build-res/icon.ico",
     artifactName: `${brand.displayName}_\${version}_x64-setup.\${ext}`,
+    // The `bedrock` command (bin/<exeName>.cmd runs dist/cli.js in Node mode); the installer adds
+    // <install dir>\bin to the per-user PATH (build-res/installer.nsh).
+    extraFiles: [{ from: "dist/bin", to: "bin", filter: ["*.cmd"] }],
   },
   nsis: {
     // Per-user, one click, no admin prompt (Toolbay rule 1). The hub runs it with /S.
@@ -30,6 +33,8 @@ module.exports = {
     shortcutName: brand.displayName,
     uninstallDisplayName: brand.displayName,
     deleteAppDataOnUninstall: false,
+    // Adds/removes <install dir>\bin on the per-user PATH (HKCU, no admin) for the CLI.
+    include: "build-res/installer.nsh",
   },
   mac: {
     target: [{ target: "dmg", arch: ["arm64", "x64"] }],
