@@ -32,6 +32,8 @@ export function writeRegistry(r: VaultRegistry): void {
 }
 
 export function defaultVaultPath(): string {
+  // BEDROCK_MAIN_VAULT: tests point the one vault somewhere temporary.
+  if (process.env.BEDROCK_MAIN_VAULT) return path.resolve(process.env.BEDROCK_MAIN_VAULT);
   return path.join(app.getPath("documents"), BRAND.vaultFolderName);
 }
 
@@ -54,7 +56,8 @@ ${INSPIRED_BY ? `\n---\n\n<small>Inspired by ${INSPIRED_BY.name}. ${INSPIRED_BY.
 export function ensureMainVault(): string {
   const reg = readRegistry();
   const dir = reg.main;
-  const fresh = !fs.existsSync(dir);
+  // Fresh = no folder yet, or a first run that was stopped half-way (only an empty .obsidian).
+  const fresh = !fs.existsSync(dir) || isUnfinishedFirstRun(dir);
   fs.mkdirSync(path.join(dir, ".obsidian"), { recursive: true });
   if (fresh) {
     fs.writeFileSync(path.join(dir, "Welcome.md"), WELCOME_NOTE);
@@ -62,6 +65,17 @@ export function ensureMainVault(): string {
   }
   if (!fs.existsSync(registryPath())) writeRegistry(reg);
   return dir;
+}
+
+function isUnfinishedFirstRun(dir: string): boolean {
+  try {
+    const top = fs.readdirSync(dir).filter((n) => n !== ".obsidian");
+    if (top.length) return false;
+    const cfg = path.join(dir, ".obsidian");
+    return !fs.existsSync(cfg) || fs.readdirSync(cfg).length === 0;
+  } catch {
+    return false;
+  }
 }
 
 export function rememberOther(vault: string): void {
