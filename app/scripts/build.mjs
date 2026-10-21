@@ -66,7 +66,9 @@ const builds = [
     entryPoints: { app: path.join(app, "src/renderer/main.ts") },
     outdir: path.join(out, "renderer"),
     platform: "node",
-    format: "cjs",
+    // IIFE so top-level names don't collide with window globals (window.top etc.); `require` is
+    // the renderer's global Node require.
+    format: "iife",
     target: "chrome140",
     external: ["electron"],
   },

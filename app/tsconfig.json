@@ -6,6 +6,7 @@
     "lib": ["ES2022", "DOM", "DOM.Iterable"],
     "types": ["node"],
     "strict": true,
+    "useDefineForClassFields": false,
     "noImplicitAny": false,
     "strictPropertyInitialization": false,
     "useUnknownInCatchVariables": false,

@@ -1,0 +1,2383 @@
+{
+ "about": "Every settings tab of Obsidian 1.14.4 desktop with each setting's control type and default, measured at runtime on a fresh vault with all core plugins on. Labels are kept so Bedrock can match them; descriptions are left out on purpose (write our own). configDefaults lists the config-file keys and defaults (from runtime + code reading). Graph centerStrength default is shown as stored; key names for canvas.json and graph collapse flags are partly inferred.",
+ "measuredOn": "2026-10-21",
+ "appVersion": "1.14.4",
+ "tabs": [
+  {
+   "id": "about",
+   "label": "General",
+   "group": "options",
+   "settings": [
+    {
+     "section": null,
+     "label": "Version 1.14.4",
+     "controls": [
+      {
+       "type": "button",
+       "label": "Check for updates"
+      }
+     ]
+    },
+    {
+     "section": null,
+     "label": "Update Available",
+     "controls": [
+      {
+       "type": "button",
+       "label": "Download"
+      }
+     ]
+    },
+    {
+     "section": null,
+     "label": "Automatic updates",
+     "controls": [
+      {
+       "type": "toggle",
+       "default": true
+      }
+     ]
+    },
+    {
+     "section": null,
+     "label": "Receive early access versions",
+     "controls": [
+      {
+       "type": "info",
+       "label": "toggle shown only with a Catalyst license"
+      }
+     ]
+    },
+    {
+     "section": null,
+     "label": "Language",
+     "controls": [
+      {
+       "type": "dropdown",
+       "default": "en",
+       "options": [
+        "am = አማርኛ",
+        "ar = اَلْعَرَبِيَّةُ",
+        "be = беларуская мова",
+        "bg = български език",
+        "bn = বাংলা",
+        "..."
+       ],
+       "optionCount": 51
+      },
+      {
+       "type": "button",
+       "label": "Relaunch"
+      }
+     ]
+    },
+    {
+     "section": null,
+     "label": "Help",
+     "controls": [
+      {
+       "type": "button",
+       "label": "Open"
+      }
+     ]
+    },
+    {
+     "heading": "Account"
+    },
+    {
+     "section": "Account",
+     "label": "Your account",
+     "controls": [
+      {
+       "type": "button",
+       "label": "Log in"
+      },
+      {
+       "type": "button",
+       "label": "Sign up"
+      }
+     ]
+    },
+    {
+     "section": "Account",
+     "label": "Catalyst license",
+     "controls": [
+      {
+       "type": "info",
+       "label": "shows license status when signed in"
+      }
+     ]
+    },
+    {
+     "section": "Account",
+     "label": "Commercial license",
+     "controls": [
+      {
+       "type": "button",
+       "label": "Activate"
+      },
+      {
+       "type": "button",
+       "label": "Purchase"
+      }
+     ]
+    },
+    {
+     "heading": "Advanced"
+    },
+    {
+     "section": "Advanced",
+     "label": "Notify if startup takes longer than expected",
+     "controls": [
+      {
+       "type": "toggle",
+       "default": false
+      },
+      {
+       "type": "icon-button",
+       "label": "Check now"
+      }
+     ]
+    },
+    {
+     "section": "Advanced",
+     "label": "Command line interface",
+     "controls": [
+      {
+       "type": "toggle",
+       "default": false
+      }
+     ]
+    },
+    {
+     "section": "Advanced",
+     "label": "Hardware acceleration",
+     "controls": [
+      {
+       "type": "toggle",
+       "default": true
+      },
+      {
+       "type": "button",
+       "label": "Relaunch"
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "id": "appearance",
+   "label": "Appearance",
+   "group": "options",
+   "settings": [
+    {
+     "section": null,
+     "label": "Base color scheme",
+     "controls": [
+      {
+       "type": "dropdown",
+       "default": "system",
+       "options": [
+        "obsidian = Dark",
+        "moonstone = Light",
+        "system = Adapt to system"
+       ]
+      }
+     ]
+    },
+    {
+     "section": null,
+     "label": "Accent color",
+     "controls": [
+      {
+       "type": "color",
+       "default": "#8a5cf5"
+      },
+      {
+       "type": "icon-button",
+       "label": "Restore default"
+      }
+     ]
+    },
+    {
+     "section": null,
+     "label": "Themes",
+     "controls": [
+      {
+       "type": "dropdown",
+       "default": "",
+       "options": [
+        " = Default"
+       ]
+      },
+      {
+       "type": "button",
+       "label": "Manage"
+      },
+      {
+       "type": "icon-button",
+       "label": "Open themes folder"
+      }
+     ]
+    },
+    {
+     "section": null,
+     "label": "Current community themes",
+     "controls": [
+      {
+       "type": "info",
+       "label": "count of installed themes"
+      }
+     ]
+    },
+    {
+     "section": null,
+     "label": "CSS snippets",
+     "controls": [
+      {
+       "type": "subpage",
+       "label": "subpage (chevron row; shows \"0 enabled\")"
+      }
+     ]
+    },
+    {
+     "heading": "Font"
+    },
+    {
+     "section": "Font",
+     "label": "Interface font",
+     "controls": [
+      {
+       "type": "subpage",
+       "label": "subpage (font picker; default: theme font)"
+      }
+     ]
+    },
+    {
+     "section": "Font",
+     "label": "Text font",
+     "controls": [
+      {
+       "type": "subpage",
+       "label": "subpage (font picker; default: theme font)"
+      }
+     ]
+    },
+    {
+     "section": "Font",
+     "label": "Monospace font",
+     "controls": [
+      {
+       "type": "subpage",
+       "label": "subpage (font picker; default: theme font)"
+      }
+     ]
+    },
+    {
+     "section": "Font",
+     "label": "Font size",
+     "controls": [
+      {
+       "type": "slider",
+       "default": 16,
+       "min": 10,
+       "max": 30,
+       "step": "1"
+      },
+      {
+       "type": "icon-button",
+       "label": "Restore default"
+      }
+     ]
+    },
+    {
+     "section": "Font",
+     "label": "Quick font size adjustment",
+     "controls": [
+      {
+       "type": "toggle",
+       "default": false
+      }
+     ]
+    },
+    {
+     "heading": "Advanced"
+    },
+    {
+     "section": "Advanced",
+     "label": "Custom app icon",
+     "controls": [
+      {
+       "type": "button",
+       "label": "Choose"
+      },
+      {
+       "type": "button",
+       "label": "Relaunch"
+      },
+      {
+       "type": "icon-button",
+       "label": "Restore default"
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "id": "interface",
+   "label": "Interface",
+   "group": "options",
+   "settings": [
+    {
+     "section": null,
+     "label": "Show tab title bar",
+     "controls": [
+      {
+       "type": "toggle",
+       "default": true
+      }
+     ]
+    },
+    {
+     "section": null,
+     "label": "Show ribbon",
+     "controls": [
+      {
+       "type": "toggle",
+       "default": true
+      }
+     ]
+    },
+    {
+     "section": null,
+     "label": "Ribbon menu configuration",
+     "controls": [
+      {
+       "type": "subpage",
+       "label": "subpage (show/hide and reorder ribbon items)"
+      }
+     ]
+    },
+    {
+     "heading": "Advanced"
+    },
+    {
+     "section": "Advanced",
+     "label": "Zoom level",
+     "controls": [
+      {
+       "type": "slider",
+       "default": 0,
+       "min": -2.5,
+       "max": 3,
+       "step": "0.5"
+      },
+      {
+       "type": "icon-button",
+       "label": "Restore default"
+      }
+     ]
+    },
+    {
+     "section": "Advanced",
+     "label": "Native menus",
+     "controls": [
+      {
+       "type": "toggle",
+       "default": false
+      }
+     ]
+    },
+    {
+     "section": "Advanced",
+     "label": "Window frame style",
+     "controls": [
+      {
+       "type": "dropdown",
+       "default": "hidden",
+       "options": [
+        "hidden = Hidden (default)",
+        "custom = Obsidian frame",
+        "native = Native frame"
+       ]
+      },
+      {
+       "type": "button",
+       "label": "Relaunch"
+      }
+     ]
+    },
+    {
+     "section": "Advanced",
+     "label": "Open settings in new window",
+     "controls": [
+      {
+       "type": "toggle",
+       "default": true
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "id": "editor",
+   "label": "Editor",
+   "group": "options",
+   "settings": [
+    {
+     "section": null,
+     "label": "Default view for new tabs",
+     "controls": [
+      {
+       "type": "dropdown",
+       "default": "source",
+       "options": [
+        "source = Editing view",
+        "preview = Reading view"
+       ]
+      }
+     ]
+    },
+    {
+     "section": null,
+     "label": "Default editing mode",
+     "controls": [
+      {
+       "type": "dropdown",
+       "default": "live-preview",
+       "options": [
+        "live-preview = Live Preview",
+        "source = Source mode"
+       ]
+      }
+     ]
+    },
+    {
+     "section": null,
+     "label": "Show editing mode in status bar",
+     "controls": [
+      {
+       "type": "toggle",
+       "default": true
+      }
+     ]
+    },
+    {
+     "heading": "Display"
+    },
+    {
+     "section": "Display",
+     "label": "Inline title",
+     "controls": [
+      {
+       "type": "toggle",
+       "default": true
+      }
+     ]
+    },
+    {
+     "section": "Display",
+     "label": "Readable line length",
+     "controls": [
+      {
+       "type": "toggle",
+       "default": true
+      }
+     ]
+    },
+    {
+     "section": "Display",
+     "label": "Strict line breaks",
+     "controls": [
+      {
+       "type": "toggle",
+       "default": false
+      }
+     ]
+    },
+    {
+     "section": "Display",
+     "label": "Properties in document",
+     "controls": [
+      {
+       "type": "dropdown",
+       "default": "visible",
+       "options": [
+        "visible = Visible",
+        "hidden = Hidden",
+        "source = Source"
+       ]
+      }
+     ]
+    },
+    {
+     "section": "Display",
+     "label": "Fold heading",
+     "controls": [
+      {
+       "type": "toggle",
+       "default": true
+      }
+     ]
+    },
+    {
+     "section": "Display",
+     "label": "Fold indent",
+     "controls": [
+      {
+       "type": "toggle",
+       "default": true
+      }
+     ]
+    },
+    {
+     "section": "Display",
+     "label": "Line numbers",
+     "controls": [
+      {
+       "type": "toggle",
+       "default": false
+      }
+     ]
+    },
+    {
+     "section": "Display",
+     "label": "Indentation guides",
+     "controls": [
+      {
+       "type": "toggle",
+       "default": true
+      }
+     ]
+    },
+    {
+     "section": "Display",
+     "label": "Right-to-left (RTL)",
+     "controls": [
+      {
+       "type": "toggle",
+       "default": false
+      }
+     ]
+    },
+    {
+     "section": "Display",
+     "label": "Show Mermaid diagrams in notes",
+     "controls": [
+      {
+       "type": "toggle",
+       "default": false
+      }
+     ]
+    },
+    {
+     "heading": "Behavior"
+    },
+    {
+     "section": "Behavior",
+     "label": "Spellcheck",
+     "controls": [
+      {
+       "type": "toggle",
+       "default": true
+      },
+      {
+       "type": "icon-button",
+       "label": ""
+      }
+     ]
+    },
+    {
+     "section": "Behavior",
+     "label": "Spellcheck languages",
+     "controls": [
+      {
+       "type": "dropdown",
+       "default": "",
+       "options": [
+        " = +",
+        "af = Afrikaans",
+        "sq = Albanian",
+        "hy = Armenian",
+        "bg = Bulgarian",
+        "..."
+       ],
+       "optionCount": 58
+      }
+     ]
+    },
+    {
+     "section": "Behavior",
+     "label": "Auto-pair brackets",
+     "controls": [
+      {
+       "type": "toggle",
+       "default": true
+      }
+     ]
+    },
+    {
+     "section": "Behavior",
+     "label": "Auto-pair Markdown syntax",
+     "controls": [
+      {
+       "type": "toggle",
+       "default": true
+      }
+     ]
+    },
+    {
+     "section": "Behavior",
+     "label": "Smart lists",
+     "controls": [
+      {
+       "type": "toggle",
+       "default": true
+      }
+     ]
+    },
+    {
+     "section": "Behavior",
+     "label": "Indent using tabs",
+     "controls": [
+      {
+       "type": "toggle",
+       "default": true
+      }
+     ]
+    },
+    {
+     "section": "Behavior",
+     "label": "Indent visual width",
+     "controls": [
+      {
+       "type": "slider",
+       "default": 4,
+       "min": 2,
+       "max": 8,
+       "step": "1"
+      },
+      {
+       "type": "icon-button",
+       "label": "Restore default"
+      }
+     ]
+    },
+    {
+     "heading": "Advanced"
+    },
+    {
+     "section": "Advanced",
+     "label": "Convert pasted HTML to Markdown",
+     "controls": [
+      {
+       "type": "toggle",
+       "default": true
+      }
+     ]
+    },
+    {
+     "section": "Advanced",
+     "label": "Vim key bindings",
+     "controls": [
+      {
+       "type": "toggle",
+       "default": false
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "id": "file",
+   "label": "Files and links",
+   "group": "options",
+   "settings": [
+    {
+     "section": null,
+     "label": "Default file to open",
+     "controls": [
+      {
+       "type": "dropdown",
+       "default": "",
+       "options": [
+        " = Last opened",
+        "new = New note",
+        "file = Specific file",
+        "daily = Daily note"
+       ]
+      }
+     ]
+    },
+    {
+     "section": null,
+     "label": "File to open",
+     "controls": [
+      {
+       "type": "file-picker",
+       "label": "file picker with clear button; default empty"
+      }
+     ]
+    },
+    {
+     "section": null,
+     "label": "Always focus new tabs",
+     "controls": [
+      {
+       "type": "toggle",
+       "default": true
+      }
+     ]
+    },
+    {
+     "section": null,
+     "label": "Default location for new notes",
+     "controls": [
+      {
+       "type": "dropdown",
+       "default": "root",
+       "options": [
+        "root = Vault folder",
+        "current = Same folder as current file",
+        "folder = In the folder specified below"
+       ]
+      }
+     ]
+    },
+    {
+     "section": null,
+     "label": "Folder to create new notes in",
+     "controls": [
+      {
+       "type": "text",
+       "default": "",
+       "placeholder": "Example: folder 1/folder 2"
+      }
+     ]
+    },
+    {
+     "section": null,
+     "label": "Default location for new attachments",
+     "controls": [
+      {
+       "type": "dropdown",
+       "default": "root",
+       "options": [
+        "root = Vault folder",
+        "current = Same folder as current file",
+        "subfolder = In subfolder under current folder",
+        "folder = In the folder specified below"
+       ]
+      }
+     ]
+    },
+    {
+     "section": null,
+     "label": "Attachment folder path",
+     "controls": [
+      {
+       "type": "text",
+       "default": "",
+       "placeholder": "Attachments"
+      }
+     ]
+    },
+    {
+     "section": null,
+     "label": "Subfolder name",
+     "controls": [
+      {
+       "type": "text",
+       "default": "",
+       "placeholder": "Attachments"
+      }
+     ]
+    },
+    {
+     "heading": "Links"
+    },
+    {
+     "section": "Links",
+     "label": "New link format",
+     "controls": [
+      {
+       "type": "dropdown",
+       "default": "shortest",
+       "options": [
+        "shortest = Shortest path when possible",
+        "relative = Path from current file",
+        "absolute = Path from vault folder"
+       ]
+      }
+     ]
+    },
+    {
+     "section": "Links",
+     "label": "Automatically update internal links",
+     "controls": [
+      {
+       "type": "toggle",
+       "default": false
+      }
+     ]
+    },
+    {
+     "section": "Links",
+     "label": "Use [[Wikilinks]]",
+     "controls": [
+      {
+       "type": "toggle",
+       "default": true
+      }
+     ]
+    },
+    {
+     "section": "Links",
+     "label": "Show all file types",
+     "controls": [
+      {
+       "type": "toggle",
+       "default": false
+      }
+     ]
+    },
+    {
+     "heading": "Trash"
+    },
+    {
+     "section": "Trash",
+     "label": "Confirm before deleting files",
+     "controls": [
+      {
+       "type": "toggle",
+       "default": true
+      }
+     ]
+    },
+    {
+     "section": "Trash",
+     "label": "Delete attachments when deleting files",
+     "controls": [
+      {
+       "type": "dropdown",
+       "default": "ask",
+       "options": [
+        "ask = Ask each time",
+        "always = Always",
+        "never = Never"
+       ]
+      }
+     ]
+    },
+    {
+     "section": "Trash",
+     "label": "Deleted files",
+     "controls": [
+      {
+       "type": "dropdown",
+       "default": "system",
+       "options": [
+        "system = Move to system trash",
+        "local = Move to Obsidian trash (.trash folder)",
+        "none = Permanently delete"
+       ]
+      }
+     ]
+    },
+    {
+     "heading": "Advanced"
+    },
+    {
+     "section": "Advanced",
+     "label": "Excluded files",
+     "controls": [
+      {
+       "type": "subpage",
+       "label": "subpage (list of excluded paths and patterns; default empty)"
+      }
+     ]
+    },
+    {
+     "section": "Advanced",
+     "label": "Override config folder",
+     "controls": [
+      {
+       "type": "text",
+       "default": "",
+       "placeholder": ".obsidian"
+      },
+      {
+       "type": "button",
+       "label": "Relaunch"
+      }
+     ]
+    },
+    {
+     "section": "Advanced",
+     "label": "Allow URI callbacks",
+     "controls": [
+      {
+       "type": "toggle",
+       "default": false
+      }
+     ]
+    },
+    {
+     "section": "Advanced",
+     "label": "Rebuild vault cache",
+     "controls": [
+      {
+       "type": "button",
+       "label": "Rebuild"
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "id": "hotkeys",
+   "label": "Hotkeys",
+   "group": "options",
+   "settings": [
+    {
+     "label": "One row per command (see commands.json)",
+     "controls": [
+      {
+       "type": "search"
+      },
+      {
+       "type": "per-command: current hotkeys, add, restore default"
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "id": "keychain",
+   "label": "Keychain",
+   "group": "options",
+   "settings": [
+    {
+     "heading": "Secrets"
+    },
+    {
+     "section": "Secrets",
+     "label": "No secrets have been added. Secrets are used to store information like API keys and passwords that plugins can use.",
+     "controls": []
+    }
+   ]
+  },
+  {
+   "id": "plugins",
+   "label": "Core plugins",
+   "group": "options",
+   "settings": [
+    {
+     "section": null,
+     "label": "Audio recorder",
+     "controls": [
+      {
+       "type": "toggle",
+       "default": true
+      },
+      {
+       "type": "icon-button",
+       "label": "Options"
+      },
+      {
+       "type": "icon-button",
+       "label": "Hotkeys"
+      }
+     ]
+    },
+    {
+     "section": null,
+     "label": "Backlinks",
+     "controls": [
+      {
+       "type": "toggle",
+       "default": true
+      },
+      {
+       "type": "icon-button",
+       "label": "Options"
+      },
+      {
+       "type": "icon-button",
+       "label": "Hotkeys"
+      }
+     ]
+    },
+    {
+     "section": null,
+     "label": "Bases",
+     "controls": [
+      {
+       "type": "toggle",
+       "default": true
+      },
+      {
+       "type": "icon-button",
+       "label": "Options"
+      },
+      {
+       "type": "icon-button",
+       "label": "Hotkeys"
+      }
+     ]
+    },
+    {
+     "section": null,
+     "label": "Bookmarks",
+     "controls": [
+      {
+       "type": "toggle",
+       "default": true
+      },
+      {
+       "type": "icon-button",
+       "label": "Options"
+      },
+      {
+       "type": "icon-button",
+       "label": "Hotkeys"
+      }
+     ]
+    },
+    {
+     "section": null,
+     "label": "Canvas",
+     "controls": [
+      {
+       "type": "toggle",
+       "default": true
+      },
+      {
+       "type": "icon-button",
+       "label": "Options"
+      },
+      {
+       "type": "icon-button",
+       "label": "Hotkeys"
+      }
+     ]
+    },
+    {
+     "section": null,
+     "label": "Command palette",
+     "controls": [
+      {
+       "type": "toggle",
+       "default": true
+      },
+      {
+       "type": "icon-button",
+       "label": "Options"
+      },
+      {
+       "type": "icon-button",
+       "label": "Hotkeys"
+      }
+     ]
+    },
+    {
+     "section": null,
+     "label": "Daily notes",
+     "controls": [
+      {
+       "type": "toggle",
+       "default": true
+      },
+      {
+       "type": "icon-button",
+       "label": "Options"
+      },
+      {
+       "type": "icon-button",
+       "label": "Hotkeys"
+      }
+     ]
+    },
+    {
+     "section": null,
+     "label": "File recovery",
+     "controls": [
+      {
+       "type": "toggle",
+       "default": true
+      },
+      {
+       "type": "icon-button",
+       "label": "Options"
+      },
+      {
+       "type": "icon-button",
+       "label": "Hotkeys"
+      }
+     ]
+    },
+    {
+     "section": null,
+     "label": "Files",
+     "controls": [
+      {
+       "type": "toggle",
+       "default": true
+      },
+      {
+       "type": "icon-button",
+       "label": "Options"
+      },
+      {
+       "type": "icon-button",
+       "label": "Hotkeys"
+      }
+     ]
+    },
+    {
+     "section": null,
+     "label": "Footnotes view",
+     "controls": [
+      {
+       "type": "toggle",
+       "default": true
+      },
+      {
+       "type": "icon-button",
+       "label": "Options"
+      },
+      {
+       "type": "icon-button",
+       "label": "Hotkeys"
+      }
+     ]
+    },
+    {
+     "section": null,
+     "label": "Graph view",
+     "controls": [
+      {
+       "type": "toggle",
+       "default": true
+      },
+      {
+       "type": "icon-button",
+       "label": "Options"
+      },
+      {
+       "type": "icon-button",
+       "label": "Hotkeys"
+      }
+     ]
+    },
+    {
+     "section": null,
+     "label": "Note composer",
+     "controls": [
+      {
+       "type": "toggle",
+       "default": true
+      },
+      {
+       "type": "icon-button",
+       "label": "Options"
+      },
+      {
+       "type": "icon-button",
+       "label": "Hotkeys"
+      }
+     ]
+    },
+    {
+     "section": null,
+     "label": "Outgoing links",
+     "controls": [
+      {
+       "type": "toggle",
+       "default": true
+      },
+      {
+       "type": "icon-button",
+       "label": "Options"
+      },
+      {
+       "type": "icon-button",
+       "label": "Hotkeys"
+      }
+     ]
+    },
+    {
+     "section": null,
+     "label": "Outline",
+     "controls": [
+      {
+       "type": "toggle",
+       "default": true
+      },
+      {
+       "type": "icon-button",
+       "label": "Options"
+      },
+      {
+       "type": "icon-button",
+       "label": "Hotkeys"
+      }
+     ]
+    },
+    {
+     "section": null,
+     "label": "Page preview",
+     "controls": [
+      {
+       "type": "toggle",
+       "default": true
+      },
+      {
+       "type": "icon-button",
+       "label": "Options"
+      },
+      {
+       "type": "icon-button",
+       "label": "Hotkeys"
+      }
+     ]
+    },
+    {
+     "section": null,
+     "label": "Properties view",
+     "controls": [
+      {
+       "type": "toggle",
+       "default": true
+      },
+      {
+       "type": "icon-button",
+       "label": "Options"
+      },
+      {
+       "type": "icon-button",
+       "label": "Hotkeys"
+      }
+     ]
+    },
+    {
+     "section": null,
+     "label": "Publish",
+     "controls": [
+      {
+       "type": "toggle",
+       "default": true
+      },
+      {
+       "type": "icon-button",
+       "label": "Options"
+      },
+      {
+       "type": "icon-button",
+       "label": "Hotkeys"
+      }
+     ]
+    },
+    {
+     "section": null,
+     "label": "Quick switcher",
+     "controls": [
+      {
+       "type": "toggle",
+       "default": true
+      },
+      {
+       "type": "icon-button",
+       "label": "Options"
+      },
+      {
+       "type": "icon-button",
+       "label": "Hotkeys"
+      }
+     ]
+    },
+    {
+     "section": null,
+     "label": "Random note",
+     "controls": [
+      {
+       "type": "toggle",
+       "default": true
+      },
+      {
+       "type": "icon-button",
+       "label": "Options"
+      },
+      {
+       "type": "icon-button",
+       "label": "Hotkeys"
+      }
+     ]
+    },
+    {
+     "section": null,
+     "label": "Search",
+     "controls": [
+      {
+       "type": "toggle",
+       "default": true
+      },
+      {
+       "type": "icon-button",
+       "label": "Options"
+      },
+      {
+       "type": "icon-button",
+       "label": "Hotkeys"
+      }
+     ]
+    },
+    {
+     "section": null,
+     "label": "Slash commands",
+     "controls": [
+      {
+       "type": "toggle",
+       "default": true
+      },
+      {
+       "type": "icon-button",
+       "label": "Options"
+      },
+      {
+       "type": "icon-button",
+       "label": "Hotkeys"
+      }
+     ]
+    },
+    {
+     "section": null,
+     "label": "Slides",
+     "controls": [
+      {
+       "type": "toggle",
+       "default": true
+      },
+      {
+       "type": "icon-button",
+       "label": "Options"
+      },
+      {
+       "type": "icon-button",
+       "label": "Hotkeys"
+      }
+     ]
+    },
+    {
+     "section": null,
+     "label": "Sync",
+     "controls": [
+      {
+       "type": "toggle",
+       "default": true
+      },
+      {
+       "type": "icon-button",
+       "label": "Options"
+      },
+      {
+       "type": "icon-button",
+       "label": "Hotkeys"
+      }
+     ]
+    },
+    {
+     "section": null,
+     "label": "Tags view",
+     "controls": [
+      {
+       "type": "toggle",
+       "default": true
+      },
+      {
+       "type": "icon-button",
+       "label": "Options"
+      },
+      {
+       "type": "icon-button",
+       "label": "Hotkeys"
+      }
+     ]
+    },
+    {
+     "section": null,
+     "label": "Templates",
+     "controls": [
+      {
+       "type": "toggle",
+       "default": true
+      },
+      {
+       "type": "icon-button",
+       "label": "Options"
+      },
+      {
+       "type": "icon-button",
+       "label": "Hotkeys"
+      }
+     ]
+    },
+    {
+     "section": null,
+     "label": "Unique note creator",
+     "controls": [
+      {
+       "type": "toggle",
+       "default": true
+      },
+      {
+       "type": "icon-button",
+       "label": "Options"
+      },
+      {
+       "type": "icon-button",
+       "label": "Hotkeys"
+      }
+     ]
+    },
+    {
+     "section": null,
+     "label": "Web viewer",
+     "controls": [
+      {
+       "type": "toggle",
+       "default": true
+      },
+      {
+       "type": "icon-button",
+       "label": "Options"
+      },
+      {
+       "type": "icon-button",
+       "label": "Hotkeys"
+      }
+     ]
+    },
+    {
+     "section": null,
+     "label": "Word count",
+     "controls": [
+      {
+       "type": "toggle",
+       "default": true
+      },
+      {
+       "type": "icon-button",
+       "label": "Options"
+      },
+      {
+       "type": "icon-button",
+       "label": "Hotkeys"
+      }
+     ]
+    },
+    {
+     "section": null,
+     "label": "Workspaces",
+     "controls": [
+      {
+       "type": "toggle",
+       "default": true
+      },
+      {
+       "type": "icon-button",
+       "label": "Options"
+      },
+      {
+       "type": "icon-button",
+       "label": "Hotkeys"
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "id": "community-plugins",
+   "label": "Community plugins",
+   "group": "options",
+   "settings": [
+    {
+     "section": null,
+     "label": "Community plugins, like any other software you install, could potentially cause data integrity and security issues. Plugin security is important to us. Here's what we do:",
+     "controls": []
+    },
+    {
+     "section": null,
+     "label": "Allow community plugins",
+     "controls": [
+      {
+       "type": "button",
+       "label": "Exit Restricted mode"
+      }
+     ]
+    },
+    {
+     "section": null,
+     "label": "Learn more about plugin security",
+     "controls": []
+    }
+   ]
+  },
+  {
+   "id": "switcher",
+   "label": "Quick switcher",
+   "group": "core-plugin options",
+   "settings": [
+    {
+     "section": null,
+     "label": "Show existing only",
+     "controls": [
+      {
+       "type": "toggle",
+       "default": false
+      }
+     ]
+    },
+    {
+     "section": null,
+     "label": "Show attachments",
+     "controls": [
+      {
+       "type": "toggle",
+       "default": true
+      }
+     ]
+    },
+    {
+     "section": null,
+     "label": "Show all file types",
+     "controls": [
+      {
+       "type": "toggle",
+       "default": false
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "id": "sync",
+   "label": "Sync",
+   "group": "core-plugin options",
+   "settings": []
+  },
+  {
+   "id": "backlink",
+   "label": "Backlinks",
+   "group": "core-plugin options",
+   "settings": [
+    {
+     "section": null,
+     "label": "Show backlinks at the bottom of notes",
+     "controls": [
+      {
+       "type": "toggle",
+       "default": false
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "id": "canvas",
+   "label": "Canvas",
+   "group": "core-plugin options",
+   "settings": [
+    {
+     "section": null,
+     "label": "Default location for new canvas files",
+     "controls": [
+      {
+       "type": "dropdown",
+       "default": "root",
+       "options": [
+        "root = Vault folder",
+        "current = Same folder as current file",
+        "folder = In the folder specified below"
+       ]
+      }
+     ]
+    },
+    {
+     "section": null,
+     "label": "Folder to create new canvas files in",
+     "controls": [
+      {
+       "type": "text",
+       "default": "",
+       "placeholder": "Example: folder 1/folder 2"
+      }
+     ]
+    },
+    {
+     "section": null,
+     "label": "Default mouse wheel behavior",
+     "controls": [
+      {
+       "type": "dropdown",
+       "default": "pan",
+       "options": [
+        "pan = Pan",
+        "zoom = Zoom"
+       ]
+      }
+     ]
+    },
+    {
+     "section": null,
+     "label": "Default Ctrl + Drag behavior",
+     "controls": [
+      {
+       "type": "dropdown",
+       "default": "menu",
+       "options": [
+        "menu = Show menu",
+        "card = Add card",
+        "note = Add note from vault",
+        "media = Add media from vault",
+        "webpage = Add web page",
+        "group = Create group"
+       ]
+      }
+     ]
+    },
+    {
+     "section": null,
+     "label": "Show card names",
+     "controls": [
+      {
+       "type": "dropdown",
+       "default": "always",
+       "options": [
+        "always = Always",
+        "hover = On hover",
+        "never = Never"
+       ]
+      }
+     ]
+    },
+    {
+     "section": null,
+     "label": "Snap to grid",
+     "controls": [
+      {
+       "type": "toggle",
+       "default": true
+      }
+     ]
+    },
+    {
+     "section": null,
+     "label": "Snap to objects",
+     "controls": [
+      {
+       "type": "toggle",
+       "default": true
+      }
+     ]
+    },
+    {
+     "section": null,
+     "label": "Zoom threshold for hiding card content",
+     "controls": [
+      {
+       "type": "slider",
+       "default": 0,
+       "min": -0.7,
+       "max": 2.3999999999999995,
+       "step": "0.01"
+      },
+      {
+       "type": "icon-button",
+       "label": "Restore default"
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "id": "page-preview",
+   "label": "Page preview",
+   "group": "core-plugin options",
+   "settings": [
+    {
+     "heading": "Require Ctrl to trigger page preview on hover"
+    },
+    {
+     "section": "Require Ctrl to trigger page preview on hover",
+     "label": "Search, Backlinks, and Outgoing links",
+     "controls": [
+      {
+       "type": "toggle",
+       "default": true
+      }
+     ]
+    },
+    {
+     "section": "Require Ctrl to trigger page preview on hover",
+     "label": "Reading view",
+     "controls": [
+      {
+       "type": "toggle",
+       "default": false
+      }
+     ]
+    },
+    {
+     "section": "Require Ctrl to trigger page preview on hover",
+     "label": "Editing view",
+     "controls": [
+      {
+       "type": "toggle",
+       "default": true
+      }
+     ]
+    },
+    {
+     "section": "Require Ctrl to trigger page preview on hover",
+     "label": "Tab header",
+     "controls": [
+      {
+       "type": "toggle",
+       "default": true
+      }
+     ]
+    },
+    {
+     "section": "Require Ctrl to trigger page preview on hover",
+     "label": "Files",
+     "controls": [
+      {
+       "type": "toggle",
+       "default": true
+      }
+     ]
+    },
+    {
+     "section": "Require Ctrl to trigger page preview on hover",
+     "label": "Properties view",
+     "controls": [
+      {
+       "type": "toggle",
+       "default": true
+      }
+     ]
+    },
+    {
+     "section": "Require Ctrl to trigger page preview on hover",
+     "label": "Bookmarks",
+     "controls": [
+      {
+       "type": "toggle",
+       "default": true
+      }
+     ]
+    },
+    {
+     "section": "Require Ctrl to trigger page preview on hover",
+     "label": "Outline",
+     "controls": [
+      {
+       "type": "toggle",
+       "default": true
+      }
+     ]
+    },
+    {
+     "section": "Require Ctrl to trigger page preview on hover",
+     "label": "Bases",
+     "controls": [
+      {
+       "type": "toggle",
+       "default": true
+      }
+     ]
+    },
+    {
+     "section": "Require Ctrl to trigger page preview on hover",
+     "label": "Graph view",
+     "controls": [
+      {
+       "type": "toggle",
+       "default": true
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "id": "daily-notes",
+   "label": "Daily notes",
+   "group": "core-plugin options",
+   "settings": [
+    {
+     "section": null,
+     "label": "Date format",
+     "controls": [
+      {
+       "type": "dropdown",
+       "default": "YYYY-MM-DD",
+       "options": [
+        "YYYY-MM-DD = 2026-10-21",
+        "YYYY.MM.DD = 2026.10.21",
+        "YYYY/MM/DD = 2026/10/21",
+        "YYYY/MM/YYYY-MM-DD = 2026/10/2026-10-21",
+        "custom = Custom"
+       ]
+      }
+     ]
+    },
+    {
+     "section": null,
+     "label": "Custom format",
+     "controls": [
+      {
+       "type": "text",
+       "default": "YYYY-MM-DD",
+       "placeholder": "YYYY-MM-DD"
+      }
+     ]
+    },
+    {
+     "section": null,
+     "label": "New file location",
+     "controls": [
+      {
+       "type": "text",
+       "default": "Daily",
+       "placeholder": "Example: folder 1/folder 2"
+      }
+     ]
+    },
+    {
+     "section": null,
+     "label": "Template file location",
+     "controls": [
+      {
+       "type": "file-picker",
+       "label": "file picker with clear button; default empty"
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "id": "templates",
+   "label": "Templates",
+   "group": "core-plugin options",
+   "settings": [
+    {
+     "section": null,
+     "label": "Template folder location",
+     "controls": [
+      {
+       "type": "text",
+       "default": "Templates",
+       "placeholder": "Example: folder 1/folder 2"
+      }
+     ]
+    },
+    {
+     "section": null,
+     "label": "Date format",
+     "controls": [
+      {
+       "type": "text",
+       "default": "",
+       "placeholder": "YYYY-MM-DD"
+      }
+     ]
+    },
+    {
+     "section": null,
+     "label": "Time format",
+     "controls": [
+      {
+       "type": "text",
+       "default": "",
+       "placeholder": "HH:mm"
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "id": "note-composer",
+   "label": "Note composer",
+   "group": "core-plugin options",
+   "settings": [
+    {
+     "section": null,
+     "label": "Text after extraction",
+     "controls": [
+      {
+       "type": "dropdown",
+       "default": "link",
+       "options": [
+        "link = Link to new file",
+        "embed = Embed new file",
+        "none = None"
+       ]
+      }
+     ]
+    },
+    {
+     "section": null,
+     "label": "Template file location",
+     "controls": [
+      {
+       "type": "file-picker",
+       "label": "file picker with clear button; default empty"
+      }
+     ]
+    },
+    {
+     "section": null,
+     "label": "Confirm file merge",
+     "controls": [
+      {
+       "type": "toggle",
+       "default": true
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "id": "command-palette",
+   "label": "Command palette",
+   "group": "core-plugin options",
+   "settings": [
+    {
+     "heading": "Pinned commands"
+    },
+    {
+     "section": "Pinned commands",
+     "label": "No commands found.",
+     "controls": []
+    }
+   ]
+  },
+  {
+   "id": "file-recovery",
+   "label": "File recovery",
+   "group": "core-plugin options",
+   "settings": [
+    {
+     "section": null,
+     "label": "Snapshot interval",
+     "controls": [
+      {
+       "type": "text",
+       "default": "5",
+       "placeholder": ""
+      }
+     ]
+    },
+    {
+     "section": null,
+     "label": "History length",
+     "controls": [
+      {
+       "type": "text",
+       "default": "7",
+       "placeholder": ""
+      }
+     ]
+    },
+    {
+     "section": null,
+     "label": "Snapshots",
+     "controls": [
+      {
+       "type": "button",
+       "label": "View"
+      }
+     ]
+    },
+    {
+     "section": null,
+     "label": "Clear history",
+     "controls": [
+      {
+       "type": "button",
+       "label": "Clear"
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "id": "zk-prefixer",
+   "label": "Unique note creator",
+   "group": "core-plugin options",
+   "settings": [
+    {
+     "section": null,
+     "label": "New file location",
+     "controls": [
+      {
+       "type": "text",
+       "default": "",
+       "placeholder": "Example: folder 1/folder 2"
+      }
+     ]
+    },
+    {
+     "section": null,
+     "label": "Template file location",
+     "controls": [
+      {
+       "type": "file-picker",
+       "label": "file picker with clear button; default empty"
+      }
+     ]
+    },
+    {
+     "section": null,
+     "label": "Unique prefix format",
+     "controls": [
+      {
+       "type": "text",
+       "default": "",
+       "placeholder": "YYYYMMDDHHmm"
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "id": "webviewer",
+   "label": "Web viewer",
+   "group": "core-plugin options",
+   "settings": [
+    {
+     "section": null,
+     "label": "Open external links",
+     "controls": [
+      {
+       "type": "toggle",
+       "default": true
+      }
+     ]
+    },
+    {
+     "section": null,
+     "label": "Homepage",
+     "controls": [
+      {
+       "type": "text",
+       "default": "",
+       "placeholder": ""
+      }
+     ]
+    },
+    {
+     "section": null,
+     "label": "Saved page folder",
+     "controls": [
+      {
+       "type": "text",
+       "default": "",
+       "placeholder": "Example: folder 1/folder 2"
+      }
+     ]
+    },
+    {
+     "section": null,
+     "label": "Search engine",
+     "controls": [
+      {
+       "type": "dropdown",
+       "default": "duckduckgo",
+       "options": [
+        "duckduckgo = DuckDuckGo",
+        "brave = Brave",
+        "bing = Bing",
+        "google = Google",
+        "custom = Custom"
+       ]
+      }
+     ]
+    },
+    {
+     "section": null,
+     "label": "Custom search engine",
+     "controls": [
+      {
+       "type": "text",
+       "default": "https://duckduckgo.com/?q=%s",
+       "placeholder": "https://duckduckgo.com/?q=%s"
+      }
+     ]
+    },
+    {
+     "section": null,
+     "label": "Enable ad blocker",
+     "controls": [
+      {
+       "type": "toggle",
+       "default": true
+      }
+     ]
+    },
+    {
+     "section": null,
+     "label": "Ad blocking rules",
+     "controls": [
+      {
+       "type": "textarea",
+       "default": "https://easylist.to/easylist/easylist.txt\nhttps://easylist.to/easylist/easyprivacy.txt",
+       "placeholder": ""
+      }
+     ]
+    },
+    {
+     "section": null,
+     "label": "Ad block update frequency",
+     "controls": [
+      {
+       "type": "slider",
+       "default": 4,
+       "min": 0,
+       "max": 24,
+       "step": "1"
+      }
+     ]
+    },
+    {
+     "section": null,
+     "label": "Web viewer data",
+     "controls": [
+      {
+       "type": "button",
+       "label": "Clear web viewer data"
+      }
+     ]
+    }
+   ]
+  }
+ ],
+ "configDefaults": {
+  "app.json": {
+   "alwaysUpdateLinks": false,
+   "spellcheck": true,
+   "readableLineLength": true,
+   "strictLineBreaks": false,
+   "useMarkdownLinks": false,
+   "autoPairBrackets": true,
+   "autoPairMarkdown": true,
+   "smartIndentList": true,
+   "foldHeading": true,
+   "foldIndent": true,
+   "showLineNumber": false,
+   "showIndentGuide": true,
+   "useTab": true,
+   "tabSize": 4,
+   "rightToLeft": false,
+   "autoConvertHtml": true,
+   "vimMode": false,
+   "livePreview": true,
+   "defaultViewMode": "source",
+   "propertiesInDocument": "visible",
+   "showUnsupportedFiles": false,
+   "attachmentFolderPath": "/",
+   "newFileLocation": "root",
+   "newFileFolderPath": "/",
+   "newLinkFormat": "shortest",
+   "userIgnoreFilters": null,
+   "promptDelete": true,
+   "trashOption": "system",
+   "deleteUnlinkedAttachments": "ask",
+   "openBehavior": "",
+   "focusNewTab": true,
+   "uriCallbacks": false,
+   "showInlineTitle": true,
+   "settingsPopoutWindow": true,
+   "mermaid": false,
+   "pdfExportSettings": {
+    "pageSize": "Letter",
+    "landscape": false,
+    "margin": "0",
+    "downscalePercent": 100
+   }
+  },
+  "appearance.json": {
+   "theme": "system (also \"obsidian\" = dark, \"moonstone\" = light)",
+   "accentColor": "",
+   "cssTheme": "",
+   "enabledCssSnippets": [],
+   "showViewHeader": true,
+   "showRibbon": true,
+   "nativeMenus": null,
+   "translucency": false,
+   "textFontFamily": "",
+   "interfaceFontFamily": "",
+   "monospaceFontFamily": "",
+   "baseFontSize": 16,
+   "baseFontSizeAction": false,
+   "slidingSidebar": true,
+   "floatingNavigation": true,
+   "autoFullScreen": true
+  },
+  "core-plugins.json": {
+   "file-explorer": true,
+   "global-search": true,
+   "switcher": true,
+   "graph": true,
+   "backlink": true,
+   "canvas": true,
+   "outgoing-link": true,
+   "tag-pane": true,
+   "footnotes": false,
+   "properties": true,
+   "page-preview": true,
+   "daily-notes": true,
+   "templates": true,
+   "note-composer": true,
+   "command-palette": true,
+   "slash-command": false,
+   "editor-status": true,
+   "bookmarks": true,
+   "zk-prefixer": false,
+   "random-note": false,
+   "outline": true,
+   "word-count": true,
+   "slides": false,
+   "audio-recorder": false,
+   "workspaces": false,
+   "file-recovery": true,
+   "publish": false,
+   "sync": true,
+   "bases": true,
+   "webviewer": false
+  },
+  "community-plugins.json": [],
+  "hotkeys.json": {
+   "<commandId>": [
+    {
+     "modifiers": [
+      "Mod",
+      "Shift"
+     ],
+     "key": "X"
+    }
+   ],
+   "note": "only overrides are stored; an empty array removes a default"
+  },
+  "types.json": {
+   "types": {
+    "aliases": "aliases",
+    "cssclasses": "multitext",
+    "tags": "tags"
+   },
+   "widgets": [
+    "text",
+    "multitext",
+    "number",
+    "checkbox",
+    "date",
+    "datetime",
+    "aliases",
+    "tags"
+   ]
+  },
+  "graph.json": {
+   "search": "",
+   "showTags": false,
+   "showAttachments": false,
+   "hideUnresolved": false,
+   "showOrphans": true,
+   "localJumps": 1,
+   "localBacklinks": true,
+   "localForelinks": true,
+   "localInterlinks": false,
+   "colorGroups": [],
+   "showArrow": false,
+   "textFadeMultiplier": 0,
+   "nodeSizeMultiplier": 1,
+   "lineSizeMultiplier": 1,
+   "centerStrength": 0.518713248970312,
+   "repelStrength": 10,
+   "linkStrength": 1,
+   "linkDistance": 250,
+   "scale": 1,
+   "close": "boolean (settings panel closed)",
+   "collapse-filter": "boolean",
+   "collapse-color-groups": "boolean",
+   "collapse-display": "boolean",
+   "collapse-forces": "boolean",
+   "note": "key set observed in a real graph.json; panel and section collapse defaults not verified"
+  },
+  "daily-notes.json": {
+   "format": "YYYY-MM-DD",
+   "folder": "",
+   "template": ""
+  },
+  "templates.json": {
+   "folder": "",
+   "dateFormat": "YYYY-MM-DD",
+   "timeFormat": "HH:mm"
+  },
+  "zk-prefixer.json": {
+   "format": "YYYYMMDDHHmm",
+   "folder": "",
+   "template": ""
+  },
+  "file-recovery.json": {
+   "intervalMinutes": 5,
+   "keepDays": 7
+  },
+  "switcher.json": {
+   "showExistingOnly": false,
+   "showAttachments": true,
+   "showAllFileTypes": false
+  },
+  "note-composer.json": {
+   "replacementText": "link",
+   "template": "",
+   "askBeforeMerging": true
+  },
+  "command-palette.json": {
+   "pinned": []
+  },
+  "backlink.json": {
+   "backlinkInDocument": false
+  },
+  "canvas.json": {
+   "newFileLocation": "root",
+   "defaultWheelBehavior": "pan",
+   "defaultModDragBehavior": "menu",
+   "cardNamesDisplay": "always",
+   "snapToGrid": true,
+   "snapToObjects": true,
+   "zoomThreshold": 0
+  },
+  "page-preview.json": "map of hover source -> \"require Ctrl\" boolean (see Page preview tab defaults)",
+  "webviewer.json": {
+   "openExternalURLs": true,
+   "homepage": "",
+   "searchEngine": "duckduckgo",
+   "enableAdblocking": true
+  },
+  "bookmarks.json": {
+   "items": [],
+   "itemTypes": [
+    "file",
+    "folder",
+    "search",
+    "heading",
+    "block",
+    "graph",
+    "url",
+    "group"
+   ]
+  },
+  "workspace.json": "layout tree, see docs/UI-SPEC.md and the report; never synced"
+ }
+}

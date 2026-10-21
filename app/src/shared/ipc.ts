@@ -14,6 +14,7 @@ export const IPC = {
   checkForUpdates: "bedrock:check-updates",
   setTitle: "bedrock:set-title",
   vaultList: "bedrock:vault-list",
+  pickFolder: "bedrock:pick-folder",
   // main -> renderer (send)
   windowStateChanged: "bedrock:window-state-changed",
   openPath: "bedrock:open-path",

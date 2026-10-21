@@ -1,0 +1,3208 @@
+{
+ "about": "Every command registered by Obsidian 1.14.4 desktop (Windows) with all 30 core plugins switched on, measured at runtime from app.commands. Facts only. \"Mod\" means Ctrl on Windows/Linux and Cmd on macOS. Commands with an empty defaultHotkeys list have no default hotkey. Basic text editing keys (undo, redo, arrows, Enter, Tab, Home/End, selection) are handled by the editor keymap, not by commands, and are not listed here.",
+ "measuredOn": "2026-10-21",
+ "appVersion": "1.14.4",
+ "installerVersion": "1.13.7",
+ "electron": "43.3.0",
+ "count": 227,
+ "withDefaultHotkey": 41,
+ "commands": [
+  {
+   "id": "app:decrease-font-size",
+   "name": "Decrease font size",
+   "group": "app",
+   "corePlugin": null,
+   "corePluginDefaultOn": null,
+   "needsActiveEditor": false,
+   "icon": null,
+   "defaultHotkeys": [],
+   "windows": [],
+   "mac": []
+  },
+  {
+   "id": "app:delete-file",
+   "name": "Delete current file",
+   "group": "app",
+   "corePlugin": null,
+   "corePluginDefaultOn": null,
+   "needsActiveEditor": false,
+   "icon": "lucide-trash-2",
+   "defaultHotkeys": [],
+   "windows": [],
+   "mac": []
+  },
+  {
+   "id": "app:go-back",
+   "name": "Navigate back",
+   "group": "app",
+   "corePlugin": null,
+   "corePluginDefaultOn": null,
+   "needsActiveEditor": false,
+   "icon": "lucide-arrow-left",
+   "defaultHotkeys": [
+    {
+     "modifiers": [
+      "Mod",
+      "Alt"
+     ],
+     "key": "ArrowLeft"
+    }
+   ],
+   "windows": [
+    "Ctrl + Alt + ArrowLeft"
+   ],
+   "mac": [
+    "Cmd + Option + ArrowLeft"
+   ]
+  },
+  {
+   "id": "app:go-forward",
+   "name": "Navigate forward",
+   "group": "app",
+   "corePlugin": null,
+   "corePluginDefaultOn": null,
+   "needsActiveEditor": false,
+   "icon": "lucide-arrow-right",
+   "defaultHotkeys": [
+    {
+     "modifiers": [
+      "Mod",
+      "Alt"
+     ],
+     "key": "ArrowRight"
+    }
+   ],
+   "windows": [
+    "Ctrl + Alt + ArrowRight"
+   ],
+   "mac": [
+    "Cmd + Option + ArrowRight"
+   ]
+  },
+  {
+   "id": "app:increase-font-size",
+   "name": "Increase font size",
+   "group": "app",
+   "corePlugin": null,
+   "corePluginDefaultOn": null,
+   "needsActiveEditor": false,
+   "icon": null,
+   "defaultHotkeys": [],
+   "windows": [],
+   "mac": []
+  },
+  {
+   "id": "app:migrate-frontmatter",
+   "name": "Format converter: Frontmatter migration",
+   "group": "app",
+   "corePlugin": null,
+   "corePluginDefaultOn": null,
+   "needsActiveEditor": false,
+   "icon": "lucide-binary",
+   "defaultHotkeys": [],
+   "windows": [],
+   "mac": []
+  },
+  {
+   "id": "app:open-another-vault",
+   "name": "Open vault...",
+   "group": "app",
+   "corePlugin": null,
+   "corePluginDefaultOn": null,
+   "needsActiveEditor": false,
+   "icon": "vault",
+   "defaultHotkeys": [],
+   "windows": [],
+   "mac": []
+  },
+  {
+   "id": "app:open-file",
+   "name": "Open file from outside the vault...",
+   "group": "app",
+   "corePlugin": null,
+   "corePluginDefaultOn": null,
+   "needsActiveEditor": false,
+   "icon": null,
+   "defaultHotkeys": [],
+   "windows": [],
+   "mac": []
+  },
+  {
+   "id": "app:open-help",
+   "name": "Open help",
+   "group": "app",
+   "corePlugin": null,
+   "corePluginDefaultOn": null,
+   "needsActiveEditor": false,
+   "icon": "question-mark-glyph",
+   "defaultHotkeys": [
+    {
+     "modifiers": [],
+     "key": "F1"
+    }
+   ],
+   "windows": [
+    "F1"
+   ],
+   "mac": [
+    "F1"
+   ]
+  },
+  {
+   "id": "app:open-sandbox-vault",
+   "name": "Open sandbox vault",
+   "group": "app",
+   "corePlugin": null,
+   "corePluginDefaultOn": null,
+   "needsActiveEditor": false,
+   "icon": null,
+   "defaultHotkeys": [],
+   "windows": [],
+   "mac": []
+  },
+  {
+   "id": "app:open-settings",
+   "name": "Open settings",
+   "group": "app",
+   "corePlugin": null,
+   "corePluginDefaultOn": null,
+   "needsActiveEditor": false,
+   "icon": "lucide-settings",
+   "defaultHotkeys": [
+    {
+     "modifiers": [
+      "Mod"
+     ],
+     "key": ","
+    }
+   ],
+   "windows": [
+    "Ctrl + ,"
+   ],
+   "mac": [
+    "Cmd + ,"
+   ]
+  },
+  {
+   "id": "app:open-vault",
+   "name": "Manage vaults",
+   "group": "app",
+   "corePlugin": null,
+   "corePluginDefaultOn": null,
+   "needsActiveEditor": false,
+   "icon": "vault",
+   "defaultHotkeys": [],
+   "windows": [],
+   "mac": []
+  },
+  {
+   "id": "app:reload",
+   "name": "Reload app without saving",
+   "group": "app",
+   "corePlugin": null,
+   "corePluginDefaultOn": null,
+   "needsActiveEditor": false,
+   "icon": "lucide-rotate-ccw",
+   "defaultHotkeys": [],
+   "windows": [],
+   "mac": []
+  },
+  {
+   "id": "app:show-debug-info",
+   "name": "Show debug info",
+   "group": "app",
+   "corePlugin": null,
+   "corePluginDefaultOn": null,
+   "needsActiveEditor": false,
+   "icon": null,
+   "defaultHotkeys": [],
+   "windows": [],
+   "mac": []
+  },
+  {
+   "id": "app:show-release-notes",
+   "name": "Show release notes",
+   "group": "app",
+   "corePlugin": null,
+   "corePluginDefaultOn": null,
+   "needsActiveEditor": false,
+   "icon": null,
+   "defaultHotkeys": [],
+   "windows": [],
+   "mac": []
+  },
+  {
+   "id": "app:switch-vault",
+   "name": "Change vault...",
+   "group": "app",
+   "corePlugin": null,
+   "corePluginDefaultOn": null,
+   "needsActiveEditor": false,
+   "icon": "vault",
+   "defaultHotkeys": [],
+   "windows": [],
+   "mac": []
+  },
+  {
+   "id": "app:toggle-default-new-pane-mode",
+   "name": "Toggle default mode for new tabs",
+   "group": "app",
+   "corePlugin": null,
+   "corePluginDefaultOn": null,
+   "needsActiveEditor": false,
+   "icon": null,
+   "defaultHotkeys": [],
+   "windows": [],
+   "mac": []
+  },
+  {
+   "id": "app:toggle-left-sidebar",
+   "name": "Toggle left sidebar",
+   "group": "app",
+   "corePlugin": null,
+   "corePluginDefaultOn": null,
+   "needsActiveEditor": false,
+   "icon": null,
+   "defaultHotkeys": [],
+   "windows": [],
+   "mac": []
+  },
+  {
+   "id": "app:toggle-ribbon",
+   "name": "Toggle ribbon",
+   "group": "app",
+   "corePlugin": null,
+   "corePluginDefaultOn": null,
+   "needsActiveEditor": false,
+   "icon": null,
+   "defaultHotkeys": [],
+   "windows": [],
+   "mac": []
+  },
+  {
+   "id": "app:toggle-right-sidebar",
+   "name": "Toggle right sidebar",
+   "group": "app",
+   "corePlugin": null,
+   "corePluginDefaultOn": null,
+   "needsActiveEditor": false,
+   "icon": null,
+   "defaultHotkeys": [],
+   "windows": [],
+   "mac": []
+  },
+  {
+   "id": "audio-recorder:start",
+   "name": "Audio recorder: Start recording audio",
+   "group": "audio-recorder",
+   "corePlugin": "audio-recorder",
+   "corePluginDefaultOn": false,
+   "needsActiveEditor": false,
+   "icon": "lucide-play-circle",
+   "defaultHotkeys": [],
+   "windows": [],
+   "mac": []
+  },
+  {
+   "id": "audio-recorder:stop",
+   "name": "Audio recorder: Stop recording audio",
+   "group": "audio-recorder",
+   "corePlugin": "audio-recorder",
+   "corePluginDefaultOn": false,
+   "needsActiveEditor": false,
+   "icon": "lucide-stop-circle",
+   "defaultHotkeys": [],
+   "windows": [],
+   "mac": []
+  },
+  {
+   "id": "backlink:open",
+   "name": "Backlinks: Show backlinks",
+   "group": "backlink",
+   "corePlugin": "backlink",
+   "corePluginDefaultOn": true,
+   "needsActiveEditor": false,
+   "icon": "lucide-link",
+   "defaultHotkeys": [],
+   "windows": [],
+   "mac": []
+  },
+  {
+   "id": "backlink:open-backlinks",
+   "name": "Backlinks: Open backlinks for the current note",
+   "group": "backlink",
+   "corePlugin": "backlink",
+   "corePluginDefaultOn": true,
+   "needsActiveEditor": false,
+   "icon": "lucide-link",
+   "defaultHotkeys": [],
+   "windows": [],
+   "mac": []
+  },
+  {
+   "id": "backlink:toggle-backlinks-in-document",
+   "name": "Backlinks: Toggle backlinks in document",
+   "group": "backlink",
+   "corePlugin": "backlink",
+   "corePluginDefaultOn": true,
+   "needsActiveEditor": false,
+   "icon": "lucide-link",
+   "defaultHotkeys": [],
+   "windows": [],
+   "mac": []
+  },
+  {
+   "id": "bases:add-item",
+   "name": "Bases: Add item",
+   "group": "bases",
+   "corePlugin": "bases",
+   "corePluginDefaultOn": true,
+   "needsActiveEditor": false,
+   "icon": "lucide-shapes",
+   "defaultHotkeys": [],
+   "windows": [],
+   "mac": []
+  },
+  {
+   "id": "bases:add-view",
+   "name": "Bases: Add view",
+   "group": "bases",
+   "corePlugin": "bases",
+   "corePluginDefaultOn": true,
+   "needsActiveEditor": false,
+   "icon": "lucide-shapes",
+   "defaultHotkeys": [],
+   "windows": [],
+   "mac": []
+  },
+  {
+   "id": "bases:change-view",
+   "name": "Bases: Switch view...",
+   "group": "bases",
+   "corePlugin": "bases",
+   "corePluginDefaultOn": true,
+   "needsActiveEditor": false,
+   "icon": "lucide-shapes",
+   "defaultHotkeys": [],
+   "windows": [],
+   "mac": []
+  },
+  {
+   "id": "bases:copy-table",
+   "name": "Bases: Copy table to clipboard",
+   "group": "bases",
+   "corePlugin": "bases",
+   "corePluginDefaultOn": true,
+   "needsActiveEditor": false,
+   "icon": "lucide-copy",
+   "defaultHotkeys": [],
+   "windows": [],
+   "mac": []
+  },
+  {
+   "id": "bases:insert",
+   "name": "Bases: Insert new base",
+   "group": "bases",
+   "corePlugin": "bases",
+   "corePluginDefaultOn": true,
+   "needsActiveEditor": true,
+   "icon": "lucide-layout-list",
+   "defaultHotkeys": [],
+   "windows": [],
+   "mac": []
+  },
+  {
+   "id": "bases:new-file",
+   "name": "Bases: Create new base",
+   "group": "bases",
+   "corePlugin": "bases",
+   "corePluginDefaultOn": true,
+   "needsActiveEditor": false,
+   "icon": "lucide-layout-list",
+   "defaultHotkeys": [],
+   "windows": [],
+   "mac": []
+  },
+  {
+   "id": "bookmarks:bookmark-all-tabs",
+   "name": "Bookmarks: Bookmark all tabs...",
+   "group": "bookmarks",
+   "corePlugin": "bookmarks",
+   "corePluginDefaultOn": true,
+   "needsActiveEditor": false,
+   "icon": "lucide-bookmark-plus",
+   "defaultHotkeys": [],
+   "windows": [],
+   "mac": []
+  },
+  {
+   "id": "bookmarks:bookmark-current-heading",
+   "name": "Bookmarks: Bookmark heading under cursor...",
+   "group": "bookmarks",
+   "corePlugin": "bookmarks",
+   "corePluginDefaultOn": true,
+   "needsActiveEditor": true,
+   "icon": "lucide-bookmark-plus",
+   "defaultHotkeys": [],
+   "windows": [],
+   "mac": []
+  },
+  {
+   "id": "bookmarks:bookmark-current-search",
+   "name": "Bookmarks: Bookmark current search...",
+   "group": "bookmarks",
+   "corePlugin": "bookmarks",
+   "corePluginDefaultOn": true,
+   "needsActiveEditor": false,
+   "icon": "lucide-search",
+   "defaultHotkeys": [],
+   "windows": [],
+   "mac": []
+  },
+  {
+   "id": "bookmarks:bookmark-current-section",
+   "name": "Bookmarks: Bookmark block under cursor...",
+   "group": "bookmarks",
+   "corePlugin": "bookmarks",
+   "corePluginDefaultOn": true,
+   "needsActiveEditor": true,
+   "icon": "lucide-bookmark-plus",
+   "defaultHotkeys": [],
+   "windows": [],
+   "mac": []
+  },
+  {
+   "id": "bookmarks:bookmark-current-view",
+   "name": "Bookmarks: Bookmark...",
+   "group": "bookmarks",
+   "corePlugin": "bookmarks",
+   "corePluginDefaultOn": true,
+   "needsActiveEditor": false,
+   "icon": "lucide-bookmark-plus",
+   "defaultHotkeys": [],
+   "windows": [],
+   "mac": []
+  },
+  {
+   "id": "bookmarks:open",
+   "name": "Bookmarks: Show bookmarks",
+   "group": "bookmarks",
+   "corePlugin": "bookmarks",
+   "corePluginDefaultOn": true,
+   "needsActiveEditor": false,
+   "icon": "lucide-bookmark",
+   "defaultHotkeys": [],
+   "windows": [],
+   "mac": []
+  },
+  {
+   "id": "bookmarks:unbookmark-current-view",
+   "name": "Bookmarks: Remove bookmark for the current file",
+   "group": "bookmarks",
+   "corePlugin": "bookmarks",
+   "corePluginDefaultOn": true,
+   "needsActiveEditor": false,
+   "icon": "lucide-bookmark-plus",
+   "defaultHotkeys": [],
+   "windows": [],
+   "mac": []
+  },
+  {
+   "id": "canvas:convert-to-file",
+   "name": "Canvas: Convert to file...",
+   "group": "canvas",
+   "corePlugin": "canvas",
+   "corePluginDefaultOn": true,
+   "needsActiveEditor": false,
+   "icon": "lucide-file-input",
+   "defaultHotkeys": [],
+   "windows": [],
+   "mac": []
+  },
+  {
+   "id": "canvas:export-as-image",
+   "name": "Canvas: Export as image",
+   "group": "canvas",
+   "corePlugin": "canvas",
+   "corePluginDefaultOn": true,
+   "needsActiveEditor": false,
+   "icon": "lucide-image",
+   "defaultHotkeys": [],
+   "windows": [],
+   "mac": []
+  },
+  {
+   "id": "canvas:jump-to-group",
+   "name": "Canvas: Jump to group",
+   "group": "canvas",
+   "corePlugin": "canvas",
+   "corePluginDefaultOn": true,
+   "needsActiveEditor": false,
+   "icon": "lucide-move",
+   "defaultHotkeys": [],
+   "windows": [],
+   "mac": []
+  },
+  {
+   "id": "canvas:new-file",
+   "name": "Canvas: Create new canvas",
+   "group": "canvas",
+   "corePlugin": "canvas",
+   "corePluginDefaultOn": true,
+   "needsActiveEditor": false,
+   "icon": "lucide-layout-dashboard",
+   "defaultHotkeys": [],
+   "windows": [],
+   "mac": []
+  },
+  {
+   "id": "command-palette:open",
+   "name": "Command palette: Open command palette",
+   "group": "command-palette",
+   "corePlugin": "command-palette",
+   "corePluginDefaultOn": true,
+   "needsActiveEditor": false,
+   "icon": "lucide-terminal-square",
+   "defaultHotkeys": [
+    {
+     "modifiers": [
+      "Mod"
+     ],
+     "key": "P"
+    }
+   ],
+   "windows": [
+    "Ctrl + P"
+   ],
+   "mac": [
+    "Cmd + P"
+   ]
+  },
+  {
+   "id": "daily-notes",
+   "name": "Daily notes: Open today's daily note",
+   "group": "daily-notes",
+   "corePlugin": "daily-notes",
+   "corePluginDefaultOn": true,
+   "needsActiveEditor": false,
+   "icon": "lucide-calendar-days",
+   "defaultHotkeys": [],
+   "windows": [],
+   "mac": []
+  },
+  {
+   "id": "daily-notes:goto-next",
+   "name": "Daily notes: Open next daily note",
+   "group": "daily-notes",
+   "corePlugin": "daily-notes",
+   "corePluginDefaultOn": true,
+   "needsActiveEditor": false,
+   "icon": "lucide-calendar-plus",
+   "defaultHotkeys": [],
+   "windows": [],
+   "mac": []
+  },
+  {
+   "id": "daily-notes:goto-prev",
+   "name": "Daily notes: Open previous daily note",
+   "group": "daily-notes",
+   "corePlugin": "daily-notes",
+   "corePluginDefaultOn": true,
+   "needsActiveEditor": false,
+   "icon": "lucide-calendar-minus",
+   "defaultHotkeys": [],
+   "windows": [],
+   "mac": []
+  },
+  {
+   "id": "editor:add-cursor-above",
+   "name": "Add cursor above",
+   "group": "editor",
+   "corePlugin": null,
+   "corePluginDefaultOn": null,
+   "needsActiveEditor": true,
+   "icon": "lucide-mouse-pointer-click",
+   "defaultHotkeys": [],
+   "windows": [],
+   "mac": []
+  },
+  {
+   "id": "editor:add-cursor-below",
+   "name": "Add cursor below",
+   "group": "editor",
+   "corePlugin": null,
+   "corePluginDefaultOn": null,
+   "needsActiveEditor": true,
+   "icon": "lucide-mouse-pointer-click",
+   "defaultHotkeys": [],
+   "windows": [],
+   "mac": []
+  },
+  {
+   "id": "editor:attach-file",
+   "name": "Insert attachment",
+   "group": "editor",
+   "corePlugin": null,
+   "corePluginDefaultOn": null,
+   "needsActiveEditor": true,
+   "icon": "lucide-paperclip",
+   "defaultHotkeys": [],
+   "windows": [],
+   "mac": []
+  },
+  {
+   "id": "editor:clear-formatting",
+   "name": "Clear formatting",
+   "group": "editor",
+   "corePlugin": null,
+   "corePluginDefaultOn": null,
+   "needsActiveEditor": true,
+   "icon": "lucide-eraser",
+   "defaultHotkeys": [],
+   "windows": [],
+   "mac": []
+  },
+  {
+   "id": "editor:context-menu",
+   "name": "Show context menu under cursor",
+   "group": "editor",
+   "corePlugin": null,
+   "corePluginDefaultOn": null,
+   "needsActiveEditor": true,
+   "icon": "lucide-menu",
+   "defaultHotkeys": [],
+   "windows": [],
+   "mac": []
+  },
+  {
+   "id": "editor:cycle-list-checklist",
+   "name": "Cycle bullet/checkbox",
+   "group": "editor",
+   "corePlugin": null,
+   "corePluginDefaultOn": null,
+   "needsActiveEditor": true,
+   "icon": "lucide-check-square",
+   "defaultHotkeys": [],
+   "windows": [],
+   "mac": []
+  },
+  {
+   "id": "editor:delete-paragraph",
+   "name": "Delete paragraph",
+   "group": "editor",
+   "corePlugin": null,
+   "corePluginDefaultOn": null,
+   "needsActiveEditor": true,
+   "icon": "lucide-scissors",
+   "defaultHotkeys": [
+    {
+     "modifiers": [
+      "Mod"
+     ],
+     "key": "D"
+    }
+   ],
+   "windows": [
+    "Ctrl + D"
+   ],
+   "mac": [
+    "Cmd + D"
+   ]
+  },
+  {
+   "id": "editor:download-attachments",
+   "name": "Download attachments for current file",
+   "group": "editor",
+   "corePlugin": null,
+   "corePluginDefaultOn": null,
+   "needsActiveEditor": false,
+   "icon": null,
+   "defaultHotkeys": [],
+   "windows": [],
+   "mac": []
+  },
+  {
+   "id": "editor:focus",
+   "name": "Focus on last note",
+   "group": "editor",
+   "corePlugin": null,
+   "corePluginDefaultOn": null,
+   "needsActiveEditor": false,
+   "icon": null,
+   "defaultHotkeys": [],
+   "windows": [],
+   "mac": []
+  },
+  {
+   "id": "editor:focus-bottom",
+   "name": "Focus on tab group below",
+   "group": "editor",
+   "corePlugin": null,
+   "corePluginDefaultOn": null,
+   "needsActiveEditor": false,
+   "icon": null,
+   "defaultHotkeys": [],
+   "windows": [],
+   "mac": []
+  },
+  {
+   "id": "editor:focus-left",
+   "name": "Focus on tab group to the left",
+   "group": "editor",
+   "corePlugin": null,
+   "corePluginDefaultOn": null,
+   "needsActiveEditor": false,
+   "icon": null,
+   "defaultHotkeys": [],
+   "windows": [],
+   "mac": []
+  },
+  {
+   "id": "editor:focus-right",
+   "name": "Focus on tab group to the right",
+   "group": "editor",
+   "corePlugin": null,
+   "corePluginDefaultOn": null,
+   "needsActiveEditor": false,
+   "icon": null,
+   "defaultHotkeys": [],
+   "windows": [],
+   "mac": []
+  },
+  {
+   "id": "editor:focus-top",
+   "name": "Focus on tab group above",
+   "group": "editor",
+   "corePlugin": null,
+   "corePluginDefaultOn": null,
+   "needsActiveEditor": false,
+   "icon": null,
+   "defaultHotkeys": [],
+   "windows": [],
+   "mac": []
+  },
+  {
+   "id": "editor:fold-all",
+   "name": "Fold all headings and lists",
+   "group": "editor",
+   "corePlugin": null,
+   "corePluginDefaultOn": null,
+   "needsActiveEditor": true,
+   "icon": "lucide-minimize-2",
+   "defaultHotkeys": [],
+   "windows": [],
+   "mac": []
+  },
+  {
+   "id": "editor:fold-less",
+   "name": "Fold less",
+   "group": "editor",
+   "corePlugin": null,
+   "corePluginDefaultOn": null,
+   "needsActiveEditor": true,
+   "icon": "lucide-unfold-vertical",
+   "defaultHotkeys": [],
+   "windows": [],
+   "mac": []
+  },
+  {
+   "id": "editor:fold-more",
+   "name": "Fold more",
+   "group": "editor",
+   "corePlugin": null,
+   "corePluginDefaultOn": null,
+   "needsActiveEditor": true,
+   "icon": "lucide-fold-vertical",
+   "defaultHotkeys": [],
+   "windows": [],
+   "mac": []
+  },
+  {
+   "id": "editor:follow-link",
+   "name": "Follow link under cursor",
+   "group": "editor",
+   "corePlugin": null,
+   "corePluginDefaultOn": null,
+   "needsActiveEditor": false,
+   "icon": "lucide-link",
+   "defaultHotkeys": [
+    {
+     "modifiers": [
+      "Alt"
+     ],
+     "key": "Enter"
+    }
+   ],
+   "windows": [
+    "Alt + Enter"
+   ],
+   "mac": [
+    "Option + Enter"
+   ]
+  },
+  {
+   "id": "editor:indent-list",
+   "name": "Indent list item",
+   "group": "editor",
+   "corePlugin": null,
+   "corePluginDefaultOn": null,
+   "needsActiveEditor": true,
+   "icon": "lucide-indent",
+   "defaultHotkeys": [],
+   "windows": [],
+   "mac": []
+  },
+  {
+   "id": "editor:insert-callout",
+   "name": "Insert callout",
+   "group": "editor",
+   "corePlugin": null,
+   "corePluginDefaultOn": null,
+   "needsActiveEditor": true,
+   "icon": "lucide-quote",
+   "defaultHotkeys": [],
+   "windows": [],
+   "mac": []
+  },
+  {
+   "id": "editor:insert-codeblock",
+   "name": "Insert code block",
+   "group": "editor",
+   "corePlugin": null,
+   "corePluginDefaultOn": null,
+   "needsActiveEditor": true,
+   "icon": "lucide-code",
+   "defaultHotkeys": [],
+   "windows": [],
+   "mac": []
+  },
+  {
+   "id": "editor:insert-embed",
+   "name": "Add embed",
+   "group": "editor",
+   "corePlugin": null,
+   "corePluginDefaultOn": null,
+   "needsActiveEditor": true,
+   "icon": "lucide-sticky-note",
+   "defaultHotkeys": [],
+   "windows": [],
+   "mac": []
+  },
+  {
+   "id": "editor:insert-footnote",
+   "name": "Insert footnote",
+   "group": "editor",
+   "corePlugin": null,
+   "corePluginDefaultOn": null,
+   "needsActiveEditor": true,
+   "icon": "lucide-file-signature",
+   "defaultHotkeys": [],
+   "windows": [],
+   "mac": []
+  },
+  {
+   "id": "editor:insert-horizontal-rule",
+   "name": "Insert horizontal rule",
+   "group": "editor",
+   "corePlugin": null,
+   "corePluginDefaultOn": null,
+   "needsActiveEditor": true,
+   "icon": "lucide-minus",
+   "defaultHotkeys": [],
+   "windows": [],
+   "mac": []
+  },
+  {
+   "id": "editor:insert-link",
+   "name": "Insert Markdown link",
+   "group": "editor",
+   "corePlugin": null,
+   "corePluginDefaultOn": null,
+   "needsActiveEditor": true,
+   "icon": "lucide-link",
+   "defaultHotkeys": [
+    {
+     "modifiers": [
+      "Mod"
+     ],
+     "key": "K"
+    }
+   ],
+   "windows": [
+    "Ctrl + K"
+   ],
+   "mac": [
+    "Cmd + K"
+   ]
+  },
+  {
+   "id": "editor:insert-mathblock",
+   "name": "Insert math block",
+   "group": "editor",
+   "corePlugin": null,
+   "corePluginDefaultOn": null,
+   "needsActiveEditor": true,
+   "icon": "lucide-sigma-square",
+   "defaultHotkeys": [],
+   "windows": [],
+   "mac": []
+  },
+  {
+   "id": "editor:insert-table",
+   "name": "Insert table",
+   "group": "editor",
+   "corePlugin": null,
+   "corePluginDefaultOn": null,
+   "needsActiveEditor": true,
+   "icon": "lucide-table",
+   "defaultHotkeys": [],
+   "windows": [],
+   "mac": []
+  },
+  {
+   "id": "editor:insert-tag",
+   "name": "Add tag",
+   "group": "editor",
+   "corePlugin": null,
+   "corePluginDefaultOn": null,
+   "needsActiveEditor": true,
+   "icon": "lucide-tag",
+   "defaultHotkeys": [],
+   "windows": [],
+   "mac": []
+  },
+  {
+   "id": "editor:insert-wikilink",
+   "name": "Add internal link",
+   "group": "editor",
+   "corePlugin": null,
+   "corePluginDefaultOn": null,
+   "needsActiveEditor": true,
+   "icon": "bracket-glyph",
+   "defaultHotkeys": [],
+   "windows": [],
+   "mac": []
+  },
+  {
+   "id": "editor:open-link-in-new-leaf",
+   "name": "Open link under cursor in new tab",
+   "group": "editor",
+   "corePlugin": null,
+   "corePluginDefaultOn": null,
+   "needsActiveEditor": false,
+   "icon": "lucide-link",
+   "defaultHotkeys": [
+    {
+     "modifiers": [
+      "Mod"
+     ],
+     "key": "Enter"
+    }
+   ],
+   "windows": [
+    "Ctrl + Enter"
+   ],
+   "mac": [
+    "Cmd + Enter"
+   ]
+  },
+  {
+   "id": "editor:open-link-in-new-split",
+   "name": "Open link under cursor to the right",
+   "group": "editor",
+   "corePlugin": null,
+   "corePluginDefaultOn": null,
+   "needsActiveEditor": false,
+   "icon": "lucide-link",
+   "defaultHotkeys": [
+    {
+     "modifiers": [
+      "Mod",
+      "Alt"
+     ],
+     "key": "Enter"
+    }
+   ],
+   "windows": [
+    "Ctrl + Alt + Enter"
+   ],
+   "mac": [
+    "Cmd + Option + Enter"
+   ]
+  },
+  {
+   "id": "editor:open-link-in-new-window",
+   "name": "Open link under cursor in new window",
+   "group": "editor",
+   "corePlugin": null,
+   "corePluginDefaultOn": null,
+   "needsActiveEditor": false,
+   "icon": "lucide-link",
+   "defaultHotkeys": [
+    {
+     "modifiers": [
+      "Mod",
+      "Alt",
+      "Shift"
+     ],
+     "key": "Enter"
+    }
+   ],
+   "windows": [
+    "Ctrl + Alt + Shift + Enter"
+   ],
+   "mac": [
+    "Cmd + Option + Shift + Enter"
+   ]
+  },
+  {
+   "id": "editor:open-search",
+   "name": "Search current file",
+   "group": "editor",
+   "corePlugin": null,
+   "corePluginDefaultOn": null,
+   "needsActiveEditor": false,
+   "icon": "lucide-search",
+   "defaultHotkeys": [
+    {
+     "modifiers": [
+      "Mod"
+     ],
+     "key": "F"
+    }
+   ],
+   "windows": [
+    "Ctrl + F"
+   ],
+   "mac": [
+    "Cmd + F"
+   ]
+  },
+  {
+   "id": "editor:open-search-replace",
+   "name": "Search & replace in current file",
+   "group": "editor",
+   "corePlugin": null,
+   "corePluginDefaultOn": null,
+   "needsActiveEditor": false,
+   "icon": "lucide-search",
+   "defaultHotkeys": [
+    {
+     "modifiers": [
+      "Mod"
+     ],
+     "key": "H"
+    }
+   ],
+   "windows": [
+    "Ctrl + H"
+   ],
+   "mac": [
+    "Cmd + H"
+   ]
+  },
+  {
+   "id": "editor:rename-heading",
+   "name": "Rename this heading...",
+   "group": "editor",
+   "corePlugin": null,
+   "corePluginDefaultOn": null,
+   "needsActiveEditor": true,
+   "icon": "lucide-edit-3",
+   "defaultHotkeys": [],
+   "windows": [],
+   "mac": []
+  },
+  {
+   "id": "editor:save-file",
+   "name": "Save current file",
+   "group": "editor",
+   "corePlugin": null,
+   "corePluginDefaultOn": null,
+   "needsActiveEditor": false,
+   "icon": null,
+   "defaultHotkeys": [
+    {
+     "modifiers": [
+      "Mod"
+     ],
+     "key": "S"
+    }
+   ],
+   "windows": [
+    "Ctrl + S"
+   ],
+   "mac": [
+    "Cmd + S"
+   ]
+  },
+  {
+   "id": "editor:set-heading",
+   "name": "Toggle heading",
+   "group": "editor",
+   "corePlugin": null,
+   "corePluginDefaultOn": null,
+   "needsActiveEditor": true,
+   "icon": "heading-glyph",
+   "defaultHotkeys": [],
+   "windows": [],
+   "mac": []
+  },
+  {
+   "id": "editor:set-heading-0",
+   "name": "Remove heading",
+   "group": "editor",
+   "corePlugin": null,
+   "corePluginDefaultOn": null,
+   "needsActiveEditor": true,
+   "icon": "heading-glyph",
+   "defaultHotkeys": [],
+   "windows": [],
+   "mac": []
+  },
+  {
+   "id": "editor:set-heading-1",
+   "name": "Set as heading 1",
+   "group": "editor",
+   "corePlugin": null,
+   "corePluginDefaultOn": null,
+   "needsActiveEditor": true,
+   "icon": "heading-1",
+   "defaultHotkeys": [],
+   "windows": [],
+   "mac": []
+  },
+  {
+   "id": "editor:set-heading-2",
+   "name": "Set as heading 2",
+   "group": "editor",
+   "corePlugin": null,
+   "corePluginDefaultOn": null,
+   "needsActiveEditor": true,
+   "icon": "heading-2",
+   "defaultHotkeys": [],
+   "windows": [],
+   "mac": []
+  },
+  {
+   "id": "editor:set-heading-3",
+   "name": "Set as heading 3",
+   "group": "editor",
+   "corePlugin": null,
+   "corePluginDefaultOn": null,
+   "needsActiveEditor": true,
+   "icon": "heading-3",
+   "defaultHotkeys": [],
+   "windows": [],
+   "mac": []
+  },
+  {
+   "id": "editor:set-heading-4",
+   "name": "Set as heading 4",
+   "group": "editor",
+   "corePlugin": null,
+   "corePluginDefaultOn": null,
+   "needsActiveEditor": true,
+   "icon": "heading-4",
+   "defaultHotkeys": [],
+   "windows": [],
+   "mac": []
+  },
+  {
+   "id": "editor:set-heading-5",
+   "name": "Set as heading 5",
+   "group": "editor",
+   "corePlugin": null,
+   "corePluginDefaultOn": null,
+   "needsActiveEditor": true,
+   "icon": "heading-5",
+   "defaultHotkeys": [],
+   "windows": [],
+   "mac": []
+  },
+  {
+   "id": "editor:set-heading-6",
+   "name": "Set as heading 6",
+   "group": "editor",
+   "corePlugin": null,
+   "corePluginDefaultOn": null,
+   "needsActiveEditor": true,
+   "icon": "heading-6",
+   "defaultHotkeys": [],
+   "windows": [],
+   "mac": []
+  },
+  {
+   "id": "editor:swap-line-down",
+   "name": "Move line down",
+   "group": "editor",
+   "corePlugin": null,
+   "corePluginDefaultOn": null,
+   "needsActiveEditor": true,
+   "icon": "lucide-corner-right-down",
+   "defaultHotkeys": [],
+   "windows": [],
+   "mac": []
+  },
+  {
+   "id": "editor:swap-line-up",
+   "name": "Move line up",
+   "group": "editor",
+   "corePlugin": null,
+   "corePluginDefaultOn": null,
+   "needsActiveEditor": true,
+   "icon": "lucide-corner-right-up",
+   "defaultHotkeys": [],
+   "windows": [],
+   "mac": []
+  },
+  {
+   "id": "editor:table-col-after",
+   "name": "Table: Add column to the right",
+   "group": "editor",
+   "corePlugin": null,
+   "corePluginDefaultOn": null,
+   "needsActiveEditor": true,
+   "icon": "lucide-panel-right-close",
+   "defaultHotkeys": [],
+   "windows": [],
+   "mac": []
+  },
+  {
+   "id": "editor:table-col-align-center",
+   "name": "Table: Align center",
+   "group": "editor",
+   "corePlugin": null,
+   "corePluginDefaultOn": null,
+   "needsActiveEditor": true,
+   "icon": "lucide-align-center",
+   "defaultHotkeys": [],
+   "windows": [],
+   "mac": []
+  },
+  {
+   "id": "editor:table-col-align-left",
+   "name": "Table: Align left",
+   "group": "editor",
+   "corePlugin": null,
+   "corePluginDefaultOn": null,
+   "needsActiveEditor": true,
+   "icon": "lucide-align-left",
+   "defaultHotkeys": [],
+   "windows": [],
+   "mac": []
+  },
+  {
+   "id": "editor:table-col-align-right",
+   "name": "Table: Align right",
+   "group": "editor",
+   "corePlugin": null,
+   "corePluginDefaultOn": null,
+   "needsActiveEditor": true,
+   "icon": "lucide-align-right",
+   "defaultHotkeys": [],
+   "windows": [],
+   "mac": []
+  },
+  {
+   "id": "editor:table-col-before",
+   "name": "Table: Add column to the left",
+   "group": "editor",
+   "corePlugin": null,
+   "corePluginDefaultOn": null,
+   "needsActiveEditor": true,
+   "icon": "lucide-panel-left-close",
+   "defaultHotkeys": [],
+   "windows": [],
+   "mac": []
+  },
+  {
+   "id": "editor:table-col-copy",
+   "name": "Table: Duplicate column",
+   "group": "editor",
+   "corePlugin": null,
+   "corePluginDefaultOn": null,
+   "needsActiveEditor": true,
+   "icon": "lucide-copy",
+   "defaultHotkeys": [],
+   "windows": [],
+   "mac": []
+  },
+  {
+   "id": "editor:table-col-delete",
+   "name": "Table: Delete column",
+   "group": "editor",
+   "corePlugin": null,
+   "corePluginDefaultOn": null,
+   "needsActiveEditor": true,
+   "icon": "lucide-trash-2",
+   "defaultHotkeys": [],
+   "windows": [],
+   "mac": []
+  },
+  {
+   "id": "editor:table-col-left",
+   "name": "Table: Move column left",
+   "group": "editor",
+   "corePlugin": null,
+   "corePluginDefaultOn": null,
+   "needsActiveEditor": true,
+   "icon": "lucide-arrow-left",
+   "defaultHotkeys": [],
+   "windows": [],
+   "mac": []
+  },
+  {
+   "id": "editor:table-col-right",
+   "name": "Table: Move column right",
+   "group": "editor",
+   "corePlugin": null,
+   "corePluginDefaultOn": null,
+   "needsActiveEditor": true,
+   "icon": "lucide-arrow-right",
+   "defaultHotkeys": [],
+   "windows": [],
+   "mac": []
+  },
+  {
+   "id": "editor:table-row-after",
+   "name": "Table: Add row below",
+   "group": "editor",
+   "corePlugin": null,
+   "corePluginDefaultOn": null,
+   "needsActiveEditor": true,
+   "icon": "lucide-panel-bottom-close",
+   "defaultHotkeys": [],
+   "windows": [],
+   "mac": []
+  },
+  {
+   "id": "editor:table-row-before",
+   "name": "Table: Add row above",
+   "group": "editor",
+   "corePlugin": null,
+   "corePluginDefaultOn": null,
+   "needsActiveEditor": true,
+   "icon": "lucide-panel-top-close",
+   "defaultHotkeys": [],
+   "windows": [],
+   "mac": []
+  },
+  {
+   "id": "editor:table-row-copy",
+   "name": "Table: Duplicate row",
+   "group": "editor",
+   "corePlugin": null,
+   "corePluginDefaultOn": null,
+   "needsActiveEditor": true,
+   "icon": "lucide-copy",
+   "defaultHotkeys": [],
+   "windows": [],
+   "mac": []
+  },
+  {
+   "id": "editor:table-row-delete",
+   "name": "Table: Delete row",
+   "group": "editor",
+   "corePlugin": null,
+   "corePluginDefaultOn": null,
+   "needsActiveEditor": true,
+   "icon": "lucide-trash-2",
+   "defaultHotkeys": [],
+   "windows": [],
+   "mac": []
+  },
+  {
+   "id": "editor:table-row-down",
+   "name": "Table: Move row down",
+   "group": "editor",
+   "corePlugin": null,
+   "corePluginDefaultOn": null,
+   "needsActiveEditor": true,
+   "icon": "lucide-arrow-down",
+   "defaultHotkeys": [],
+   "windows": [],
+   "mac": []
+  },
+  {
+   "id": "editor:table-row-up",
+   "name": "Table: Move row up",
+   "group": "editor",
+   "corePlugin": null,
+   "corePluginDefaultOn": null,
+   "needsActiveEditor": true,
+   "icon": "lucide-arrow-up",
+   "defaultHotkeys": [],
+   "windows": [],
+   "mac": []
+  },
+  {
+   "id": "editor:toggle-blockquote",
+   "name": "Toggle blockquote",
+   "group": "editor",
+   "corePlugin": null,
+   "corePluginDefaultOn": null,
+   "needsActiveEditor": true,
+   "icon": "lucide-quote",
+   "defaultHotkeys": [],
+   "windows": [],
+   "mac": []
+  },
+  {
+   "id": "editor:toggle-bold",
+   "name": "Toggle bold",
+   "group": "editor",
+   "corePlugin": null,
+   "corePluginDefaultOn": null,
+   "needsActiveEditor": true,
+   "icon": "lucide-bold",
+   "defaultHotkeys": [
+    {
+     "modifiers": [
+      "Mod"
+     ],
+     "key": "B"
+    }
+   ],
+   "windows": [
+    "Ctrl + B"
+   ],
+   "mac": [
+    "Cmd + B"
+   ]
+  },
+  {
+   "id": "editor:toggle-bullet-list",
+   "name": "Toggle bullet list",
+   "group": "editor",
+   "corePlugin": null,
+   "corePluginDefaultOn": null,
+   "needsActiveEditor": true,
+   "icon": "lucide-list",
+   "defaultHotkeys": [],
+   "windows": [],
+   "mac": []
+  },
+  {
+   "id": "editor:toggle-checklist-status",
+   "name": "Toggle checkbox status",
+   "group": "editor",
+   "corePlugin": null,
+   "corePluginDefaultOn": null,
+   "needsActiveEditor": true,
+   "icon": "lucide-check-square",
+   "defaultHotkeys": [
+    {
+     "modifiers": [
+      "Mod"
+     ],
+     "key": "l"
+    }
+   ],
+   "windows": [
+    "Ctrl + L"
+   ],
+   "mac": [
+    "Cmd + L"
+   ]
+  },
+  {
+   "id": "editor:toggle-code",
+   "name": "Toggle code",
+   "group": "editor",
+   "corePlugin": null,
+   "corePluginDefaultOn": null,
+   "needsActiveEditor": true,
+   "icon": "lucide-code-2",
+   "defaultHotkeys": [],
+   "windows": [],
+   "mac": []
+  },
+  {
+   "id": "editor:toggle-comments",
+   "name": "Toggle comment",
+   "group": "editor",
+   "corePlugin": null,
+   "corePluginDefaultOn": null,
+   "needsActiveEditor": true,
+   "icon": "lucide-percent",
+   "defaultHotkeys": [
+    {
+     "modifiers": [
+      "Mod"
+     ],
+     "key": "/"
+    }
+   ],
+   "windows": [
+    "Ctrl + /"
+   ],
+   "mac": [
+    "Cmd + /"
+   ]
+  },
+  {
+   "id": "editor:toggle-fold",
+   "name": "Toggle fold on the current line",
+   "group": "editor",
+   "corePlugin": null,
+   "corePluginDefaultOn": null,
+   "needsActiveEditor": true,
+   "icon": "lucide-diff",
+   "defaultHotkeys": [],
+   "windows": [],
+   "mac": []
+  },
+  {
+   "id": "editor:toggle-fold-properties",
+   "name": "Toggle fold properties in current file",
+   "group": "editor",
+   "corePlugin": null,
+   "corePluginDefaultOn": null,
+   "needsActiveEditor": false,
+   "icon": "lucide-diff",
+   "defaultHotkeys": [],
+   "windows": [],
+   "mac": []
+  },
+  {
+   "id": "editor:toggle-highlight",
+   "name": "Toggle highlight",
+   "group": "editor",
+   "corePlugin": null,
+   "corePluginDefaultOn": null,
+   "needsActiveEditor": true,
+   "icon": "lucide-highlighter",
+   "defaultHotkeys": [],
+   "windows": [],
+   "mac": []
+  },
+  {
+   "id": "editor:toggle-highlight-blue",
+   "name": "Toggle blue highlight",
+   "group": "editor",
+   "corePlugin": null,
+   "corePluginDefaultOn": null,
+   "needsActiveEditor": true,
+   "icon": "lucide-highlighter",
+   "defaultHotkeys": [],
+   "windows": [],
+   "mac": []
+  },
+  {
+   "id": "editor:toggle-highlight-green",
+   "name": "Toggle green highlight",
+   "group": "editor",
+   "corePlugin": null,
+   "corePluginDefaultOn": null,
+   "needsActiveEditor": true,
+   "icon": "lucide-highlighter",
+   "defaultHotkeys": [],
+   "windows": [],
+   "mac": []
+  },
+  {
+   "id": "editor:toggle-highlight-orange",
+   "name": "Toggle orange highlight",
+   "group": "editor",
+   "corePlugin": null,
+   "corePluginDefaultOn": null,
+   "needsActiveEditor": true,
+   "icon": "lucide-highlighter",
+   "defaultHotkeys": [],
+   "windows": [],
+   "mac": []
+  },
+  {
+   "id": "editor:toggle-highlight-purple",
+   "name": "Toggle purple highlight",
+   "group": "editor",
+   "corePlugin": null,
+   "corePluginDefaultOn": null,
+   "needsActiveEditor": true,
+   "icon": "lucide-highlighter",
+   "defaultHotkeys": [],
+   "windows": [],
+   "mac": []
+  },
+  {
+   "id": "editor:toggle-highlight-red",
+   "name": "Toggle red highlight",
+   "group": "editor",
+   "corePlugin": null,
+   "corePluginDefaultOn": null,
+   "needsActiveEditor": true,
+   "icon": "lucide-highlighter",
+   "defaultHotkeys": [],
+   "windows": [],
+   "mac": []
+  },
+  {
+   "id": "editor:toggle-highlight-yellow",
+   "name": "Toggle yellow highlight",
+   "group": "editor",
+   "corePlugin": null,
+   "corePluginDefaultOn": null,
+   "needsActiveEditor": true,
+   "icon": "lucide-highlighter",
+   "defaultHotkeys": [],
+   "windows": [],
+   "mac": []
+  },
+  {
+   "id": "editor:toggle-inline-math",
+   "name": "Toggle inline math",
+   "group": "editor",
+   "corePlugin": null,
+   "corePluginDefaultOn": null,
+   "needsActiveEditor": true,
+   "icon": "lucide-sigma",
+   "defaultHotkeys": [],
+   "windows": [],
+   "mac": []
+  },
+  {
+   "id": "editor:toggle-italics",
+   "name": "Toggle italic",
+   "group": "editor",
+   "corePlugin": null,
+   "corePluginDefaultOn": null,
+   "needsActiveEditor": true,
+   "icon": "lucide-italic",
+   "defaultHotkeys": [
+    {
+     "modifiers": [
+      "Mod"
+     ],
+     "key": "I"
+    }
+   ],
+   "windows": [
+    "Ctrl + I"
+   ],
+   "mac": [
+    "Cmd + I"
+   ]
+  },
+  {
+   "id": "editor:toggle-line-numbers",
+   "name": "Toggle line numbers",
+   "group": "editor",
+   "corePlugin": null,
+   "corePluginDefaultOn": null,
+   "needsActiveEditor": false,
+   "icon": "lucide-list-ordered",
+   "defaultHotkeys": [],
+   "windows": [],
+   "mac": []
+  },
+  {
+   "id": "editor:toggle-numbered-list",
+   "name": "Toggle numbered list",
+   "group": "editor",
+   "corePlugin": null,
+   "corePluginDefaultOn": null,
+   "needsActiveEditor": true,
+   "icon": "lucide-list-ordered",
+   "defaultHotkeys": [],
+   "windows": [],
+   "mac": []
+  },
+  {
+   "id": "editor:toggle-readable-line-length",
+   "name": "Toggle readable line length",
+   "group": "editor",
+   "corePlugin": null,
+   "corePluginDefaultOn": null,
+   "needsActiveEditor": false,
+   "icon": "lucide-ruler",
+   "defaultHotkeys": [],
+   "windows": [],
+   "mac": []
+  },
+  {
+   "id": "editor:toggle-source",
+   "name": "Toggle Live Preview/Source mode",
+   "group": "editor",
+   "corePlugin": null,
+   "corePluginDefaultOn": null,
+   "needsActiveEditor": false,
+   "icon": "lucide-code-2",
+   "defaultHotkeys": [],
+   "windows": [],
+   "mac": []
+  },
+  {
+   "id": "editor:toggle-spellcheck",
+   "name": "Toggle spellcheck",
+   "group": "editor",
+   "corePlugin": null,
+   "corePluginDefaultOn": null,
+   "needsActiveEditor": false,
+   "icon": null,
+   "defaultHotkeys": [],
+   "windows": [],
+   "mac": []
+  },
+  {
+   "id": "editor:toggle-strikethrough",
+   "name": "Toggle strikethrough",
+   "group": "editor",
+   "corePlugin": null,
+   "corePluginDefaultOn": null,
+   "needsActiveEditor": true,
+   "icon": "lucide-strikethrough",
+   "defaultHotkeys": [],
+   "windows": [],
+   "mac": []
+  },
+  {
+   "id": "editor:unfold-all",
+   "name": "Unfold all headings and lists",
+   "group": "editor",
+   "corePlugin": null,
+   "corePluginDefaultOn": null,
+   "needsActiveEditor": true,
+   "icon": "lucide-maximize-2",
+   "defaultHotkeys": [],
+   "windows": [],
+   "mac": []
+  },
+  {
+   "id": "editor:unindent-list",
+   "name": "Unindent list item",
+   "group": "editor",
+   "corePlugin": null,
+   "corePluginDefaultOn": null,
+   "needsActiveEditor": true,
+   "icon": "lucide-outdent",
+   "defaultHotkeys": [],
+   "windows": [],
+   "mac": []
+  },
+  {
+   "id": "file-explorer:duplicate-file",
+   "name": "Make a copy of the current file",
+   "group": "file-explorer",
+   "corePlugin": "file-explorer",
+   "corePluginDefaultOn": true,
+   "needsActiveEditor": false,
+   "icon": "lucide-files",
+   "defaultHotkeys": [],
+   "windows": [],
+   "mac": []
+  },
+  {
+   "id": "file-explorer:move-file",
+   "name": "Move current file to another folder",
+   "group": "file-explorer",
+   "corePlugin": "file-explorer",
+   "corePluginDefaultOn": true,
+   "needsActiveEditor": false,
+   "icon": "lucide-folder-tree",
+   "defaultHotkeys": [],
+   "windows": [],
+   "mac": []
+  },
+  {
+   "id": "file-explorer:new-file",
+   "name": "Create new note",
+   "group": "file-explorer",
+   "corePlugin": "file-explorer",
+   "corePluginDefaultOn": true,
+   "needsActiveEditor": false,
+   "icon": "lucide-file-plus",
+   "defaultHotkeys": [
+    {
+     "modifiers": [
+      "Mod"
+     ],
+     "key": "N"
+    }
+   ],
+   "windows": [
+    "Ctrl + N"
+   ],
+   "mac": [
+    "Cmd + N"
+   ]
+  },
+  {
+   "id": "file-explorer:new-file-in-current-tab",
+   "name": "Create new note in current tab",
+   "group": "file-explorer",
+   "corePlugin": "file-explorer",
+   "corePluginDefaultOn": true,
+   "needsActiveEditor": false,
+   "icon": "lucide-file-plus",
+   "defaultHotkeys": [],
+   "windows": [],
+   "mac": []
+  },
+  {
+   "id": "file-explorer:new-file-in-new-pane",
+   "name": "Create note to the right",
+   "group": "file-explorer",
+   "corePlugin": "file-explorer",
+   "corePluginDefaultOn": true,
+   "needsActiveEditor": false,
+   "icon": "lucide-file-plus",
+   "defaultHotkeys": [
+    {
+     "modifiers": [
+      "Mod",
+      "Shift"
+     ],
+     "key": "N"
+    }
+   ],
+   "windows": [
+    "Ctrl + Shift + N"
+   ],
+   "mac": [
+    "Cmd + Shift + N"
+   ]
+  },
+  {
+   "id": "file-explorer:new-folder",
+   "name": "Files: Create new folder",
+   "group": "file-explorer",
+   "corePlugin": "file-explorer",
+   "corePluginDefaultOn": true,
+   "needsActiveEditor": false,
+   "icon": "lucide-folder-plus",
+   "defaultHotkeys": [],
+   "windows": [],
+   "mac": []
+  },
+  {
+   "id": "file-explorer:open",
+   "name": "Files: Show file explorer",
+   "group": "file-explorer",
+   "corePlugin": "file-explorer",
+   "corePluginDefaultOn": true,
+   "needsActiveEditor": false,
+   "icon": "lucide-files",
+   "defaultHotkeys": [],
+   "windows": [],
+   "mac": []
+  },
+  {
+   "id": "file-explorer:reveal-active-file",
+   "name": "Files: Reveal current file in navigation",
+   "group": "file-explorer",
+   "corePlugin": "file-explorer",
+   "corePluginDefaultOn": true,
+   "needsActiveEditor": false,
+   "icon": "lucide-navigation",
+   "defaultHotkeys": [],
+   "windows": [],
+   "mac": []
+  },
+  {
+   "id": "file-recovery:open",
+   "name": "File recovery: Open local history",
+   "group": "file-recovery",
+   "corePlugin": "file-recovery",
+   "corePluginDefaultOn": true,
+   "needsActiveEditor": false,
+   "icon": "lucide-rotate-ccw",
+   "defaultHotkeys": [],
+   "windows": [],
+   "mac": []
+  },
+  {
+   "id": "footnotes:open",
+   "name": "Footnotes view: Show footnotes",
+   "group": "footnotes",
+   "corePlugin": "footnotes",
+   "corePluginDefaultOn": false,
+   "needsActiveEditor": false,
+   "icon": "lucide-file-signature",
+   "defaultHotkeys": [],
+   "windows": [],
+   "mac": []
+  },
+  {
+   "id": "global-search:open",
+   "name": "Search: Search in all files",
+   "group": "global-search",
+   "corePlugin": "global-search",
+   "corePluginDefaultOn": true,
+   "needsActiveEditor": false,
+   "icon": "lucide-search",
+   "defaultHotkeys": [
+    {
+     "modifiers": [
+      "Mod",
+      "Shift"
+     ],
+     "key": "F"
+    }
+   ],
+   "windows": [
+    "Ctrl + Shift + F"
+   ],
+   "mac": [
+    "Cmd + Shift + F"
+   ]
+  },
+  {
+   "id": "graph:animate",
+   "name": "Graph view: Start graph timelapse animation",
+   "group": "graph",
+   "corePlugin": "graph",
+   "corePluginDefaultOn": true,
+   "needsActiveEditor": false,
+   "icon": "lucide-wand",
+   "defaultHotkeys": [],
+   "windows": [],
+   "mac": []
+  },
+  {
+   "id": "graph:open",
+   "name": "Graph view: Open graph view",
+   "group": "graph",
+   "corePlugin": "graph",
+   "corePluginDefaultOn": true,
+   "needsActiveEditor": false,
+   "icon": "lucide-git-fork",
+   "defaultHotkeys": [
+    {
+     "modifiers": [
+      "Mod"
+     ],
+     "key": "G"
+    }
+   ],
+   "windows": [
+    "Ctrl + G"
+   ],
+   "mac": [
+    "Cmd + G"
+   ]
+  },
+  {
+   "id": "graph:open-local",
+   "name": "Graph view: Open local graph",
+   "group": "graph",
+   "corePlugin": "graph",
+   "corePluginDefaultOn": true,
+   "needsActiveEditor": false,
+   "icon": "lucide-git-fork",
+   "defaultHotkeys": [],
+   "windows": [],
+   "mac": []
+  },
+  {
+   "id": "insert-current-date",
+   "name": "Templates: Insert current date",
+   "group": "insert-current-date",
+   "corePlugin": "templates",
+   "corePluginDefaultOn": true,
+   "needsActiveEditor": true,
+   "icon": "lucide-calendar-days",
+   "defaultHotkeys": [],
+   "windows": [],
+   "mac": []
+  },
+  {
+   "id": "insert-current-time",
+   "name": "Templates: Insert current time",
+   "group": "insert-current-time",
+   "corePlugin": "templates",
+   "corePluginDefaultOn": true,
+   "needsActiveEditor": true,
+   "icon": "lucide-clock",
+   "defaultHotkeys": [],
+   "windows": [],
+   "mac": []
+  },
+  {
+   "id": "insert-template",
+   "name": "Templates: Insert template",
+   "group": "insert-template",
+   "corePlugin": "templates",
+   "corePluginDefaultOn": true,
+   "needsActiveEditor": false,
+   "icon": "lucide-copy",
+   "defaultHotkeys": [],
+   "windows": [],
+   "mac": []
+  },
+  {
+   "id": "insert-unique-link",
+   "name": "Unique note creator: Add unique internal link",
+   "group": "insert-unique-link",
+   "corePlugin": null,
+   "corePluginDefaultOn": null,
+   "needsActiveEditor": true,
+   "icon": "lucide-link",
+   "defaultHotkeys": [],
+   "windows": [],
+   "mac": []
+  },
+  {
+   "id": "markdown:add-alias",
+   "name": "Add alias",
+   "group": "markdown",
+   "corePlugin": null,
+   "corePluginDefaultOn": null,
+   "needsActiveEditor": false,
+   "icon": "lucide-forward",
+   "defaultHotkeys": [],
+   "windows": [],
+   "mac": []
+  },
+  {
+   "id": "markdown:add-metadata-property",
+   "name": "Add file property",
+   "group": "markdown",
+   "corePlugin": null,
+   "corePluginDefaultOn": null,
+   "needsActiveEditor": false,
+   "icon": "lucide-plus-circle",
+   "defaultHotkeys": [
+    {
+     "modifiers": [
+      "Mod"
+     ],
+     "key": ";"
+    }
+   ],
+   "windows": [
+    "Ctrl + ;"
+   ],
+   "mac": [
+    "Cmd + ;"
+   ]
+  },
+  {
+   "id": "markdown:clear-metadata-properties",
+   "name": "Clear file properties",
+   "group": "markdown",
+   "corePlugin": null,
+   "corePluginDefaultOn": null,
+   "needsActiveEditor": false,
+   "icon": "lucide-package-x",
+   "defaultHotkeys": [],
+   "windows": [],
+   "mac": []
+  },
+  {
+   "id": "markdown:toggle-preview",
+   "name": "Toggle reading view",
+   "group": "markdown",
+   "corePlugin": null,
+   "corePluginDefaultOn": null,
+   "needsActiveEditor": false,
+   "icon": "lucide-book-open",
+   "defaultHotkeys": [
+    {
+     "modifiers": [
+      "Mod"
+     ],
+     "key": "E"
+    }
+   ],
+   "windows": [
+    "Ctrl + E"
+   ],
+   "mac": [
+    "Cmd + E"
+   ]
+  },
+  {
+   "id": "mobile:quick-action",
+   "name": "Configure mobile Quick Action",
+   "group": "mobile",
+   "corePlugin": null,
+   "corePluginDefaultOn": null,
+   "needsActiveEditor": false,
+   "icon": "lucide-terminal-square",
+   "defaultHotkeys": [],
+   "windows": [],
+   "mac": []
+  },
+  {
+   "id": "note-composer:extract-heading",
+   "name": "Note composer: Extract this heading...",
+   "group": "note-composer",
+   "corePlugin": "note-composer",
+   "corePluginDefaultOn": true,
+   "needsActiveEditor": true,
+   "icon": "lucide-scissors",
+   "defaultHotkeys": [],
+   "windows": [],
+   "mac": []
+  },
+  {
+   "id": "note-composer:merge-file",
+   "name": "Note composer: Merge current file with another file...",
+   "group": "note-composer",
+   "corePlugin": "note-composer",
+   "corePluginDefaultOn": true,
+   "needsActiveEditor": false,
+   "icon": "lucide-git-merge",
+   "defaultHotkeys": [],
+   "windows": [],
+   "mac": []
+  },
+  {
+   "id": "note-composer:split-file",
+   "name": "Note composer: Extract current selection...",
+   "group": "note-composer",
+   "corePlugin": "note-composer",
+   "corePluginDefaultOn": true,
+   "needsActiveEditor": true,
+   "icon": "lucide-scissors",
+   "defaultHotkeys": [],
+   "windows": [],
+   "mac": []
+  },
+  {
+   "id": "open-with-default-app:open",
+   "name": "Open in default app",
+   "group": "open-with-default-app",
+   "corePlugin": null,
+   "corePluginDefaultOn": null,
+   "needsActiveEditor": false,
+   "icon": "lucide-arrow-up-right",
+   "defaultHotkeys": [],
+   "windows": [],
+   "mac": []
+  },
+  {
+   "id": "open-with-default-app:show",
+   "name": "Show in system explorer",
+   "group": "open-with-default-app",
+   "corePlugin": null,
+   "corePluginDefaultOn": null,
+   "needsActiveEditor": false,
+   "icon": "lucide-files",
+   "defaultHotkeys": [],
+   "windows": [],
+   "mac": []
+  },
+  {
+   "id": "outgoing-links:open",
+   "name": "Outgoing links: Show outgoing links",
+   "group": "outgoing-links",
+   "corePlugin": "outgoing-link",
+   "corePluginDefaultOn": true,
+   "needsActiveEditor": false,
+   "icon": "lucide-link",
+   "defaultHotkeys": [],
+   "windows": [],
+   "mac": []
+  },
+  {
+   "id": "outgoing-links:open-for-current",
+   "name": "Outgoing links: Open outgoing links for the current file",
+   "group": "outgoing-links",
+   "corePlugin": "outgoing-link",
+   "corePluginDefaultOn": true,
+   "needsActiveEditor": false,
+   "icon": "lucide-link",
+   "defaultHotkeys": [],
+   "windows": [],
+   "mac": []
+  },
+  {
+   "id": "outline:open",
+   "name": "Outline: Show outline",
+   "group": "outline",
+   "corePlugin": "outline",
+   "corePluginDefaultOn": true,
+   "needsActiveEditor": false,
+   "icon": "lucide-list",
+   "defaultHotkeys": [],
+   "windows": [],
+   "mac": []
+  },
+  {
+   "id": "outline:open-for-current",
+   "name": "Outline: Open outline of the current file",
+   "group": "outline",
+   "corePlugin": "outline",
+   "corePluginDefaultOn": true,
+   "needsActiveEditor": false,
+   "icon": "lucide-list",
+   "defaultHotkeys": [],
+   "windows": [],
+   "mac": []
+  },
+  {
+   "id": "properties:open",
+   "name": "Properties view: Show all properties",
+   "group": "properties",
+   "corePlugin": "properties",
+   "corePluginDefaultOn": true,
+   "needsActiveEditor": false,
+   "icon": "lucide-archive",
+   "defaultHotkeys": [],
+   "windows": [],
+   "mac": []
+  },
+  {
+   "id": "properties:open-local",
+   "name": "Properties view: Show file properties",
+   "group": "properties",
+   "corePlugin": "properties",
+   "corePluginDefaultOn": true,
+   "needsActiveEditor": false,
+   "icon": "lucide-info",
+   "defaultHotkeys": [],
+   "windows": [],
+   "mac": []
+  },
+  {
+   "id": "publish:open-in-live-site",
+   "name": "Publish: Open in live site",
+   "group": "publish",
+   "corePlugin": "publish",
+   "corePluginDefaultOn": false,
+   "needsActiveEditor": false,
+   "icon": "lucide-globe",
+   "defaultHotkeys": [],
+   "windows": [],
+   "mac": []
+  },
+  {
+   "id": "publish:publish-file",
+   "name": "Publish: Publish current file",
+   "group": "publish",
+   "corePlugin": "publish",
+   "corePluginDefaultOn": false,
+   "needsActiveEditor": false,
+   "icon": "lucide-send",
+   "defaultHotkeys": [],
+   "windows": [],
+   "mac": []
+  },
+  {
+   "id": "publish:view-changes",
+   "name": "Publish: Publish changes...",
+   "group": "publish",
+   "corePlugin": "publish",
+   "corePluginDefaultOn": false,
+   "needsActiveEditor": false,
+   "icon": "lucide-send",
+   "defaultHotkeys": [],
+   "windows": [],
+   "mac": []
+  },
+  {
+   "id": "random-note",
+   "name": "Random note: Open random note",
+   "group": "random-note",
+   "corePlugin": "random-note",
+   "corePluginDefaultOn": false,
+   "needsActiveEditor": false,
+   "icon": "dice-glyph",
+   "defaultHotkeys": [],
+   "windows": [],
+   "mac": []
+  },
+  {
+   "id": "slides:start",
+   "name": "Slides: Start presentation",
+   "group": "slides",
+   "corePlugin": "slides",
+   "corePluginDefaultOn": false,
+   "needsActiveEditor": false,
+   "icon": "lucide-monitor",
+   "defaultHotkeys": [],
+   "windows": [],
+   "mac": []
+  },
+  {
+   "id": "switcher:open",
+   "name": "Quick switcher: Open quick switcher",
+   "group": "switcher",
+   "corePlugin": "switcher",
+   "corePluginDefaultOn": true,
+   "needsActiveEditor": false,
+   "icon": "lucide-navigation",
+   "defaultHotkeys": [
+    {
+     "modifiers": [
+      "Mod"
+     ],
+     "key": "O"
+    }
+   ],
+   "windows": [
+    "Ctrl + O"
+   ],
+   "mac": [
+    "Cmd + O"
+   ]
+  },
+  {
+   "id": "sync:open-sync-log",
+   "name": "Sync: Open activity log",
+   "group": "sync",
+   "corePlugin": "sync",
+   "corePluginDefaultOn": true,
+   "needsActiveEditor": false,
+   "icon": "lucide-align-left",
+   "defaultHotkeys": [],
+   "windows": [],
+   "mac": []
+  },
+  {
+   "id": "sync:open-sync-view",
+   "name": "Sync: Show Sync history",
+   "group": "sync",
+   "corePlugin": "sync",
+   "corePluginDefaultOn": true,
+   "needsActiveEditor": false,
+   "icon": "lucide-rotate-ccw",
+   "defaultHotkeys": [],
+   "windows": [],
+   "mac": []
+  },
+  {
+   "id": "sync:setup",
+   "name": "Sync: Set up Sync",
+   "group": "sync",
+   "corePlugin": "sync",
+   "corePluginDefaultOn": true,
+   "needsActiveEditor": false,
+   "icon": "lucide-settings",
+   "defaultHotkeys": [],
+   "windows": [],
+   "mac": []
+  },
+  {
+   "id": "sync:view-version-history",
+   "name": "Sync: Open version history for the current file",
+   "group": "sync",
+   "corePlugin": "sync",
+   "corePluginDefaultOn": true,
+   "needsActiveEditor": false,
+   "icon": "lucide-history",
+   "defaultHotkeys": [],
+   "windows": [],
+   "mac": []
+  },
+  {
+   "id": "tag-pane:open",
+   "name": "Tags view: Show tags",
+   "group": "tag-pane",
+   "corePlugin": "tag-pane",
+   "corePluginDefaultOn": true,
+   "needsActiveEditor": false,
+   "icon": "lucide-tag",
+   "defaultHotkeys": [],
+   "windows": [],
+   "mac": []
+  },
+  {
+   "id": "theme:switch",
+   "name": "Change theme...",
+   "group": "theme",
+   "corePlugin": null,
+   "corePluginDefaultOn": null,
+   "needsActiveEditor": false,
+   "icon": null,
+   "defaultHotkeys": [],
+   "windows": [],
+   "mac": []
+  },
+  {
+   "id": "theme:toggle-light-dark",
+   "name": "Toggle light/dark mode",
+   "group": "theme",
+   "corePlugin": null,
+   "corePluginDefaultOn": null,
+   "needsActiveEditor": false,
+   "icon": null,
+   "defaultHotkeys": [],
+   "windows": [],
+   "mac": []
+  },
+  {
+   "id": "webviewer:focus-address-bar",
+   "name": "Web viewer: Focus address bar",
+   "group": "webviewer",
+   "corePlugin": "webviewer",
+   "corePluginDefaultOn": false,
+   "needsActiveEditor": false,
+   "icon": "text-cursor-input",
+   "defaultHotkeys": [],
+   "windows": [],
+   "mac": []
+  },
+  {
+   "id": "webviewer:open",
+   "name": "Web viewer: Open web viewer",
+   "group": "webviewer",
+   "corePlugin": "webviewer",
+   "corePluginDefaultOn": false,
+   "needsActiveEditor": false,
+   "icon": null,
+   "defaultHotkeys": [],
+   "windows": [],
+   "mac": []
+  },
+  {
+   "id": "webviewer:open-history",
+   "name": "Web viewer: Show history",
+   "group": "webviewer",
+   "corePlugin": "webviewer",
+   "corePluginDefaultOn": false,
+   "needsActiveEditor": false,
+   "icon": "lucide-clock",
+   "defaultHotkeys": [],
+   "windows": [],
+   "mac": []
+  },
+  {
+   "id": "webviewer:save-to-vault",
+   "name": "Web viewer: Save to vault",
+   "group": "webviewer",
+   "corePlugin": "webviewer",
+   "corePluginDefaultOn": false,
+   "needsActiveEditor": false,
+   "icon": "lucide-file-down",
+   "defaultHotkeys": [],
+   "windows": [],
+   "mac": []
+  },
+  {
+   "id": "webviewer:search",
+   "name": "Web viewer: Search the web",
+   "group": "webviewer",
+   "corePlugin": "webviewer",
+   "corePluginDefaultOn": false,
+   "needsActiveEditor": false,
+   "icon": "search",
+   "defaultHotkeys": [],
+   "windows": [],
+   "mac": []
+  },
+  {
+   "id": "webviewer:toggle-reader-mode",
+   "name": "Web viewer: Toggle reader mode",
+   "group": "webviewer",
+   "corePlugin": "webviewer",
+   "corePluginDefaultOn": false,
+   "needsActiveEditor": false,
+   "icon": "glasses",
+   "defaultHotkeys": [],
+   "windows": [],
+   "mac": []
+  },
+  {
+   "id": "webviewer:zoom-in",
+   "name": "Web viewer: Zoom in",
+   "group": "webviewer",
+   "corePlugin": "webviewer",
+   "corePluginDefaultOn": false,
+   "needsActiveEditor": false,
+   "icon": "zoom-in",
+   "defaultHotkeys": [],
+   "windows": [],
+   "mac": []
+  },
+  {
+   "id": "webviewer:zoom-out",
+   "name": "Web viewer: Zoom out",
+   "group": "webviewer",
+   "corePlugin": "webviewer",
+   "corePluginDefaultOn": false,
+   "needsActiveEditor": false,
+   "icon": "zoom-in",
+   "defaultHotkeys": [],
+   "windows": [],
+   "mac": []
+  },
+  {
+   "id": "webviewer:zoom-reset",
+   "name": "Web viewer: Reset zoom",
+   "group": "webviewer",
+   "corePlugin": "webviewer",
+   "corePluginDefaultOn": false,
+   "needsActiveEditor": false,
+   "icon": "rotate-cw",
+   "defaultHotkeys": [],
+   "windows": [],
+   "mac": []
+  },
+  {
+   "id": "window:reset-zoom",
+   "name": "Reset zoom",
+   "group": "window",
+   "corePlugin": null,
+   "corePluginDefaultOn": null,
+   "needsActiveEditor": false,
+   "icon": null,
+   "defaultHotkeys": [],
+   "windows": [],
+   "mac": []
+  },
+  {
+   "id": "window:toggle-always-on-top",
+   "name": "Toggle window always on top",
+   "group": "window",
+   "corePlugin": null,
+   "corePluginDefaultOn": null,
+   "needsActiveEditor": false,
+   "icon": null,
+   "defaultHotkeys": [],
+   "windows": [],
+   "mac": []
+  },
+  {
+   "id": "window:zoom-in",
+   "name": "Zoom in",
+   "group": "window",
+   "corePlugin": null,
+   "corePluginDefaultOn": null,
+   "needsActiveEditor": false,
+   "icon": null,
+   "defaultHotkeys": [],
+   "windows": [],
+   "mac": []
+  },
+  {
+   "id": "window:zoom-out",
+   "name": "Zoom out",
+   "group": "window",
+   "corePlugin": null,
+   "corePluginDefaultOn": null,
+   "needsActiveEditor": false,
+   "icon": null,
+   "defaultHotkeys": [],
+   "windows": [],
+   "mac": []
+  },
+  {
+   "id": "workspace:close",
+   "name": "Close current tab",
+   "group": "workspace",
+   "corePlugin": null,
+   "corePluginDefaultOn": null,
+   "needsActiveEditor": false,
+   "icon": "lucide-x",
+   "defaultHotkeys": [
+    {
+     "modifiers": [
+      "Mod"
+     ],
+     "key": "W"
+    }
+   ],
+   "windows": [
+    "Ctrl + W"
+   ],
+   "mac": [
+    "Cmd + W"
+   ]
+  },
+  {
+   "id": "workspace:close-others",
+   "name": "Close all other tabs",
+   "group": "workspace",
+   "corePlugin": null,
+   "corePluginDefaultOn": null,
+   "needsActiveEditor": false,
+   "icon": "lucide-x",
+   "defaultHotkeys": [],
+   "windows": [],
+   "mac": []
+  },
+  {
+   "id": "workspace:close-others-tab-group",
+   "name": "Close others in tab group",
+   "group": "workspace",
+   "corePlugin": null,
+   "corePluginDefaultOn": null,
+   "needsActiveEditor": false,
+   "icon": "lucide-x",
+   "defaultHotkeys": [],
+   "windows": [],
+   "mac": []
+  },
+  {
+   "id": "workspace:close-tab-group",
+   "name": "Close this tab group",
+   "group": "workspace",
+   "corePlugin": null,
+   "corePluginDefaultOn": null,
+   "needsActiveEditor": false,
+   "icon": "lucide-x",
+   "defaultHotkeys": [],
+   "windows": [],
+   "mac": []
+  },
+  {
+   "id": "workspace:close-window",
+   "name": "Close window",
+   "group": "workspace",
+   "corePlugin": null,
+   "corePluginDefaultOn": null,
+   "needsActiveEditor": false,
+   "icon": "lucide-x",
+   "defaultHotkeys": [
+    {
+     "modifiers": [
+      "Mod",
+      "Shift"
+     ],
+     "key": "W"
+    }
+   ],
+   "windows": [
+    "Ctrl + Shift + W"
+   ],
+   "mac": [
+    "Cmd + Shift + W"
+   ]
+  },
+  {
+   "id": "workspace:copy-full-path",
+   "name": "Copy current file path from system root",
+   "group": "workspace",
+   "corePlugin": null,
+   "corePluginDefaultOn": null,
+   "needsActiveEditor": false,
+   "icon": "lucide-hard-drive",
+   "defaultHotkeys": [],
+   "windows": [],
+   "mac": []
+  },
+  {
+   "id": "workspace:copy-path",
+   "name": "Copy current file path from vault folder",
+   "group": "workspace",
+   "corePlugin": null,
+   "corePluginDefaultOn": null,
+   "needsActiveEditor": false,
+   "icon": "lucide-copy",
+   "defaultHotkeys": [],
+   "windows": [],
+   "mac": []
+  },
+  {
+   "id": "workspace:copy-url",
+   "name": "Copy Obsidian URL for current file",
+   "group": "workspace",
+   "corePlugin": null,
+   "corePluginDefaultOn": null,
+   "needsActiveEditor": false,
+   "icon": "lucide-vault",
+   "defaultHotkeys": [],
+   "windows": [],
+   "mac": []
+  },
+  {
+   "id": "workspace:edit-file-title",
+   "name": "Rename file",
+   "group": "workspace",
+   "corePlugin": null,
+   "corePluginDefaultOn": null,
+   "needsActiveEditor": false,
+   "icon": "lucide-edit-3",
+   "defaultHotkeys": [
+    {
+     "modifiers": [],
+     "key": "F2"
+    }
+   ],
+   "windows": [
+    "F2"
+   ],
+   "mac": [
+    "F2"
+   ]
+  },
+  {
+   "id": "workspace:export-pdf",
+   "name": "Export to PDF...",
+   "group": "workspace",
+   "corePlugin": null,
+   "corePluginDefaultOn": null,
+   "needsActiveEditor": false,
+   "icon": null,
+   "defaultHotkeys": [],
+   "windows": [],
+   "mac": []
+  },
+  {
+   "id": "workspace:goto-last-tab",
+   "name": "Go to last tab",
+   "group": "workspace",
+   "corePlugin": null,
+   "corePluginDefaultOn": null,
+   "needsActiveEditor": false,
+   "icon": null,
+   "defaultHotkeys": [
+    {
+     "modifiers": [
+      "Mod"
+     ],
+     "key": "9"
+    }
+   ],
+   "windows": [
+    "Ctrl + 9"
+   ],
+   "mac": [
+    "Cmd + 9"
+   ]
+  },
+  {
+   "id": "workspace:goto-tab-1",
+   "name": "Go to tab #1",
+   "group": "workspace",
+   "corePlugin": null,
+   "corePluginDefaultOn": null,
+   "needsActiveEditor": false,
+   "icon": null,
+   "defaultHotkeys": [
+    {
+     "modifiers": [
+      "Mod"
+     ],
+     "key": "1"
+    }
+   ],
+   "windows": [
+    "Ctrl + 1"
+   ],
+   "mac": [
+    "Cmd + 1"
+   ]
+  },
+  {
+   "id": "workspace:goto-tab-2",
+   "name": "Go to tab #2",
+   "group": "workspace",
+   "corePlugin": null,
+   "corePluginDefaultOn": null,
+   "needsActiveEditor": false,
+   "icon": null,
+   "defaultHotkeys": [
+    {
+     "modifiers": [
+      "Mod"
+     ],
+     "key": "2"
+    }
+   ],
+   "windows": [
+    "Ctrl + 2"
+   ],
+   "mac": [
+    "Cmd + 2"
+   ]
+  },
+  {
+   "id": "workspace:goto-tab-3",
+   "name": "Go to tab #3",
+   "group": "workspace",
+   "corePlugin": null,
+   "corePluginDefaultOn": null,
+   "needsActiveEditor": false,
+   "icon": null,
+   "defaultHotkeys": [
+    {
+     "modifiers": [
+      "Mod"
+     ],
+     "key": "3"
+    }
+   ],
+   "windows": [
+    "Ctrl + 3"
+   ],
+   "mac": [
+    "Cmd + 3"
+   ]
+  },
+  {
+   "id": "workspace:goto-tab-4",
+   "name": "Go to tab #4",
+   "group": "workspace",
+   "corePlugin": null,
+   "corePluginDefaultOn": null,
+   "needsActiveEditor": false,
+   "icon": null,
+   "defaultHotkeys": [
+    {
+     "modifiers": [
+      "Mod"
+     ],
+     "key": "4"
+    }
+   ],
+   "windows": [
+    "Ctrl + 4"
+   ],
+   "mac": [
+    "Cmd + 4"
+   ]
+  },
+  {
+   "id": "workspace:goto-tab-5",
+   "name": "Go to tab #5",
+   "group": "workspace",
+   "corePlugin": null,
+   "corePluginDefaultOn": null,
+   "needsActiveEditor": false,
+   "icon": null,
+   "defaultHotkeys": [
+    {
+     "modifiers": [
+      "Mod"
+     ],
+     "key": "5"
+    }
+   ],
+   "windows": [
+    "Ctrl + 5"
+   ],
+   "mac": [
+    "Cmd + 5"
+   ]
+  },
+  {
+   "id": "workspace:goto-tab-6",
+   "name": "Go to tab #6",
+   "group": "workspace",
+   "corePlugin": null,
+   "corePluginDefaultOn": null,
+   "needsActiveEditor": false,
+   "icon": null,
+   "defaultHotkeys": [
+    {
+     "modifiers": [
+      "Mod"
+     ],
+     "key": "6"
+    }
+   ],
+   "windows": [
+    "Ctrl + 6"
+   ],
+   "mac": [
+    "Cmd + 6"
+   ]
+  },
+  {
+   "id": "workspace:goto-tab-7",
+   "name": "Go to tab #7",
+   "group": "workspace",
+   "corePlugin": null,
+   "corePluginDefaultOn": null,
+   "needsActiveEditor": false,
+   "icon": null,
+   "defaultHotkeys": [
+    {
+     "modifiers": [
+      "Mod"
+     ],
+     "key": "7"
+    }
+   ],
+   "windows": [
+    "Ctrl + 7"
+   ],
+   "mac": [
+    "Cmd + 7"
+   ]
+  },
+  {
+   "id": "workspace:goto-tab-8",
+   "name": "Go to tab #8",
+   "group": "workspace",
+   "corePlugin": null,
+   "corePluginDefaultOn": null,
+   "needsActiveEditor": false,
+   "icon": null,
+   "defaultHotkeys": [
+    {
+     "modifiers": [
+      "Mod"
+     ],
+     "key": "8"
+    }
+   ],
+   "windows": [
+    "Ctrl + 8"
+   ],
+   "mac": [
+    "Cmd + 8"
+   ]
+  },
+  {
+   "id": "workspace:move-to-new-window",
+   "name": "Move current tab to new window",
+   "group": "workspace",
+   "corePlugin": null,
+   "corePluginDefaultOn": null,
+   "needsActiveEditor": false,
+   "icon": "lucide-maximize",
+   "defaultHotkeys": [],
+   "windows": [],
+   "mac": []
+  },
+  {
+   "id": "workspace:new-tab",
+   "name": "New tab",
+   "group": "workspace",
+   "corePlugin": null,
+   "corePluginDefaultOn": null,
+   "needsActiveEditor": false,
+   "icon": null,
+   "defaultHotkeys": [
+    {
+     "modifiers": [
+      "Mod"
+     ],
+     "key": "T"
+    }
+   ],
+   "windows": [
+    "Ctrl + T"
+   ],
+   "mac": [
+    "Cmd + T"
+   ]
+  },
+  {
+   "id": "workspace:new-window",
+   "name": "New window",
+   "group": "workspace",
+   "corePlugin": null,
+   "corePluginDefaultOn": null,
+   "needsActiveEditor": false,
+   "icon": null,
+   "defaultHotkeys": [],
+   "windows": [],
+   "mac": []
+  },
+  {
+   "id": "workspace:next-tab",
+   "name": "Go to next tab",
+   "group": "workspace",
+   "corePlugin": null,
+   "corePluginDefaultOn": null,
+   "needsActiveEditor": false,
+   "icon": "lucide-arrow-right",
+   "defaultHotkeys": [
+    {
+     "modifiers": [
+      "Ctrl"
+     ],
+     "key": "Tab"
+    },
+    {
+     "modifiers": [
+      "Ctrl"
+     ],
+     "key": "PageDown"
+    }
+   ],
+   "windows": [
+    "Ctrl + Tab",
+    "Ctrl + PageDown"
+   ],
+   "mac": [
+    "Ctrl + Tab",
+    "Ctrl + PageDown"
+   ]
+  },
+  {
+   "id": "workspace:open-in-new-window",
+   "name": "Open current tab in new window",
+   "group": "workspace",
+   "corePlugin": null,
+   "corePluginDefaultOn": null,
+   "needsActiveEditor": false,
+   "icon": "lucide-maximize",
+   "defaultHotkeys": [],
+   "windows": [],
+   "mac": []
+  },
+  {
+   "id": "workspace:previous-tab",
+   "name": "Go to previous tab",
+   "group": "workspace",
+   "corePlugin": null,
+   "corePluginDefaultOn": null,
+   "needsActiveEditor": false,
+   "icon": "lucide-arrow-left",
+   "defaultHotkeys": [
+    {
+     "modifiers": [
+      "Ctrl",
+      "Shift"
+     ],
+     "key": "Tab"
+    },
+    {
+     "modifiers": [
+      "Ctrl"
+     ],
+     "key": "PageUp"
+    }
+   ],
+   "windows": [
+    "Ctrl + Shift + Tab",
+    "Ctrl + PageUp"
+   ],
+   "mac": [
+    "Ctrl + Shift + Tab",
+    "Ctrl + PageUp"
+   ]
+  },
+  {
+   "id": "workspace:show-trash",
+   "name": "Show trash",
+   "group": "workspace",
+   "corePlugin": null,
+   "corePluginDefaultOn": null,
+   "needsActiveEditor": false,
+   "icon": null,
+   "defaultHotkeys": [],
+   "windows": [],
+   "mac": []
+  },
+  {
+   "id": "workspace:split-horizontal",
+   "name": "Split down",
+   "group": "workspace",
+   "corePlugin": null,
+   "corePluginDefaultOn": null,
+   "needsActiveEditor": false,
+   "icon": "lucide-separator-horizontal",
+   "defaultHotkeys": [],
+   "windows": [],
+   "mac": []
+  },
+  {
+   "id": "workspace:split-vertical",
+   "name": "Split right",
+   "group": "workspace",
+   "corePlugin": null,
+   "corePluginDefaultOn": null,
+   "needsActiveEditor": false,
+   "icon": "lucide-separator-vertical",
+   "defaultHotkeys": [],
+   "windows": [],
+   "mac": []
+  },
+  {
+   "id": "workspace:toggle-pin",
+   "name": "Toggle pin",
+   "group": "workspace",
+   "corePlugin": null,
+   "corePluginDefaultOn": null,
+   "needsActiveEditor": false,
+   "icon": "lucide-pin",
+   "defaultHotkeys": [],
+   "windows": [],
+   "mac": []
+  },
+  {
+   "id": "workspace:toggle-stacked-tabs",
+   "name": "Toggle stacked tabs",
+   "group": "workspace",
+   "corePlugin": null,
+   "corePluginDefaultOn": null,
+   "needsActiveEditor": false,
+   "icon": "lucide-layers",
+   "defaultHotkeys": [],
+   "windows": [],
+   "mac": []
+  },
+  {
+   "id": "workspace:undo-close-pane",
+   "name": "Undo close tab",
+   "group": "workspace",
+   "corePlugin": null,
+   "corePluginDefaultOn": null,
+   "needsActiveEditor": false,
+   "icon": "lucide-undo-2",
+   "defaultHotkeys": [
+    {
+     "modifiers": [
+      "Mod",
+      "Shift"
+     ],
+     "key": "T"
+    }
+   ],
+   "windows": [
+    "Ctrl + Shift + T"
+   ],
+   "mac": [
+    "Cmd + Shift + T"
+   ]
+  },
+  {
+   "id": "workspaces:load",
+   "name": "Workspaces: Load workspace layout",
+   "group": "workspaces",
+   "corePlugin": "workspaces",
+   "corePluginDefaultOn": false,
+   "needsActiveEditor": false,
+   "icon": "lucide-layout",
+   "defaultHotkeys": [],
+   "windows": [],
+   "mac": []
+  },
+  {
+   "id": "workspaces:open-modal",
+   "name": "Workspaces: Manage workspace layouts",
+   "group": "workspaces",
+   "corePlugin": "workspaces",
+   "corePluginDefaultOn": false,
+   "needsActiveEditor": false,
+   "icon": "lucide-layout",
+   "defaultHotkeys": [],
+   "windows": [],
+   "mac": []
+  },
+  {
+   "id": "workspaces:save",
+   "name": "Workspaces: Save layout",
+   "group": "workspaces",
+   "corePlugin": "workspaces",
+   "corePluginDefaultOn": false,
+   "needsActiveEditor": false,
+   "icon": "lucide-save",
+   "defaultHotkeys": [],
+   "windows": [],
+   "mac": []
+  },
+  {
+   "id": "workspaces:save-and-load",
+   "name": "Workspaces: Save and load another layout",
+   "group": "workspaces",
+   "corePlugin": "workspaces",
+   "corePluginDefaultOn": false,
+   "needsActiveEditor": false,
+   "icon": "lucide-layout",
+   "defaultHotkeys": [],
+   "windows": [],
+   "mac": []
+  },
+  {
+   "id": "zk-prefixer",
+   "name": "Unique note creator: Create new unique note",
+   "group": "zk-prefixer",
+   "corePlugin": "zk-prefixer",
+   "corePluginDefaultOn": false,
+   "needsActiveEditor": false,
+   "icon": "box-glyph",
+   "defaultHotkeys": [],
+   "windows": [],
+   "mac": []
+  }
+ ]
+}

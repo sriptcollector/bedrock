@@ -132,9 +132,9 @@ function startApp(): void {
   app.whenReady().then(() => {
     if (process.platform !== "darwin") Menu.setApplicationMenu(null);
     else Menu.setApplicationMenu(macMenu());
+    if (process.argv.includes("--quit")) return quit(); // nothing running: nothing to quit
     const startHidden = process.argv.includes("--hide");
     mainWin = openMain(!startHidden);
-    if (process.argv.includes("--quit")) return quit();
     hub.writeState(mainWin);
     if (!smokeTest) {
       createTray({ show, hide, quit, isVisible: () => !!mainWin && !mainWin.isDestroyed() && mainWin.isVisible() });
@@ -200,6 +200,10 @@ function registerIpc(ctx: { openOtherVault: (dir: string) => void }): void {
     return true;
   });
   ipcMain.handle(IPC.vaultList, () => readRegistry());
+  ipcMain.handle(IPC.pickFolder, async (e) => {
+    const r = await dialog.showOpenDialog(winOf(e)!, { title: "Choose a vault folder", properties: ["openDirectory"] });
+    return r.canceled ? null : r.filePaths[0] ?? null;
+  });
   ipcMain.handle(IPC.importIntoMainVault, (_e, src: string) => importIntoMain(src));
 
   ipcMain.handle(IPC.revealInFolder, (_e, p: string) => shell.showItemInFolder(p));
