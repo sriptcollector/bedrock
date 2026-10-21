@@ -23,6 +23,8 @@ import { Notice } from "./ui/notice";
 import { MarkdownView } from "./editor/markdown-view";
 import { FileExplorerView } from "./views/file-explorer";
 import { registerSimpleViews, IMAGE_EXTS } from "./views/simple-views";
+import { registerGraph } from "./views/graph/view";
+import { registerCanvas } from "./views/canvas/view";
 import { PropertyTypes } from "./editor/properties";
 import { mountSyncUi } from "./sync-ui";
 import { scanVault } from "../core/scan";
@@ -59,9 +61,9 @@ const CORE_PLUGINS: Record<string, { name: string; description: string; availabl
   "file-explorer": { name: "Files", description: "See all files in your vault.", available: true },
   "global-search": { name: "Search", description: "Search for text and files in your vault.", available: false },
   switcher: { name: "Quick switcher", description: "Jump to any file with the keyboard.", available: true },
-  graph: { name: "Graph view", description: "See how your notes link together.", available: false },
+  graph: { name: "Graph view", description: "See how your notes link together.", available: true },
   backlink: { name: "Backlinks", description: "See which notes link to the current note.", available: false },
-  canvas: { name: "Canvas", description: "Lay out notes and media on an infinite board.", available: false },
+  canvas: { name: "Canvas", description: "Lay out notes and media on an infinite board.", available: true },
   "outgoing-link": { name: "Outgoing links", description: "See the links in the current note.", available: false },
   "tag-pane": { name: "Tags view", description: "See all tags in your vault.", available: false },
   properties: { name: "Properties view", description: "See all properties in your vault.", available: false },
@@ -226,11 +228,15 @@ export class App {
     r.registerExtensions(["md"], "markdown");
     r.registerView("file-explorer", (leaf: WorkspaceLeaf) => new FileExplorerView(leaf));
     registerSimpleViews(this);
+    registerGraph(this);
+    registerCanvas(this);
   }
 
   private registerRibbon(): void {
     const rb = this.workspace.leftRibbon;
     rb.addRibbonItemButton("switcher:open", "file-search", "Open quick switcher", () => this.commands.executeCommandById("switcher:open"));
+    rb.addRibbonItemButton("graph:Open graph view", "git-fork", "Open graph view", () => this.commands.executeCommandById("graph:open"));
+    rb.addRibbonItemButton("canvas:Create new canvas", "layout-dashboard", "Create new canvas", () => this.commands.executeCommandById("canvas:new-file"));
     rb.addRibbonItemButton("command-palette:open", "terminal", "Open command palette", () => this.commands.executeCommandById("command-palette:open"));
     rb.addRibbonItemButton("file-explorer:new-file", "square-pen", "Create new note", () => this.commands.executeCommandById("file-explorer:new-file"));
     rb.addSettingsButton("folder-open", "Open another folder as vault", () => this.native.openVaultDialog());

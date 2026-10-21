@@ -16,6 +16,7 @@
     "icons": "node scripts/icons.mjs",
     "test": "vitest run",
     "test:e2e": "npm run build && node test/e2e/smoke.mjs",
+    "test:e2e:graph-canvas": "npm run build && node test/e2e/graph-canvas.mjs",
     "selftest": "node scripts/build.mjs && electron . --selftest",
     "dist": "node scripts/build.mjs --prod && node scripts/manifest.mjs && electron-builder --config electron-builder.config.cjs",
     "dist:dir": "node scripts/build.mjs --prod && electron-builder --config electron-builder.config.cjs --dir",
