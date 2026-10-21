@@ -212,12 +212,22 @@ export class App {
     const body = document.body;
     body.empty();
     this.titleBar = new TitleBar(this.native, this.boot.platform);
-    body.appendChild(this.titleBar.containerEl);
     const appContainer = body.createDiv("app-container");
     const main = appContainer.createDiv("horizontal-main-container");
     main.appendChild(this.workspace.containerEl);
     this.statusBar = new StatusBar(this);
     appContainer.appendChild(this.statusBar.containerEl);
+    // Last in the DOM: Chromium applies drag/no-drag regions in document order.
+    body.appendChild(this.titleBar.containerEl);
+    const markTopRight = () => TitleBar.markTopRight();
+    this.workspace.on("layout-change", markTopRight);
+    this.workspace.on("resize", markTopRight);
+    window.addEventListener("resize", markTopRight);
+    this.workspace.on("css-change", () => this.titleBar.syncOverlayColors());
+    requestAnimationFrame(() => {
+      markTopRight();
+      this.titleBar.syncOverlayColors();
+    });
     this.setting = createSettingsModal(this);
     body.addEventListener("dragover", (e) => e.preventDefault());
     body.addEventListener("drop", (e) => e.preventDefault());

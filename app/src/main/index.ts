@@ -12,6 +12,7 @@ import { ensureMainVault, importIntoMain, isVaultFolder, readRegistry, rememberO
 import { createVaultWindow, vaultWindows } from "./windows";
 import { runSelftest } from "./selftest";
 import { startSync, stopSync } from "./sync";
+import { installCrashHandling, log } from "./log";
 
 // ---- identity & app data (before anything touches userData) ----
 app.setName(BRAND.displayName);
@@ -20,6 +21,8 @@ if (process.platform === "win32") app.setAppUserModelId(BRAND.appId);
 const userDataOverride = process.env.BEDROCK_USER_DATA;
 app.setPath("userData", userDataOverride ? path.resolve(userDataOverride) : path.join(app.getPath("appData"), BRAND.appId));
 account.captureEnvToken();
+installCrashHandling();
+log("info", `start ${app.getVersion()} ${process.platform} args=${process.argv.slice(1).filter((a) => a.startsWith("--")).join(" ")}`);
 
 function argValue(argv: string[], flag: string): string | null {
   const i = argv.indexOf(flag);
@@ -191,6 +194,15 @@ function registerIpc(ctx: { openOtherVault: (dir: string) => void }): void {
     else if (action === "close") w.close();
     else if (action === "toggle-devtools") w.webContents.toggleDevTools();
     else if (action === "reload") w.webContents.reload();
+  });
+  ipcMain.handle(IPC.titleBarOverlay, (e, o: { color: string; symbolColor: string }) => {
+    const w = winOf(e);
+    if (!w || process.platform === "darwin") return;
+    try {
+      w.setTitleBarOverlay({ color: o.color, symbolColor: o.symbolColor, height: 39 });
+    } catch {
+      /* window without an overlay */
+    }
   });
   ipcMain.handle(IPC.windowState, (e) => {
     const w = winOf(e);

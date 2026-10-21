@@ -1,38 +1,44 @@
 // Window chrome: our own title bar buttons on Windows/Linux (frameless window) and the status bar.
-import { setIcon } from "../dom/icons";
 import { IPC } from "../../shared/ipc";
 
 export class TitleBar {
   containerEl: HTMLElement;
-  private maxBtn: HTMLElement | null = null;
 
   constructor(private native: any, platform: string) {
     this.containerEl = createDiv("titlebar");
     const inner = this.containerEl.createDiv("titlebar-inner");
     inner.createDiv("titlebar-text");
     if (platform === "darwin") return;
-    const btns = inner.createDiv("titlebar-button-container mod-right");
-    const mk = (cls: string, icon: string, label: string, action: string) => {
-      const b = btns.createDiv({ cls: `titlebar-button ${cls}`, attr: { "aria-label": label } });
-      setIcon(b, icon);
-      b.addEventListener("click", () => native.windowControl(action));
-      return b;
-    };
-    mk("mod-minimize", "minus", "Minimize", "minimize");
-    this.maxBtn = mk("mod-maximize", "square", "Maximize", "maximize");
-    mk("mod-close", "x", "Close", "close");
+    // Windows/Linux: the minimize/maximize/close buttons are the system's own (titleBarOverlay in
+    // the main process). This container only reserves their space, like the original app.
+    inner.createDiv("titlebar-button-container mod-right");
+    document.body.addClass("is-frameless", "is-hidden-frameless");
     native.on(IPC.windowStateChanged, (s: any) => this.setState(s));
     native.invoke(IPC.windowState).then((s: any) => this.setState(s));
+  }
+
+  /** Give the system caption buttons our theme's colours (call after every theme/CSS change). */
+  syncOverlayColors(): void {
+    if (document.body.hasClass("mod-macos")) return;
+    const cs = getComputedStyle(document.body);
+    const bg = (cs.getPropertyValue("--titlebar-background") || cs.getPropertyValue("--background-secondary")).trim();
+    const fg = (cs.getPropertyValue("--titlebar-text-color") || cs.getPropertyValue("--text-muted")).trim();
+    this.native.invoke(IPC.titleBarOverlay, { color: toHex(bg) ?? "#00000000", symbolColor: toHex(fg) ?? "#888888" });
+  }
+
+  /** The tab group in the top-right corner leaves room for the caption buttons (mod-top-right-space). */
+  static markTopRight(): void {
+    const w = window.innerWidth;
+    for (const el of Array.from(document.querySelectorAll<HTMLElement>(".workspace-tabs.mod-top"))) {
+      const r = el.getBoundingClientRect();
+      el.toggleClass("mod-top-right-space", r.width > 0 && r.top <= 1 && Math.abs(r.right - w) <= 1);
+    }
   }
 
   private setState(s: { maximized: boolean; focused: boolean; fullscreen: boolean }): void {
     document.body.toggleClass("is-maximized", !!s.maximized);
     document.body.toggleClass("is-fullscreen", !!s.fullscreen);
     document.body.toggleClass("is-focused", !!s.focused);
-    if (this.maxBtn) {
-      setIcon(this.maxBtn, s.maximized ? "copy" : "square");
-      this.maxBtn.setAttr("aria-label", s.maximized ? "Restore down" : "Maximize");
-    }
   }
 }
 
@@ -68,4 +74,17 @@ export class StatusBar {
     this.countEl.createSpan({ cls: "status-bar-item-segment", text: `${words.toLocaleString()} ${words === 1 ? "word" : "words"}` });
     this.countEl.createSpan({ cls: "status-bar-item-segment", text: `${chars.toLocaleString()} ${chars === 1 ? "character" : "characters"}` });
   }
+}
+
+/** Any CSS colour -> #rrggbb (the overlay API wants hex). */
+function toHex(c: string): string | null {
+  if (!c) return null;
+  const probe = document.createElement("div");
+  probe.style.color = c;
+  document.body.appendChild(probe);
+  const rgb = getComputedStyle(probe).color;
+  probe.remove();
+  const m = rgb.match(/\d+(\.\d+)?/g);
+  if (!m || m.length < 3) return null;
+  return "#" + m.slice(0, 3).map((v) => Math.round(+v).toString(16).padStart(2, "0")).join("");
 }

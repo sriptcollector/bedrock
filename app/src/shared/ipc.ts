@@ -4,6 +4,7 @@ export const IPC = {
   bootInfo: "bedrock:boot-info",
   windowControl: "bedrock:window-control", // "minimize" | "maximize" | "close" | "hide"
   windowState: "bedrock:window-state",
+  titleBarOverlay: "bedrock:titlebar-overlay", // {color, symbolColor}: recolour native caption buttons
   openVaultDialog: "bedrock:open-vault-dialog",
   openVault: "bedrock:open-vault",
   importIntoMainVault: "bedrock:import-into-main-vault",
