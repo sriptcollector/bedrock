@@ -1,4 +1,4 @@
-export { SyncEngine, type SyncEngineOptions, type SyncStatus, type SyncState, type VersionInfo, type TrashItem } from './engine.js';
+export { SyncEngine, EMPTY_VAULT_MESSAGE, type SyncEngineOptions, type SyncStatus, type SyncState, type VersionInfo, type TrashItem } from './engine.js';
 export { obtainVaultKey, KeyEscrow, type Keychain, type ObtainKeyOptions } from './escrow.js';
 export { TOOL_SLUG, KEYCHAIN_SERVICE, KEYCHAIN_ACCOUNT, ESCROW_ITEM_KEY, CHUNK_SIZE, DEFAULT_SERVER_URL } from './constants.js';
 export {

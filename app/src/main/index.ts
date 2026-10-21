@@ -11,6 +11,7 @@ import { startAutoUpdate, checkNow } from "./updater";
 import { ensureMainVault, importIntoMain, isVaultFolder, readRegistry, rememberOther } from "./vaults";
 import { createVaultWindow, vaultWindows } from "./windows";
 import { runSelftest } from "./selftest";
+import { startSync, stopSync } from "./sync";
 
 // ---- identity & app data (before anything touches userData) ----
 app.setName(BRAND.displayName);
@@ -116,9 +117,17 @@ function startApp(): void {
   }
 
   app.on("second-instance", (_e, argv) => handleArgs(argv));
-  app.on("before-quit", () => {
+  let syncStopped = false;
+  app.on("before-quit", (e) => {
     quitting = true;
     hub.removeState();
+    if (!syncStopped) {
+      // let the sync engine save its state (a few ms) before the process exits
+      e.preventDefault();
+      syncStopped = true;
+      const done = () => app.quit();
+      Promise.race([stopSync(), new Promise((r) => setTimeout(r, 3000))]).then(done, done);
+    }
   });
   app.on("window-all-closed", () => {
     if (smokeTest || process.platform !== "darwin") {
@@ -136,6 +145,8 @@ function startApp(): void {
     const startHidden = process.argv.includes("--hide");
     mainWin = openMain(!startHidden);
     hub.writeState(mainWin);
+    // Sync runs in the main process for the one vault, whether or not the window is visible.
+    startSync({ vaultPath: devVault ? path.resolve(devVault) : ensureMainVault(), smokeTest });
     if (!smokeTest) {
       createTray({ show, hide, quit, isVisible: () => !!mainWin && !mainWin.isDestroyed() && mainWin.isVisible() });
       startAutoUpdate();

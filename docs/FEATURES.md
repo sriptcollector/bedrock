@@ -359,7 +359,7 @@ Legend: **[later]** = not needed for the first release. **[ours]** = Bedrock doe
 
 ### Settings > Sync
 
-- [ ] Signed-out state: short explanation plus Sign up / Log in (Bedrock: replace with our Sync settings, see "Sync")
+- [x] Signed-out state: short explanation plus Sign up / Log in (Bedrock: replace with our Sync settings, see "Sync")
 
 ### Settings > Backlinks
 
@@ -756,10 +756,10 @@ Every command id below must exist with the same id so `hotkeys.json`, plugins an
 
 #### `sync` (4)
 
-- [ ] `sync:open-sync-log` Sync: Open activity log
-- [ ] `sync:open-sync-view` Sync: Show Sync history
-- [ ] `sync:setup` Sync: Set up Sync
-- [ ] `sync:view-version-history` Sync: Open version history for the current file
+- [x] `sync:open-sync-log` Sync: Open activity log
+- [x] `sync:open-sync-view` Sync: Show Sync history
+- [x] `sync:setup` Sync: Set up Sync
+- [x] `sync:view-version-history` Sync: Open version history for the current file
 
 #### `tag-pane` (1)
 
@@ -904,18 +904,18 @@ Every command id below must exist with the same id so `hotkeys.json`, plugins an
 ## 17. Sync [ours]
 
 Bedrock's sync replaces Obsidian Sync (design in `ARCHITECTURE.md`). Parity items users will look for:
-- [ ] Built in and free; signs in through the Toolbay account; no vault password
-- [ ] End-to-end encryption (contents, names, metadata)
-- [ ] Status bar sync icon with states: synced, syncing, paused, offline, error, not set up; click opens the sync panel
-- [ ] Sync settings tab: account and vault info, device name, pause/resume, storage used, log
-- [ ] Selective sync: images, audio, video, PDFs, other types toggles; excluded folders
-- [ ] Settings sync categories: main settings, appearance, themes and snippets, hotkeys, active core plugins, core plugin settings, active community plugins, installed community plugins
-- [ ] Version history per file with diff and restore (90 days)
-- [ ] Deleted files list with restore
+- [x] Built in and free; signs in through the Toolbay account; no vault password
+- [x] End-to-end encryption (contents, names, metadata)
+- [x] Status bar sync icon with states: synced, syncing, paused, offline, error, not set up; click opens the sync panel
+- [x] Sync settings tab: account and vault info, device name, pause/resume, storage used, log
+- [x] Selective sync: images, audio, video, PDFs, other types toggles; excluded folders
+- [x] Settings sync categories: main settings, appearance, themes and snippets, hotkeys, active core plugins, core plugin settings, active community plugins, installed community plugins
+- [x] Version history per file with diff and restore (90 days)
+- [x] Deleted files list with restore
 - [ ] Conflict handling: three-way merge for text, conflict copy when it cannot merge, notice to the user, snapshot saved before merging
-- [ ] Guard: an empty or missing local vault pauses sync instead of deleting remote files
+- [x] Guard: an empty or missing local vault pauses sync instead of deleting remote files
 - [ ] Sync log (what changed, when, from which device)
-- [ ] Works offline; catches up on reconnect
+- [x] Works offline; catches up on reconnect
 
 ## 18. Small states to match
 

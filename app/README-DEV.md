@@ -18,6 +18,7 @@ npm run dist -w app         installer (+ rewrites ../toolbay.json)
 ```
 
 Env: `BEDROCK_USER_DATA=<dir>` (separate app data, used by tests), `BEDROCK_NO_UPDATE=1`,
+`BEDROCK_SYNC_URL` (sync server, default https://sync.toolbay.ai), `BEDROCK_KEYCHAIN_DIR` (tests: file keychain),
 `TOOLBAY_TOKEN` (hub token, memory only), `TOOLBAY_API_BASE` (defaults to https://toolbay.ai).
 
 ## Module map
@@ -33,6 +34,8 @@ src/main/              Electron main process
   tray.ts              tray Show/Hide/Quit
   updater.ts           electron-updater against GitHub releases (packaged builds only)
   selftest.ts          --selftest: core index in main process + real UI in a hidden window
+  sync/                sync host: runs packages/sync for the one vault (host.ts), keychain.ts,
+                       selective.ts (selective sync rule). Design + sign-in decision: docs/SYNC.md §11
 src/preload/           tiny bridge (window.bedrockNative); the renderer has Node anyway
 src/core/              pure TS, no DOM/Electron (runs in workers, main, tests)
   parse.ts             Markdown -> CachedMetadata (frontmatter, headings, links, embeds, tags, blocks,
@@ -68,7 +71,9 @@ src/renderer/
   plugins/             plugin.ts (Plugin base), loader.ts (community plugins, CommonJS wrapper)
   theme/               app.css (default theme on Obsidian's public variables/classes), custom-css.ts
                        (light/dark, accent, themes/, snippets/ from appearance.json)
-  sync-ui/index.ts     extension point for the sync UI (status bar item stub)
+  sync-ui/             sync UI: index.ts (status bar icon + menu, commands, file menu, notices),
+                       settings-tab.ts (Settings › Sync), modals.ts (version history + diff, deleted
+                       files, activity log, excluded folders), client.ts (IPC), diff.ts, styles.ts
   ui/                  Modal/SuggestModal/FuzzySuggestModal, Notice, Menu, Setting components,
                        fuzzy search, title bar + status bar
 test/unit/             vitest: links, parse, vault (+rename updates links), markdown snapshots, workspace
@@ -92,9 +97,11 @@ test/fixtures/vault/   sample vault incl. a test community plugin
   subclass (`settings/modal.ts`). Values go through `app.vault.getConfig/setConfig` (app.json).
 - **Plugins**: `plugins/loader.ts`. Restricted mode = `app.plugins.isEnabled()` (per vault, stored in
   app data localStorage, not in the vault). Plugin browser and update checks are not built yet.
-- **Sync UI**: `sync-ui/index.ts` (`mountSyncUi` returns the status bar item). The sync engine runs in
-  the main process (packages/sync); add IPC channels prefixed `bedrock:sync-` in `shared/ipc.ts`.
-  The vault watcher already turns files written by sync into live UI updates.
+- **Sync**: the engine runs in the main process (`main/sync/host.ts`); the renderer calls it with
+  `ipcRenderer.invoke(IPC.syncCall, op, ...args)` (returns `{ok, value | error}`) and listens to
+  `IPC.syncUpdate` (snapshot) / `IPC.syncEvent`. `window.app.sync` is the client (snapshot, versions,
+  restore, trash...). The vault watcher turns files written by sync into live UI updates.
+  `node test/e2e/sync-e2e.mjs [--vault <dir>]` runs the real-process sync test (docs/SYNC.md §12).
 - **Markdown**: syntax lives in `markdown/parser.ts` (reading view) and `editor/syntax.ts` (editor).
   Plugins use `registerMarkdownPostProcessor` / `registerMarkdownCodeBlockProcessor`.
 - **Editor extensions**: `app.workspace.editorExtensions` (+ `workspace.updateOptions()`), via

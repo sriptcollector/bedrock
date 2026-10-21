@@ -4,6 +4,8 @@
 //  2. The hub's OS keychain entry: service "ai.toolbay.desktop", account "session"
 //     (same as toolbay-desktop/src-tauri/src/api.rs KEYRING_SERVICE / KEYRING_USER; the value is the
 //     raw bearer token). We never write our own copy.
+import { keychainGet } from "./sync/keychain";
+
 const KEYRING_SERVICE = "ai.toolbay.desktop";
 const KEYRING_USER = "session";
 
@@ -16,19 +18,25 @@ export function captureEnvToken(): void {
 }
 
 export function keychainToken(): string | null {
-  try {
-    // eslint-disable-next-line @typescript-eslint/no-var-requires
-    const { Entry } = require("@napi-rs/keyring") as typeof import("@napi-rs/keyring");
-    const v = new Entry(KEYRING_SERVICE, KEYRING_USER).getPassword();
-    return v && v.trim() ? v.trim() : null;
-  } catch {
-    return null;
-  }
+  return keychainGet(KEYRING_SERVICE, KEYRING_USER);
 }
 
-/** Current token: the hub's env token wins, else the keychain session. Never persisted by us. */
+let sawKeychain = false;
+
+/**
+ * Current token. The hub's keychain session is read fresh each time (the hub may sign in or out
+ * while we run); the TOOLBAY_TOKEN the hub launched us with is the fallback. Once the keychain
+ * session has been seen and then disappears, the hub signed out, so the launch token is dropped
+ * too. Never persisted by us.
+ */
 export function token(): string | null {
-  return envToken ?? keychainToken();
+  const k = keychainToken();
+  if (k) {
+    sawKeychain = true;
+    return k;
+  }
+  if (sawKeychain) envToken = null;
+  return envToken;
 }
 
 export function signedIn(): boolean {
@@ -39,6 +47,7 @@ export interface Account {
   id: string;
   name: string;
   handle: string;
+  email?: string;
   avatarUrl?: string;
 }
 
@@ -55,7 +64,7 @@ export async function account(): Promise<Account | null> {
     if (!r.ok) return null;
     const v: any = await r.json();
     const u = v.user ?? v;
-    return { id: String(u.id ?? ""), name: u.name ?? "", handle: u.handle ?? "", avatarUrl: u.avatarUrl };
+    return { id: String(u.id ?? ""), name: u.name ?? "", handle: u.handle ?? "", email: u.email ?? undefined, avatarUrl: u.avatarUrl ?? undefined };
   } catch {
     return null;
   }

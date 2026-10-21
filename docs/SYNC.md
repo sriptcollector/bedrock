@@ -466,3 +466,139 @@ Nothing below was created by the agent; no accounts, buckets, keys or DNS record
 - Confirm the tool settings sync API accepts the slug **`bedrock`** (`TOOL_SLUG`, exported from
   `packages/sync`; one constant to change if the slug is renamed) and an item value of ~100 bytes.
 - `GET /api/v1/me` must keep returning `{user:{id}}` with a stable id.
+
+---
+
+## 11. The app side: sync host, sign-in and UI
+
+Code: `app/src/main/sync/` (host, keychain, selective sync rule), `app/src/renderer/sync-ui/`
+(status bar icon, Settings › Sync, modals), `app/src/shared/sync.ts` (types),
+`app/test/e2e/sync-e2e.mjs` (real-process test).
+
+**Sync host (main process).** One `SyncEngine` for the one vault (`Documents\<displayName>`, or the
+`main` entry of `vaults.json`). Folders opened with "Open another folder as vault" never sync.
+
+- Starts by itself when a Toolbay sign-in exists and stops on sign-out. The token is re-read every
+  4 s: the hub's keychain session (`ai.toolbay.desktop` / `session`) first, the `TOOLBAY_TOKEN` the
+  hub launched us with as a fallback. Once the keychain session has been seen and then disappears,
+  the hub signed out, so the launch token is dropped too. A changed token restarts the engine.
+- Vault key: `obtainVaultKey` with the OS keychain (`ai.toolbay.bedrock` / `vault-key`) and the
+  toolbay.ai tool settings API (slug `bedrock`). The host first checks `GET /healthz` on the sync
+  service, so nothing is written to the account while the service is unreachable.
+- Server `https://sync.toolbay.ai`, or `BEDROCK_SYNC_URL`. Device id: a random UUID in
+  `<userData>/sync/device.json`. Device name: the computer name, or the "Device name" setting.
+- While the service can't be reached (it isn't deployed yet), the status says "Can't reach the sync
+  service right now. Your notes are saved on this computer and will sync as soon as it's back." The
+  app keeps working; the engine retries after 2, 4, 8 … 60 s.
+- Per-computer files in `<userData>/sync/`: `settings.json` (pause, device name, selective sync),
+  `log.json` (activity log, last 1,000 entries), `state-<id>/sync-state.json` (engine state).
+- Engine debounce is 400 ms (not the engine's 1.5 s default): the editor already waits for 2 s of
+  quiet before it saves, so versions can't pile up faster than the editor saves.
+- **First sync on a computer** whose account already has notes: the untouched welcome note and the
+  empty `.obsidian/app.json` this computer made on its first start are removed first, so the
+  account's copies come down instead of conflict copies. If the computer had notes of its own, the
+  two sets are combined by the engine (nothing replaced; a different note with the same name
+  becomes a conflict copy) and one notice says so.
+- "Import an existing vault into my synced vault" copies files into the one vault; the watcher
+  picks them up and they sync like any other change (tested with the 517-note vault copy, section 12).
+- Test hooks (not for users): `BEDROCK_KEYCHAIN_DIR` (keychain entries become files in that folder,
+  so several instances run side by side without touching the real keychain), `BEDROCK_HUB_INSTALLED`,
+  `BEDROCK_SYNC=0`, `BEDROCK_SYNC_DEBOUNCE_MS`, `BEDROCK_SYNC_DEBUG`. Smoke tests (`--smoke-test`)
+  only sync when `BEDROCK_SYNC_URL` is set.
+
+**Sign-in decision: the hub owns sign-in; Bedrock never stores a token.**
+
+- The hub registers only `toolbay://` (`toolbay-desktop/src-tauri/src/auth.rs`). `toolbay://signin`
+  starts its browser sign-in; the hub stores the session in its keychain entry and does not tell
+  running tools, so we poll the keychain.
+- `toolbay.ai/desktop/auth` always redirects to `toolbay://auth` (there is no `redirect_uri`
+  parameter), so a `bedrock://` callback is not possible without changing toolbay.ai. It would also
+  mean Bedrock keeping its own token copy, which the tool rules forbid, and registering
+  `toolbay://` ourselves would hijack the hub's scheme. So we don't.
+- Signed out: Settings › Sync and the status bar menu show **"Sign in to Toolbay to sync"**, which
+  opens `toolbay://signin` when the hub is installed (`app.getApplicationNameForProtocol`). Without
+  the hub the button is **"Get the Toolbay app"** and opens `https://toolbay.ai/download`. Syncing
+  starts by itself within 4 s of the hub writing its session. The app works fully while signed out.
+
+**Selective sync (engine change).** Excluding paths with the engine's plain `ignore` option would
+have made already-synced files look deleted and removed them on every other computer. The engine
+gained `exclude` / `setExclude()`: excluded paths are neither uploaded nor downloaded on that
+computer, files that already synced are left alone on both sides, and including them again re-reads
+the server's list (`lastSeq` reset) so they come back. Rules (`app/src/main/sync/selective.ts`):
+
+- Notes (`.md`), canvases and bases always sync.
+- Toggles: images (bmp png jpg jpeg gif svg webp avif), audio (mp3 wav m4a 3gp flac ogg oga opus),
+  videos (mp4 webm ogv mov mkv), PDFs, all other types. All on by default. Obsidian turns "other
+  types" off; with one vault per account we sync everything unless told otherwise.
+- Excluded folders (and everything under them).
+- Settings categories, split the way Obsidian splits `.obsidian/`: main settings (`app.json`,
+  `types.json`), appearance (`appearance.json`), themes and snippets (`themes/`, `snippets/`),
+  hotkeys (`hotkeys.json`), active core plugin list (`core-plugins.json`), core plugin settings
+  (every other `.obsidian/*.json`), active community plugin list (`community-plugins.json`),
+  installed community plugins (`plugins/`). The first six are on by default and the two community
+  plugin ones are off, as in Obsidian: plugin code from another computer should not arrive unasked.
+
+**Empty-vault guard (engine change).** A full scan that finds the vault folder missing, or empty
+while 3 or more synced files should be there, stops with "The vault folder is empty or missing, so
+sync is paused to keep your notes safe on your other computers…" instead of deleting everything on
+the other computers. Deleting a few notes on purpose still syncs.
+
+**Engine additions** (all additive): `exclude` option, `setExclude()`, `versionContent(path, v)`,
+`trashContent(fileId)` (bytes for the history diff and the deleted-files preview),
+`EMPTY_VAULT_MESSAGE`. Tests: `packages/sync/test/selective.test.ts`.
+
+**UI** (Obsidian's look, our own code and words):
+
+- Status bar icon (`.status-bar-item.plugin-sync`, `.sync-status-icon.mod-success|mod-working|mod-error`):
+  synced (green), syncing and connecting (accent, spinning), offline (cloud-off), paused, error
+  (refresh-cw-off, red), signed out. The tooltip states the status in one sentence. Clicking opens a
+  menu with the status, Sync now, Pause / Resume, Version history of this file, Deleted files,
+  Activity log and Sync settings (signed out: Sign in to Toolbay to sync).
+- Settings › Sync (core plugins group): account, status with Pause/Resume, storage used with a bar,
+  device name, deleted files, activity log, Selective sync (excluded folders + 5 toggles), Vault
+  configuration sync (8 toggles) and a short privacy note. Signed out: an explanation and the
+  sign-in button. There is no remote vault picker, encryption password or region.
+- Version history (command "Open version history for the current file", file menu "Open version
+  history", status menu): versions grouped Today / Yesterday / This week / Older with time, size,
+  device and renames; the text of the selected version; "Show changes" shows an inline diff from
+  that version to the note now (removed lines red, added green, changed part highlighted); Copy;
+  Restore (commits the old version again as a new version, so nothing is lost).
+- Deleted files: list with search, preview, Restore, check boxes for "Restore N files", and Empty
+  (all or the checked ones) behind a confirmation that says it is permanent and frees space.
+- Activity log: uploads, downloads, moves, deletes, merges, conflicts and problems, with a filter
+  and Copy log.
+- Conflict notice: "“Note.md” was changed on two computers at the same time and the changes
+  overlap. Both versions are kept…" with **Open both** (the note and its copy side by side).
+- Commands: `sync:view-version-history`, `sync:open-sync-log`, `sync:open-sync-view` (opens the
+  activity log), `sync:setup` (opens Settings › Sync), plus our own `sync:open-deleted-files`,
+  `sync:sync-now` and `sync:toggle-pause`.
+- No device list: the server has no endpoint for it.
+
+## 12. End-to-end test (real processes)
+
+`node app/test/e2e/sync-e2e.mjs [--vault <dir>]` after `npm run build -w app` and
+`npm run build -w server`. It runs the real server (`DEV_AUTH=1`, disk backend, temp `DATA_DIR`) as
+a child process, a fake toolbay.ai in the test process, and three Bedrock instances with separate
+`BEDROCK_USER_DATA`, keychain folders and vaults, all signed in as `dev:u1`. `--vault` copies the
+given vault to a temp folder, imports the copy on a fourth instance (user `dev:u2`) and checks that it
+arrives byte-identical on a fifth. Screenshots: `app/test/out/sync-*.png`; results and timings:
+`app/test/out/sync-e2e-results.json`.
+
+Measured 2026-10-21 on Orion's Windows 11 PC (all processes local), 42/42 checks passed:
+
+| Check | Result |
+|---|---|
+| Typing in A's editor → visible in B's open editor, measured from A's save (the editor saves after 2 s of quiet, so from the last keystroke add 2 s) | p50 **541 ms**, p95 **548 ms** (8 edits) |
+| File written on A → on B's disk | p50 **438 ms**, p95 **450 ms** (20 writes) |
+| Server stopped, different lines of one note edited on A and B plus a new note on each, server restarted | status "offline" on both; merged on both 1.6 s after the server came back, no conflict copy |
+| Same line edited on both while offline | exactly one `Ideas (conflict <device> <date>).md`, both texts kept; the conflict notice appeared on the side that got the copy, and "Open both" opened the two side by side |
+| Rename, move into a folder and delete on A (through the app's file manager) | mirrored on B in 0.46 s; history follows the moved file |
+| 20 MB PNG + 20 MB PDF dropped into a note on A | on B byte-identical 1.3 s after A saved them |
+| Version history: oldest of 3 versions selected, "Show changes", Restore | old text back on A and B |
+| Deleted files on B: select, Restore | note back on A and B |
+| Pause / resume, sign-in rejected (error) then a fresh token, sign-out (hub keychain entry removed) then sign-in | status icon paused / error / signed-out as expected; nothing synced while paused or signed out; caught up afterwards |
+| B starts with its own note, account already has notes | combined, one notice; a fresh computer C gets no conflict copies of its welcome note or settings file and no notice |
+| Third computer | all three trees identical 1.2 s after its app started |
+| **Copy of Orion's vault** (`tbv-scratch\vault-copy`, copied again to a temp folder) imported on D, second computer E | 819 files imported in 2.2 s; D uploaded everything in 4.4 s; E byte-identical 14.7 s after the import (816 files, 129.8 MB). The 5 files of an installed community plugin stayed on D by design (off by default) |
+
+Screenshots of every state: `app/test/out/sync-01-A-synced.png` … `sync-16-real-vault-on-E.png`.

@@ -15,10 +15,13 @@ export const IPC = {
   setTitle: "bedrock:set-title",
   vaultList: "bedrock:vault-list",
   pickFolder: "bedrock:pick-folder",
+  syncCall: "bedrock:sync-call", // {op, ...args}: see main/sync/host.ts and shared/sync.ts
   // main -> renderer (send)
   windowStateChanged: "bedrock:window-state-changed",
   openPath: "bedrock:open-path",
   command: "bedrock:command",
+  syncUpdate: "bedrock:sync-update", // SyncSnapshot
+  syncEvent: "bedrock:sync-event", // SyncUiEvent
 } as const;
 
 export interface BootInfo {
