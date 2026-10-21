@@ -83,5 +83,10 @@ jobs:
           tag="${GITHUB_REF_NAME}"
           notes="docs/release-notes/${tag}.md"
           [ -f "$notes" ] || notes=/dev/null
+          # Fixed-name copies so toolbay.ai's download links never change between releases.
+          mkdir -p fixed
+          cp dist-all/*_x64-setup.exe fixed/Bedrock_x64-setup.exe
+          cp dist-all/*_arm64.dmg fixed/Bedrock_arm64.dmg
+          cp dist-all/*_x64.dmg fixed/Bedrock_x64.dmg
           gh release create "$tag" --title "Bedrock notes app ${tag}" --notes-file "$notes" \
-            dist-all/*.exe dist-all/*.dmg dist-all/*.blockmap dist-all/latest*.yml toolbay.json
+            dist-all/*.exe dist-all/*.dmg dist-all/*.blockmap dist-all/latest*.yml toolbay.json fixed/*
