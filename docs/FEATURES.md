@@ -8,9 +8,9 @@ Legend: **[later]** = not needed for the first release. **[ours]** = Bedrock doe
 
 ## 1. App shell and windows
 
-- [ ] Single instance: a second launch passes its arguments (file path, URI) to the running app
+- [x] Single instance: a second launch passes its arguments (file path, URI) to the running app
 - [ ] One window per open vault; window size and position remembered per vault
-- [ ] Hidden native title bar by default; tab row is the drag area; our own minimize / maximize / close buttons at top right
+- [x] Hidden native title bar by default; tab row is the drag area; our own minimize / maximize / close buttons at top right
 - [ ] Window frame setting: hidden (default), app frame, native frame (needs restart)
 - [ ] Popout windows for any tab ("Open in new window", "Move to new window"); they share the same app state
 - [ ] Settings opens in its own window by default (900x700), with an option to show it as an in-app dialog
@@ -27,18 +27,18 @@ Legend: **[later]** = not needed for the first release. **[ours]** = Bedrock doe
 
 ## 2. Vault and files
 
-- [ ] Any folder is a vault; plain `.md` files; folders are real folders
+- [x] Any folder is a vault; plain `.md` files; folders are real folders
 - [ ] Config folder `.obsidian/` (overridable name) with the same files and JSON shapes; only non-default values written
-- [ ] Watch for outside changes (create, modify, delete, rename) and update everything live
+- [x] Watch for outside changes (create, modify, delete, rename) and update everything live
 - [ ] Supported file types open in their own views: Markdown, canvas, base, images, PDF, audio, video; "show all file types" setting
-- [ ] New note location: vault root (default), same folder as current file, or a chosen folder
+- [x] New note location: vault root (default), same folder as current file, or a chosen folder
 - [ ] New notes are named "Untitled", "Untitled 1", ...; title selected for immediate rename
 - [ ] Attachments location: vault root (default), same folder, subfolder under current folder, or a chosen folder
-- [ ] Paste or drop an image: saved as `Pasted image YYYYMMDDHHmmss.png` and linked
-- [ ] Delete: confirm dialog (default on); move to OS trash (default), to `.trash` in the vault, or delete permanently
+- [x] Paste or drop an image: saved as `Pasted image YYYYMMDDHHmmss.png` and linked
+- [x] Delete: confirm dialog (default on); move to OS trash (default), to `.trash` in the vault, or delete permanently
 - [ ] Delete attachments used only by the deleted note: ask (default), always, never
-- [ ] Rename: ask whether to update links (default) or always update automatically
-- [ ] Link format for new links: shortest path (default), relative path, absolute path; wikilinks (default) or Markdown links
+- [x] Rename: ask whether to update links (default) or always update automatically
+- [x] Link format for new links: shortest path (default), relative path, absolute path; wikilinks (default) or Markdown links
 - [ ] Excluded files list (hidden from search, graph, unlinked mentions; lower in the quick switcher)
 - [ ] Metadata cache built in a worker: links, embeds, tags, headings, blocks, sections, list items, tasks, frontmatter and links inside frontmatter, footnotes; resolved and unresolved link maps; stored between runs
 - [ ] "Rebuild vault cache" button
@@ -46,22 +46,22 @@ Legend: **[later]** = not needed for the first release. **[ours]** = Bedrock doe
 
 ## 3. Workspace layout
 
-- [ ] Layout tree: main area, left sidebar, right sidebar, popout windows; splits (vertical and horizontal) contain tab groups; tab groups contain tabs
-- [ ] Layout saved in `.obsidian/workspace.json` on every change and restored on start (also the list of recently opened files)
+- [x] Layout tree: main area, left sidebar, right sidebar, popout windows; splits (vertical and horizontal) contain tab groups; tab groups contain tabs
+- [x] Layout saved in `.obsidian/workspace.json` on every change and restored on start (also the list of recently opened files)
 - [ ] Tabs: click to switch, middle-click or X to close, drag to reorder, drag into a split (four drop zones) or out to a new window
 - [ ] New tab button and the empty new tab screen (new note, new base, new canvas, go to file, with hotkey chips)
 - [ ] Tab list dropdown (all tabs in the group)
-- [ ] Stacked tabs mode per tab group: tabs become overlapping vertical strips with rotated titles; click a strip to slide it into view
-- [ ] Pinned tabs (pin icon; links open elsewhere)
+- [x] Stacked tabs mode per tab group: tabs become overlapping vertical strips with rotated titles; click a strip to slide it into view
+- [x] Pinned tabs (pin icon; links open elsewhere)
 - [ ] Linked tabs (local graph, outline, backlinks follow another tab; chain icon)
-- [ ] Split right, split down; resize handles; close tab group; close others
-- [ ] Undo close tab
+- [x] Split right, split down; resize handles; close tab group; close others
+- [x] Undo close tab
 - [ ] Back and forward history per tab, with long-press/right-click history list
 - [ ] Tabs remember mode (editing or reading), scroll position and cursor
 - [ ] Deferred tabs: hidden tabs keep their state without building their view until shown
 - [ ] "Always focus new tabs" setting
 - [ ] Left sidebar default tabs: Files, Search, Bookmarks; right sidebar default tabs: Backlinks, Outgoing links, Tags, All properties, Outline (right collapsed by default)
-- [ ] Sidebar tab strip shows icons only; sidebars can hold their own splits and tab groups
+- [x] Sidebar tab strip shows icons only; sidebars can hold their own splits and tab groups
 - [ ] Toggle buttons for each sidebar at the top corners; sidebar width 300 px default, resizable, remembered
 - [ ] Ribbon: 44 px strip at the far left with action buttons from core and community plugins; hide/show and reorder in Settings > Interface; can be turned off
 - [ ] Status bar at the bottom right: backlinks count, properties count, editing mode toggle, word and character count (selection-aware), sync status; plugins can add items
@@ -72,62 +72,62 @@ Legend: **[later]** = not needed for the first release. **[ours]** = Bedrock doe
 ## 4. Editor (Markdown)
 
 ### Modes
-- [ ] Live Preview (default editing mode)
-- [ ] Source mode
-- [ ] Reading view
-- [ ] Toggle editing and reading (Ctrl+E), toggle Live Preview and Source, per-tab mode, defaults for new tabs from settings
-- [ ] Inline title: file name shown as an editable title above the note (setting, on by default)
+- [x] Live Preview (default editing mode)
+- [x] Source mode
+- [x] Reading view
+- [x] Toggle editing and reading (Ctrl+E), toggle Live Preview and Source, per-tab mode, defaults for new tabs from settings
+- [x] Inline title: file name shown as an editable title above the note (setting, on by default)
 
 ### Live Preview behaviour
 - [ ] Markdown symbols hidden when the cursor is not touching them; revealed per token group (not whole line) when the cursor or selection touches them, only while the editor has focus
-- [ ] Heading `#` marks shown only when the cursor is on the heading line
+- [x] Heading `#` marks shown only when the cursor is on the heading line
 - [ ] Hidden ranges are skipped by the cursor (atomic); clicks inside them land at the edge
-- [ ] Links show only their display text; full syntax appears when the cursor enters the link
-- [ ] List bullets drawn as dots; numbered lists keep numbers; task boxes are clickable checkboxes
-- [ ] Quotes drawn with a left border
+- [x] Links show only their display text; full syntax appears when the cursor enters the link
+- [x] List bullets drawn as dots; numbered lists keep numbers; task boxes are clickable checkboxes
+- [x] Quotes drawn with a left border
 - [ ] Block widgets when the cursor is outside: properties form, tables, callouts, embeds, images, math, Mermaid, HTML; each with an "edit this block" button
 - [ ] No flicker while dragging a selection or typing with an input method (decorations mapped, not rebuilt)
 - [ ] Same `cm-*` token classes and `HyperMD-*` line classes as Obsidian so themes work
 
 ### Syntax support
-- [ ] CommonMark + GitHub tables, task lists, strikethrough, autolinks
-- [ ] Wikilinks with alias, heading and block targets; Markdown links; external links with an external-link marker
+- [x] CommonMark + GitHub tables, task lists, strikethrough, autolinks
+- [x] Wikilinks with alias, heading and block targets; Markdown links; external links with an external-link marker
 - [ ] Embeds `![[...]]` of notes, headings, blocks, images (with width or width x height), PDF (page, height), audio, video, canvas, base
-- [ ] Tags `#tag` and nested `#a/b`; tag pills in reading view
-- [ ] Highlights `==text==`; comments `%%text%%` hidden in reading view
-- [ ] Footnotes (reference and inline)
+- [x] Tags `#tag` and nested `#a/b`; tag pills in reading view
+- [x] Highlights `==text==`; comments `%%text%%` hidden in reading view
+- [x] Footnotes (reference and inline)
 - [ ] Math with `$...$` and `$$...$$` (MathJax-compatible output)
 - [ ] Mermaid code blocks, off by default (setting) and gated by a per-vault "allow" prompt
 - [ ] Code blocks with syntax highlighting, language label, copy button
-- [ ] Callouts `> [!type] title` with `+`/`-` fold markers; 13 types and their aliases; custom types fall back to note; nested callouts
-- [ ] Block ids `^id`; horizontal rules; HTML blocks (sanitized)
-- [ ] Frontmatter YAML at the top
+- [x] Callouts `> [!type] title` with `+`/`-` fold markers; 13 types and their aliases; custom types fall back to note; nested callouts
+- [x] Block ids `^id`; horizontal rules; HTML blocks (sanitized)
+- [x] Frontmatter YAML at the top
 
 ### Editing aids
-- [ ] Auto-pair brackets and quotes (setting)
-- [ ] Auto-pair Markdown symbols (setting)
+- [x] Auto-pair brackets and quotes (setting)
+- [x] Auto-pair Markdown symbols (setting)
 - [ ] Smart lists: continue lists on Enter, fix indentation and numbering (setting)
-- [ ] Indent with tabs or 4 spaces (setting); tab visual width (setting)
+- [x] Indent with tabs or 4 spaces (setting); tab visual width (setting)
 - [ ] Fold headings and indented lists (settings); fold all / unfold all; fold state remembered
 - [ ] Line numbers (setting, off); indentation guides (setting, on); readable line length 700 px (setting, on); right-to-left (setting)
-- [ ] Strict line breaks (setting, off)
+- [x] Strict line breaks (setting, off)
 - [ ] Spellcheck (setting, on) with language list
 - [ ] Link autocomplete after `[[` (files, headings with `#`, blocks with `^`, aliases); create link to a new note
-- [ ] Tag autocomplete after `#`
+- [x] Tag autocomplete after `#`
 - [ ] Slash command menu after `/` (when the plugin is on)
 - [ ] Paste HTML as Markdown (setting, on); paste as plain text
 - [ ] Drag files in to link or embed them
 - [ ] Multiple cursors (Alt+click, add cursor above/below)
-- [ ] Find and replace bar inside the note (match case, regex, whole word)
+- [x] Find and replace bar inside the note (match case, regex, whole word)
 - [ ] Table editing in Live Preview: cell editing, add/move/delete rows and columns, alignment, row and column handles
 - [ ] Properties form: add, rename, retype, reorder, delete properties; value editors per type; list pills; tag pills; date picker; links inside values
 - [ ] Highlight colors (red, orange, yellow, green, blue, purple) for highlights
-- [ ] Vim key bindings (setting) [later]
+- [x] Vim key bindings (setting) [later]
 
 ### Reading view
 - [ ] Sections rendered lazily near the viewport (fast on long notes)
 - [ ] Clickable links, tags, checkboxes; hover preview; copy button on code blocks; foldable headings and callouts
-- [ ] Post-processor hooks for plugins (`registerMarkdownPostProcessor`, code block processors)
+- [x] Post-processor hooks for plugins (`registerMarkdownPostProcessor`, code block processors)
 - [ ] Backlinks at the bottom of notes (option, off)
 - [ ] Note classes from the `cssclasses` property
 
@@ -136,8 +136,8 @@ Legend: **[later]** = not needed for the first release. **[ours]** = Bedrock doe
 ### File explorer
 - [ ] Tree of folders and files; folders first; non-Markdown files show an uppercase extension tag; Markdown files hide `.md`
 - [ ] Header buttons: new note, new folder, sort order, auto-reveal current file, collapse/expand all
-- [ ] Sort: name A-Z (default), name Z-A, modified new-old, modified old-new, created new-old, created old-new
-- [ ] Click opens, Ctrl+click opens in new tab, middle-click new tab
+- [x] Sort: name A-Z (default), name Z-A, modified new-old, modified old-new, created new-old, created old-new
+- [x] Click opens, Ctrl+click opens in new tab, middle-click new tab
 - [ ] Multi-select with Ctrl and Shift; drag and drop files and folders (move); drop files from the OS (copy in)
 - [ ] Inline rename (F2); cut, copy, paste of files
 - [ ] File context menu: open in new tab, open to the right, open in new window, make a copy, move, bookmark, merge with, copy path (vault path, full path, obsidian URL), version history, open in default app, show in system explorer, rename, delete
@@ -152,9 +152,9 @@ Legend: **[later]** = not needed for the first release. **[ours]** = Bedrock doe
 - [ ] Enter open, Ctrl+Enter new tab, Ctrl+Alt+Enter to the right, Shift+Enter create, Esc close; instruction bar listing these
 
 ### Command palette
-- [ ] Fuzzy search over every command with hotkey chips
+- [x] Fuzzy search over every command with hotkey chips
 - [ ] Recently used commands first; pinned commands (settings) at the top
-- [ ] Only commands that apply to the current context are listed (editor-only commands need an editor)
+- [x] Only commands that apply to the current context are listed (editor-only commands need an editor)
 
 ### Search
 - [ ] Search pane with query box, match-case toggle, explain-search toggle, collapse results, show more context, sort order (file name, modified, created; both directions)
@@ -183,7 +183,7 @@ Legend: **[later]** = not needed for the first release. **[ours]** = Bedrock doe
 - [ ] Outline pane: heading tree, click to jump, drag to move sections, filter, follow cursor option
 - [ ] All properties pane: every property key with counts and type icons, sort, filter, rename across vault
 - [ ] File properties pane: properties of the active note in the sidebar
-- [ ] Property types: text, list, number, checkbox, date, date and time, plus aliases and tags; stored in `types.json`; inferred from values; change type from the key's menu
+- [x] Property types: text, list, number, checkbox, date, date and time, plus aliases and tags; stored in `types.json`; inferred from values; change type from the key's menu
 - [ ] Footnotes pane [later]
 - [ ] Rename heading updates links to it; rename file updates links (per setting)
 
