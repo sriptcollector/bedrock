@@ -104,6 +104,8 @@ await app.evaluate(({ BrowserWindow }) => {
   w.unmaximize();
   w.setContentSize(1280, 800);
   w.center();
+  // Keep painting when another window covers this one (screenshots wait for a frame).
+  w.webContents.setBackgroundThrottling(false);
 });
 await win.waitForSelector(".workspace", { timeout: 30000 });
 await win.waitForFunction(() => window.app?.workspace?.layoutReady && window.app?.indexStats, null, { timeout: 120000 });
@@ -365,7 +367,19 @@ for (const theme of themes) {
       await sleep(400);
       const file = path.join(outDir, `${name}-${theme}.bedrock.png`);
       const rect = clip ? await win.evaluate((s) => window.__t.rect(s), clip) : null;
-      await win.screenshot({ path: file, clip: rect ?? undefined });
+      try {
+        await win.screenshot({ path: file, clip: rect ?? undefined, timeout: 15000 });
+      } catch {
+        // The window wasn't painting (covered or unfocused): bring it forward and try again.
+        await app.evaluate(({ BrowserWindow }) => {
+          const w = BrowserWindow.getAllWindows()[0];
+          w.show();
+          w.focus();
+          w.webContents.invalidate();
+        });
+        await sleep(500);
+        await win.screenshot({ path: file, clip: rect ?? undefined, timeout: 30000 });
+      }
       let pct = "";
       const ref = refDir && path.join(refDir, `${name}-${theme}.png`);
       if (ref && fs.existsSync(ref)) pct = await makeSheet(ref, file, path.join(outDir, `${name}-${theme}.png`), name);
@@ -399,7 +413,13 @@ async function runSettings(theme) {
       await sleep(250);
       const name = `settings-${id}${pages > 1 ? "-p" + (p + 1) : ""}`;
       const file = path.join(outDir, `${name}-${theme}.bedrock.png`);
-      await page.screenshot({ path: file });
+      try {
+        await page.screenshot({ path: file, timeout: 15000 });
+      } catch {
+        await app.evaluate(({ BrowserWindow }) => BrowserWindow.getAllWindows().forEach((w) => (w.webContents.setBackgroundThrottling(false), w.webContents.invalidate())));
+        await sleep(500);
+        await page.screenshot({ path: file, timeout: 30000 });
+      }
       let pct = "";
       const ref = refDir && path.join(refDir, `${name}-${theme}.png`);
       if (ref && fs.existsSync(ref)) pct = await makeSheet(ref, file, path.join(outDir, `${name}-${theme}.png`), name);
