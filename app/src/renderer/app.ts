@@ -23,6 +23,7 @@ import { Notice } from "./ui/notice";
 import { MarkdownView } from "./editor/markdown-view";
 import { FileExplorerView } from "./views/file-explorer";
 import { registerSimpleViews, IMAGE_EXTS } from "./views/simple-views";
+import { registerSidebar } from "./views/sidebar";
 import { PropertyTypes } from "./editor/properties";
 import { mountSyncUi } from "./sync-ui";
 import { scanVault } from "../core/scan";
@@ -226,6 +227,7 @@ export class App {
     r.registerExtensions(["md"], "markdown");
     r.registerView("file-explorer", (leaf: WorkspaceLeaf) => new FileExplorerView(leaf));
     registerSimpleViews(this);
+    registerSidebar(this);
   }
 
   private registerRibbon(): void {

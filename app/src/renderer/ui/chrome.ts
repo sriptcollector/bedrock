@@ -61,8 +61,11 @@ export class StatusBar {
     const sel = v.editor.getSelection();
     const text: string = sel || v.editor.getValue();
     const body = text.replace(/^---\n[\s\S]*?\n---\n?/, "");
-    const words = (body.match(/[\p{L}\p{N}][\p{L}\p{N}'’_-]*/gu) ?? []).length;
+    // Runs of text between spaces and Markdown/code punctuation (matches the original's counts on the demo vault).
+    const words = (body.match(/[^\s/|[\]()#*=~`>"!,.:;?{}+<]+/gu) ?? []).length;
     const chars = body.length;
-    this.countEl.setText(`${words.toLocaleString()} ${words === 1 ? "word" : "words"} ${chars.toLocaleString()} ${chars === 1 ? "character" : "characters"}`);
+    this.countEl.empty();
+    this.countEl.createSpan({ cls: "status-bar-item-segment", text: `${words.toLocaleString()} ${words === 1 ? "word" : "words"}` });
+    this.countEl.createSpan({ cls: "status-bar-item-segment", text: `${chars.toLocaleString()} ${chars === 1 ? "character" : "characters"}` });
   }
 }

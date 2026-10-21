@@ -495,6 +495,7 @@ export class Workspace extends Events {
               { type: "leaf", state: { type: "backlink", state: {} } },
               { type: "leaf", state: { type: "outgoing-link", state: {} } },
               { type: "leaf", state: { type: "tag", state: {} } },
+              { type: "leaf", state: { type: "all-properties", state: {} } },
               { type: "leaf", state: { type: "outline", state: {} } },
             ],
           },
