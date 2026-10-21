@@ -13,6 +13,8 @@ import { createVaultWindow, vaultWindows } from "./windows";
 import { runSelftest } from "./selftest";
 import { startSync, stopSync } from "./sync";
 import { installCrashHandling, log } from "./log";
+import { startAgents, stopAgents } from "./agents/host";
+import { runCli } from "../cli/main";
 
 // ---- identity & app data (before anything touches userData) ----
 app.setName(BRAND.displayName);
@@ -29,9 +31,23 @@ function argValue(argv: string[], flag: string): string | null {
   return i >= 0 && argv[i + 1] && !argv[i + 1].startsWith("--") ? argv[i + 1] : null;
 }
 
+// ---- agent command line: `<exe> --cli <args>` and `<exe> --mcp` (stdio MCP server) ----
+// No window, no single-instance lock, no sync: talks to the running app or works on the vault folder.
+const agentArgs = agentCliArgs(process.argv);
+
 // ---- headless self test: `--selftest <vaultPath>` ----
 const selftestVault = argValue(process.argv, "--selftest");
-if (process.argv.includes("--selftest")) {
+if (agentArgs) {
+  app.disableHardwareAcceleration();
+  app.dock?.hide();
+  runCli(agentArgs).then(
+    (code) => app.exit(code),
+    (e) => {
+      process.stderr.write(String(e?.stack ?? e) + "\n");
+      app.exit(1);
+    },
+  );
+} else if (process.argv.includes("--selftest")) {
   app.whenReady().then(async () => {
     const code = await runSelftest(selftestVault ?? "").catch((e) => {
       console.error(e);
@@ -41,6 +57,14 @@ if (process.argv.includes("--selftest")) {
   });
 } else {
   startApp();
+}
+
+function agentCliArgs(argv: string[]): string[] | null {
+  const cli = argv.indexOf("--cli");
+  if (cli >= 0) return argv.slice(cli + 1);
+  const mcp = argv.indexOf("--mcp");
+  if (mcp >= 0) return ["mcp", ...argv.slice(mcp + 1)];
+  return null;
 }
 
 function startApp(): void {
@@ -129,7 +153,7 @@ function startApp(): void {
       e.preventDefault();
       syncStopped = true;
       const done = () => app.quit();
-      Promise.race([stopSync(), new Promise((r) => setTimeout(r, 3000))]).then(done, done);
+      Promise.race([Promise.all([stopSync(), stopAgents()]), new Promise((r) => setTimeout(r, 3000))]).then(done, done);
     }
   });
   app.on("window-all-closed", () => {
@@ -150,6 +174,8 @@ function startApp(): void {
     hub.writeState(mainWin);
     // Sync runs in the main process for the one vault, whether or not the window is visible.
     startSync({ vaultPath: devVault ? path.resolve(devVault) : ensureMainVault(), smokeTest });
+    // Agent access (MCP over HTTP + REST on 127.0.0.1, token-protected) for the same vault.
+    void startAgents({ vaultPath: devVault ? path.resolve(devVault) : ensureMainVault(), showMain: show });
     if (!smokeTest) {
       createTray({ show, hide, quit, isVisible: () => !!mainWin && !mainWin.isDestroyed() && mainWin.isVisible() });
       startAutoUpdate();

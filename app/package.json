@@ -38,6 +38,7 @@
     "@lezer/common": "^1.0.0",
     "@lezer/highlight": "^1.0.0",
     "@lezer/markdown": "^1.0.0",
+    "@modelcontextprotocol/sdk": "^1.32.1",
     "@replit/codemirror-vim": "^6.4.0",
     "@resvg/resvg-js": "^2.6.2",
     "@types/node": "^22.0.0",
@@ -56,6 +57,7 @@
     "png2icons": "^2.0.1",
     "typescript": "^5.9.0",
     "vitest": "^5.0.5",
-    "yaml": "^2.9.1"
+    "yaml": "^2.9.1",
+    "zod": "^4.6.7"
   }
 }
