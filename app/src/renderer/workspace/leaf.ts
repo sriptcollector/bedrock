@@ -191,7 +191,11 @@ export class WorkspaceLeaf extends WorkspaceItem {
     const cur = this.view;
     const sameType = cur && cur.getViewType() === vs.type;
     const prevEntry = cur && cur.navigation ? this.historyEntry() : null;
-    const changing = !cur || !sameType || JSON.stringify(cur.getState()) !== JSON.stringify(vs.state ?? {});
+    // A new history entry when the tab shows something else (another file or view), not when only
+    // its mode or options change.
+    const curState = cur?.getState?.() ?? {};
+    const nextState = vs.state ?? {};
+    const changing = !cur || !sameType || ("file" in curState || "file" in nextState ? curState.file !== nextState.file : JSON.stringify(curState) !== JSON.stringify(nextState));
     if (!fromHistory && prevEntry && changing && prevEntry.state.type !== "empty") {
       this.history.backHistory.push(prevEntry);
       if (this.history.backHistory.length > 50) this.history.backHistory.shift();

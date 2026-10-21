@@ -9,15 +9,15 @@ Legend: **[later]** = not needed for the first release. **[ours]** = Bedrock doe
 ## 1. App shell and windows
 
 - [x] Single instance: a second launch passes its arguments (file path, URI) to the running app
-- [ ] One window per open vault; window size and position remembered per vault
+- [x] One window per open vault; window size and position remembered per vault
 - [x] Hidden native title bar by default; tab row is the drag area; our own minimize / maximize / close buttons at top right
-- [ ] Window frame setting: hidden (default), app frame, native frame (needs restart)
+- [x] Window frame setting: hidden (default), app frame, native frame (needs restart)
 - [x] Popout windows for any tab ("Open in new window", "Move to new window"); they share the same app state
-- [ ] Settings opens in its own window by default (900x700), with an option to show it as an in-app dialog
-- [ ] Plugin browser and theme browser open in their own windows (1100x800)
-- [ ] Vault picker window (800x650): list of known vaults on the left with a per-vault menu (reveal, rename, remove from list), right side with "create new vault", "open folder as vault", "open synced vault" [ours: Toolbay account vault], language picker
-- [ ] Create-vault form: name, location (folder picker), create button; back link
-- [ ] Vault switcher at the bottom of the left sidebar: vault name, menu to switch or manage vaults, help button, settings button
+- [x] Settings opens in its own window by default (900x700), with an option to show it as an in-app dialog
+- [x] Plugin browser and theme browser open in their own windows (1100x800)
+- [x] Vault picker window (800x650): list of known vaults on the left with a per-vault menu (reveal, rename, remove from list), right side with "create new vault", "open folder as vault", "open synced vault" [ours: Toolbay account vault], language picker
+- [x] Create-vault form: name, location (folder picker), create button; back link
+- [x] Vault switcher at the bottom of the left sidebar: vault name, menu to switch or manage vaults, help button, settings button
 - [ ] Loading state while a big vault is indexed (progress in the status bar)
 - [ ] App-package self-update: small installer plus a signed renderer package checked on start and hourly; "relaunch to update" prompt; early-access channel toggle [ours: Toolbay release feed]
 - [x] Zoom in / out / reset for the whole window; hardware acceleration toggle (restart)
@@ -28,45 +28,45 @@ Legend: **[later]** = not needed for the first release. **[ours]** = Bedrock doe
 ## 2. Vault and files
 
 - [x] Any folder is a vault; plain `.md` files; folders are real folders
-- [ ] Config folder `.obsidian/` (overridable name) with the same files and JSON shapes; only non-default values written
+- [x] Config folder `.obsidian/` (overridable name) with the same files and JSON shapes; only non-default values written
 - [x] Watch for outside changes (create, modify, delete, rename) and update everything live
-- [ ] Supported file types open in their own views: Markdown, canvas, base, images, PDF, audio, video; "show all file types" setting
+- [x] Supported file types open in their own views: Markdown, canvas, base, images, PDF, audio, video; "show all file types" setting
 - [x] New note location: vault root (default), same folder as current file, or a chosen folder
-- [ ] New notes are named "Untitled", "Untitled 1", ...; title selected for immediate rename
-- [ ] Attachments location: vault root (default), same folder, subfolder under current folder, or a chosen folder
+- [x] New notes are named "Untitled", "Untitled 1", ...; title selected for immediate rename
+- [x] Attachments location: vault root (default), same folder, subfolder under current folder, or a chosen folder
 - [x] Paste or drop an image: saved as `Pasted image YYYYMMDDHHmmss.png` and linked
 - [x] Delete: confirm dialog (default on); move to OS trash (default), to `.trash` in the vault, or delete permanently
-- [ ] Delete attachments used only by the deleted note: ask (default), always, never
+- [x] Delete attachments used only by the deleted note: ask (default), always, never
 - [x] Rename: ask whether to update links (default) or always update automatically
 - [x] Link format for new links: shortest path (default), relative path, absolute path; wikilinks (default) or Markdown links
-- [ ] Excluded files list (hidden from search, graph, unlinked mentions; lower in the quick switcher)
-- [ ] Metadata cache built in a worker: links, embeds, tags, headings, blocks, sections, list items, tasks, frontmatter and links inside frontmatter, footnotes; resolved and unresolved link maps; stored between runs
-- [ ] "Rebuild vault cache" button
-- [ ] Default file to open on start: last opened (default), new note, a specific file, or today's daily note
+- [x] Excluded files list (hidden from search, graph, unlinked mentions; lower in the quick switcher)
+- [x] Metadata cache built in a worker: links, embeds, tags, headings, blocks, sections, list items, tasks, frontmatter and links inside frontmatter, footnotes; resolved and unresolved link maps; stored between runs
+- [x] "Rebuild vault cache" button
+- [x] Default file to open on start: last opened (default), new note, a specific file, or today's daily note
 
 ## 3. Workspace layout
 
 - [x] Layout tree: main area, left sidebar, right sidebar, popout windows; splits (vertical and horizontal) contain tab groups; tab groups contain tabs
 - [x] Layout saved in `.obsidian/workspace.json` on every change and restored on start (also the list of recently opened files)
-- [ ] Tabs: click to switch, middle-click or X to close, drag to reorder, drag into a split (four drop zones) or out to a new window
-- [ ] New tab button and the empty new tab screen (new note, new base, new canvas, go to file, with hotkey chips)
-- [ ] Tab list dropdown (all tabs in the group)
+- [x] Tabs: click to switch, middle-click or X to close, drag to reorder, drag into a split (four drop zones) or out to a new window
+- [x] New tab button and the empty new tab screen (new note, new base, new canvas, go to file, with hotkey chips)
+- [x] Tab list dropdown (all tabs in the group)
 - [x] Stacked tabs mode per tab group: tabs become overlapping vertical strips with rotated titles; click a strip to slide it into view
 - [x] Pinned tabs (pin icon; links open elsewhere)
-- [ ] Linked tabs (local graph, outline, backlinks follow another tab; chain icon)
+- [x] Linked tabs (local graph, outline, backlinks follow another tab; chain icon)
 - [x] Split right, split down; resize handles; close tab group; close others
 - [x] Undo close tab
-- [ ] Back and forward history per tab, with long-press/right-click history list
-- [ ] Tabs remember mode (editing or reading), scroll position and cursor
-- [ ] Deferred tabs: hidden tabs keep their state without building their view until shown
-- [ ] "Always focus new tabs" setting
-- [ ] Left sidebar default tabs: Files, Search, Bookmarks; right sidebar default tabs: Backlinks, Outgoing links, Tags, All properties, Outline (right collapsed by default)
+- [x] Back and forward history per tab, with long-press/right-click history list
+- [x] Tabs remember mode (editing or reading), scroll position and cursor
+- [x] Deferred tabs: hidden tabs keep their state without building their view until shown
+- [x] "Always focus new tabs" setting
+- [x] Left sidebar default tabs: Files, Search, Bookmarks; right sidebar default tabs: Backlinks, Outgoing links, Tags, All properties, Outline (right collapsed by default)
 - [x] Sidebar tab strip shows icons only; sidebars can hold their own splits and tab groups
-- [ ] Toggle buttons for each sidebar at the top corners; sidebar width 300 px default, resizable, remembered
-- [ ] Ribbon: 44 px strip at the far left with action buttons from core and community plugins; hide/show and reorder in Settings > Interface; can be turned off
-- [ ] Status bar at the bottom right: backlinks count, properties count, editing mode toggle, word and character count (selection-aware), sync status; plugins can add items
-- [ ] View header: back, forward, breadcrumb path (click a folder to reveal it, click the name to rename), bookmark icon, mode toggle, more-options menu; can be hidden
-- [ ] More-options menu: backlinks in document, reading view / source mode, split right, split down, open in new window, rename, move, bookmark, merge, add property, export to PDF, find, replace, copy path, version history, open linked view, open in default app, show in system explorer, reveal in file tree, delete
+- [x] Toggle buttons for each sidebar at the top corners; sidebar width 300 px default, resizable, remembered
+- [x] Ribbon: 44 px strip at the far left with action buttons from core and community plugins; hide/show and reorder in Settings > Interface; can be turned off
+- [x] Status bar at the bottom right: backlinks count, properties count, editing mode toggle, word and character count (selection-aware), sync status; plugins can add items
+- [x] View header: back, forward, breadcrumb path (click a folder to reveal it, click the name to rename), bookmark icon, mode toggle, more-options menu; can be hidden
+- [x] More-options menu: backlinks in document, reading view / source mode, split right, split down, open in new window, rename, move, bookmark, merge, add property, export to PDF, find, replace, copy path, version history, open linked view, open in default app, show in system explorer, reveal in file tree, delete
 - [ ] Saved layouts (Workspaces plugin) [later]
 
 ## 4. Editor (Markdown)
@@ -146,14 +146,14 @@ Legend: **[later]** = not needed for the first release. **[ours]** = Bedrock doe
 - [x] Active file highlighted; indentation guides
 
 ### Quick switcher
-- [ ] Fuzzy search over file names, paths and aliases; recent files when empty
-- [ ] Unresolved link names offered as "create" (setting: show existing only)
-- [ ] Attachments shown (setting, on); all file types (setting, off)
-- [ ] Enter open, Ctrl+Enter new tab, Ctrl+Alt+Enter to the right, Shift+Enter create, Esc close; instruction bar listing these
+- [x] Fuzzy search over file names, paths and aliases; recent files when empty
+- [x] Unresolved link names offered as "create" (setting: show existing only)
+- [x] Attachments shown (setting, on); all file types (setting, off)
+- [x] Enter open, Ctrl+Enter new tab, Ctrl+Alt+Enter to the right, Shift+Enter create, Esc close; instruction bar listing these
 
 ### Command palette
 - [x] Fuzzy search over every command with hotkey chips
-- [ ] Recently used commands first; pinned commands (settings) at the top
+- [x] Recently used commands first; pinned commands (settings) at the top
 - [x] Only commands that apply to the current context are listed (editor-only commands need an editor)
 
 ### Search
@@ -172,12 +172,12 @@ Legend: **[later]** = not needed for the first release. **[ours]** = Bedrock doe
 
 ### Page preview
 - [ ] Hover popover showing the linked note (scrollable, editable, expand button)
-- [ ] Per-source "needs Ctrl" settings (defaults: reading view without Ctrl, everything else with Ctrl)
+- [x] Per-source "needs Ctrl" settings (defaults: reading view without Ctrl, everything else with Ctrl)
 
 ## 6. Links and knowledge
 
 - [x] Backlinks pane: linked mentions with context cards; unlinked mentions with a "link" button; counts; collapse results; more context; sort; filter
-- [ ] Backlinks at the bottom of each note (setting in Backlinks options and per note from the menu)
+- [x] Backlinks at the bottom of each note (setting in Backlinks options and per note from the menu)
 - [x] Outgoing links pane: links (resolved and unresolved) and unlinked mentions of other notes
 - [x] Tags pane: tree of nested tags, counts, sort by name or frequency, click to search
 - [x] Outline pane: heading tree, click to jump, drag to move sections, filter, follow cursor option
@@ -224,11 +224,11 @@ Legend: **[later]** = not needed for the first release. **[ours]** = Bedrock doe
 - [x] Unique note creator: timestamp prefix (default YYYYMMDDHHmm), folder, template [later]
 - [x] Note composer: merge file into another, extract selection or heading to a new note; leave a link (default), embed or nothing; template with `{{content}}`, `{{fromTitle}}`, `{{newTitle}}`; confirm before merge
 - [x] Random note [later]
-- [ ] Word count in the status bar (words and characters, selection-aware)
+- [x] Word count in the status bar (words and characters, selection-aware)
 - [x] File recovery: snapshots at most every 5 minutes, kept 7 days, outside the vault; snapshot browser with diff, restore, copy; clear history
 - [x] Export note to PDF (page size, orientation, margins, scale)
 - [ ] Slides (present a note split by `---`) [later]
-- [ ] Audio recorder (record into the vault) [later]
+- [x] Audio recorder (record into the vault) [later]
 - [x] Bases (`.base` table and card views over properties, with sort, group, filter, formulas) [later]
 - [ ] Web viewer (in-app browser, reader mode, save page as Markdown, ad blocking) [later]
 
@@ -258,16 +258,16 @@ Legend: **[later]** = not needed for the first release. **[ours]** = Bedrock doe
 ### Settings > General
 
 - [x] "Version 1.14.4": button "Check for updates"
-- [ ] "Update Available": button "Download"
+- [x] "Update Available": button "Download"
 - [x] "Automatic updates": toggle, on
-- [ ] "Receive early access versions": toggle shown only with a Catalyst license
+- [x] "Receive early access versions": toggle shown only with a Catalyst license
 - [ ] "Language": dropdown, English (51 options); button "Relaunch"
 - [x] "Help": button "Open"
 - [ ] Account / "Your account": button "Log in"; button "Sign up"
-- [ ] Account / "Catalyst license": shows license status when signed in
-- [ ] Account / "Commercial license": button "Activate"; button "Purchase"
-- [ ] Advanced / "Notify if startup takes longer than expected": toggle, off; icon button "Check now"
-- [ ] Advanced / "Command line interface": toggle, off
+- [x] Account / "Catalyst license": shows license status when signed in
+- [x] Account / "Commercial license": button "Activate"; button "Purchase"
+- [x] Advanced / "Notify if startup takes longer than expected": toggle, off; icon button "Check now"
+- [x] Advanced / "Command line interface": toggle, off
 - [x] Advanced / "Hardware acceleration": toggle, on; button "Relaunch"
 
 ### Settings > Appearance
@@ -363,7 +363,7 @@ Legend: **[later]** = not needed for the first release. **[ours]** = Bedrock doe
 
 ### Settings > Backlinks
 
-- [ ] "Show backlinks at the bottom of notes": toggle, off
+- [x] "Show backlinks at the bottom of notes": toggle, off
 
 ### Settings > Canvas
 
@@ -378,16 +378,16 @@ Legend: **[later]** = not needed for the first release. **[ours]** = Bedrock doe
 
 ### Settings > Page preview
 
-- [ ] Require Ctrl to trigger page preview on hover / "Search, Backlinks, and Outgoing links": toggle, on
-- [ ] Require Ctrl to trigger page preview on hover / "Reading view": toggle, off
-- [ ] Require Ctrl to trigger page preview on hover / "Editing view": toggle, on
-- [ ] Require Ctrl to trigger page preview on hover / "Tab header": toggle, on
-- [ ] Require Ctrl to trigger page preview on hover / "Files": toggle, on
-- [ ] Require Ctrl to trigger page preview on hover / "Properties view": toggle, on
-- [ ] Require Ctrl to trigger page preview on hover / "Bookmarks": toggle, on
-- [ ] Require Ctrl to trigger page preview on hover / "Outline": toggle, on
-- [ ] Require Ctrl to trigger page preview on hover / "Bases": toggle, on
-- [ ] Require Ctrl to trigger page preview on hover / "Graph view": toggle, on
+- [x] Require Ctrl to trigger page preview on hover / "Search, Backlinks, and Outgoing links": toggle, on
+- [x] Require Ctrl to trigger page preview on hover / "Reading view": toggle, off
+- [x] Require Ctrl to trigger page preview on hover / "Editing view": toggle, on
+- [x] Require Ctrl to trigger page preview on hover / "Tab header": toggle, on
+- [x] Require Ctrl to trigger page preview on hover / "Files": toggle, on
+- [x] Require Ctrl to trigger page preview on hover / "Properties view": toggle, on
+- [x] Require Ctrl to trigger page preview on hover / "Bookmarks": toggle, on
+- [x] Require Ctrl to trigger page preview on hover / "Outline": toggle, on
+- [x] Require Ctrl to trigger page preview on hover / "Bases": toggle, on
+- [x] Require Ctrl to trigger page preview on hover / "Graph view": toggle, on
 
 ### Settings > Daily notes
 
@@ -449,43 +449,43 @@ Legend: **[later]** = not needed for the first release. **[ours]** = Bedrock doe
 ## 12. Plugins
 
 ### Core plugins (same ids; default state)
-- [ ] `file-explorer` Files (on)
-- [ ] `global-search` Search (on)
+- [x] `file-explorer` Files (on)
+- [x] `global-search` Search (on)
 - [x] `switcher` Quick switcher (on)
 - [x] `graph` Graph view (on)
-- [ ] `backlink` Backlinks (on)
+- [x] `backlink` Backlinks (on)
 - [x] `canvas` Canvas (on)
-- [ ] `outgoing-link` Outgoing links (on)
-- [ ] `tag-pane` Tags view (on)
+- [x] `outgoing-link` Outgoing links (on)
+- [x] `tag-pane` Tags view (on)
 - [x] `footnotes` Footnotes view (off) [later]
-- [ ] `properties` Properties view (on)
-- [ ] `page-preview` Page preview (on)
+- [x] `properties` Properties view (on)
+- [x] `page-preview` Page preview (on)
 - [x] `daily-notes` Daily notes (on)
 - [x] `templates` Templates (on)
 - [x] `note-composer` Note composer (on)
 - [x] `command-palette` Command palette (on)
 - [x] `slash-command` Slash commands (off)
-- [ ] `editor-status` editing mode in status bar (on, not listed)
-- [ ] `bookmarks` Bookmarks (on)
+- [x] `editor-status` editing mode in status bar (on, not listed)
+- [x] `bookmarks` Bookmarks (on)
 - [x] `zk-prefixer` Unique note creator (off) [later]
 - [x] `random-note` Random note (off) [later]
-- [ ] `outline` Outline (on)
-- [ ] `word-count` Word count (on)
+- [x] `outline` Outline (on)
+- [x] `word-count` Word count (on)
 - [ ] `slides` Slides (off) [later]
-- [ ] `audio-recorder` Audio recorder (off) [later]
+- [x] `audio-recorder` Audio recorder (off) [later]
 - [x] `workspaces` Workspaces (off) [later]
 - [x] `file-recovery` File recovery (on)
-- [ ] `publish` Publish (off) [ours: not planned]
+- [x] `publish` Publish (off) [ours: not planned] [n/a: Obsidian's paid web hosting; shown in Settings as not part of this app]
 - [ ] `sync` Sync (on) [ours: Bedrock sync, always available]
 - [x] `bases` Bases (on) [later]
 - [ ] `webviewer` Web viewer (off) [later]
 
 ### Community plugins
 - [x] Restricted mode on by default; "turn on community plugins" flow with a warning; per-vault trust prompt when a vault with plugins is opened the first time; stored outside the vault
-- [ ] Load each enabled id from `community-plugins.json`; read `manifest.json`; skip if `minAppVersion` is too new or the plugin is mobile-only on mobile
+- [x] Load each enabled id from `community-plugins.json`; read `manifest.json`; skip if `minAppVersion` is too new or the plugin is mobile-only on mobile
 - [x] Run `main.js` as CommonJS with a `require` that gives `obsidian`, the shared `@codemirror/*` and `@lezer/*` packages, and falls through to Node for everything else; map old CodeMirror package names
-- [ ] Inject `styles.css`; `loadData` / `saveData` on `data.json`; notify the plugin when `data.json` changes on disk
-- [ ] Unload cleanly: everything registered through the plugin is removed
+- [x] Inject `styles.css`; `loadData` / `saveData` on `data.json`; notify the plugin when `data.json` changes on disk
+- [x] Unload cleanly: everything registered through the plugin is removed
 - [x] Installed plugins list in settings: toggle, options, hotkeys, uninstall, open folder, reload, check for updates
 - [x] Plugin browser: public community list, downloads and update dates, search, sort, installed only, detail page with README, install / enable / update / uninstall
 - [ ] `obsidian` API implemented to match `obsidian.d.ts` (App, Vault, Workspace, MetadataCache, FileManager, Plugin, ItemView, MarkdownView, Editor, Modal, SuggestModal, FuzzySuggestModal, Setting, PluginSettingTab, Notice, Menu, MarkdownRenderer, requestUrl, moment, Platform, setIcon, addIcon, normalizePath, parseYaml, stringifyYaml, debounce, prepareFuzzySearch, ...)
@@ -498,31 +498,31 @@ Every command id below must exist with the same id so `hotkeys.json`, plugins an
 
 #### `app` (20)
 
-- [ ] `app:decrease-font-size` Decrease font size
-- [ ] `app:delete-file` Delete current file
-- [ ] `app:go-back` Navigate back (Ctrl + Alt + ArrowLeft)
-- [ ] `app:go-forward` Navigate forward (Ctrl + Alt + ArrowRight)
-- [ ] `app:increase-font-size` Increase font size
-- [ ] `app:migrate-frontmatter` Format converter: Frontmatter migration
-- [ ] `app:open-another-vault` Open vault...
-- [ ] `app:open-file` Open file from outside the vault...
-- [ ] `app:open-help` Open help (F1)
-- [ ] `app:open-sandbox-vault` Open sandbox vault
+- [x] `app:decrease-font-size` Decrease font size
+- [x] `app:delete-file` Delete current file
+- [x] `app:go-back` Navigate back (Ctrl + Alt + ArrowLeft)
+- [x] `app:go-forward` Navigate forward (Ctrl + Alt + ArrowRight)
+- [x] `app:increase-font-size` Increase font size
+- [x] `app:migrate-frontmatter` Format converter: Frontmatter migration
+- [x] `app:open-another-vault` Open vault...
+- [x] `app:open-file` Open file from outside the vault...
+- [x] `app:open-help` Open help (F1)
+- [x] `app:open-sandbox-vault` Open sandbox vault
 - [x] `app:open-settings` Open settings (Ctrl + ,)
-- [ ] `app:open-vault` Manage vaults
-- [ ] `app:reload` Reload app without saving
-- [ ] `app:show-debug-info` Show debug info
-- [ ] `app:show-release-notes` Show release notes
-- [ ] `app:switch-vault` Change vault...
-- [ ] `app:toggle-default-new-pane-mode` Toggle default mode for new tabs
-- [ ] `app:toggle-left-sidebar` Toggle left sidebar
-- [ ] `app:toggle-ribbon` Toggle ribbon
-- [ ] `app:toggle-right-sidebar` Toggle right sidebar
+- [x] `app:open-vault` Manage vaults
+- [x] `app:reload` Reload app without saving
+- [x] `app:show-debug-info` Show debug info
+- [x] `app:show-release-notes` Show release notes
+- [x] `app:switch-vault` Change vault...
+- [x] `app:toggle-default-new-pane-mode` Toggle default mode for new tabs
+- [x] `app:toggle-left-sidebar` Toggle left sidebar
+- [x] `app:toggle-ribbon` Toggle ribbon
+- [x] `app:toggle-right-sidebar` Toggle right sidebar
 
 #### `audio-recorder` (2)
 
-- [ ] `audio-recorder:start` Audio recorder: Start recording audio
-- [ ] `audio-recorder:stop` Audio recorder: Stop recording audio
+- [x] `audio-recorder:start` Audio recorder: Start recording audio
+- [x] `audio-recorder:stop` Audio recorder: Stop recording audio
 
 #### `backlink` (3)
 
@@ -558,7 +558,7 @@ Every command id below must exist with the same id so `hotkeys.json`, plugins an
 
 #### `command-palette` (1)
 
-- [ ] `command-palette:open` Command palette: Open command palette (Ctrl + P)
+- [x] `command-palette:open` Command palette: Open command palette (Ctrl + P)
 
 #### `daily-notes` (3)
 
@@ -656,14 +656,14 @@ Every command id below must exist with the same id so `hotkeys.json`, plugins an
 
 #### `file-explorer` (8)
 
-- [ ] `file-explorer:duplicate-file` Make a copy of the current file
-- [ ] `file-explorer:move-file` Move current file to another folder
-- [ ] `file-explorer:new-file` Create new note (Ctrl + N)
-- [ ] `file-explorer:new-file-in-current-tab` Create new note in current tab
-- [ ] `file-explorer:new-file-in-new-pane` Create note to the right (Ctrl + Shift + N)
-- [ ] `file-explorer:new-folder` Files: Create new folder
-- [ ] `file-explorer:open` Files: Show file explorer
-- [ ] `file-explorer:reveal-active-file` Files: Reveal current file in navigation
+- [x] `file-explorer:duplicate-file` Make a copy of the current file
+- [x] `file-explorer:move-file` Move current file to another folder
+- [x] `file-explorer:new-file` Create new note (Ctrl + N)
+- [x] `file-explorer:new-file-in-current-tab` Create new note in current tab
+- [x] `file-explorer:new-file-in-new-pane` Create note to the right (Ctrl + Shift + N)
+- [x] `file-explorer:new-folder` Files: Create new folder
+- [x] `file-explorer:open` Files: Show file explorer
+- [x] `file-explorer:reveal-active-file` Files: Reveal current file in navigation
 
 #### `file-recovery` (1)
 
@@ -701,14 +701,14 @@ Every command id below must exist with the same id so `hotkeys.json`, plugins an
 
 #### `markdown` (4)
 
-- [ ] `markdown:add-alias` Add alias
-- [ ] `markdown:add-metadata-property` Add file property (Ctrl + ;)
-- [ ] `markdown:clear-metadata-properties` Clear file properties
-- [ ] `markdown:toggle-preview` Toggle reading view (Ctrl + E)
+- [x] `markdown:add-alias` Add alias
+- [x] `markdown:add-metadata-property` Add file property (Ctrl + ;)
+- [x] `markdown:clear-metadata-properties` Clear file properties
+- [x] `markdown:toggle-preview` Toggle reading view (Ctrl + E)
 
 #### `mobile` (1)
 
-- [ ] `mobile:quick-action` Configure mobile Quick Action
+- [x] `mobile:quick-action` Configure mobile Quick Action [n/a: there is no mobile app]
 
 #### `note-composer` (3)
 
@@ -718,8 +718,8 @@ Every command id below must exist with the same id so `hotkeys.json`, plugins an
 
 #### `open-with-default-app` (2)
 
-- [ ] `open-with-default-app:open` Open in default app
-- [ ] `open-with-default-app:show` Show in system explorer
+- [x] `open-with-default-app:open` Open in default app
+- [x] `open-with-default-app:show` Show in system explorer
 
 #### `outgoing-links` (2)
 
@@ -738,9 +738,9 @@ Every command id below must exist with the same id so `hotkeys.json`, plugins an
 
 #### `publish` (3)
 
-- [ ] `publish:open-in-live-site` Publish: Open in live site
-- [ ] `publish:publish-file` Publish: Publish current file
-- [ ] `publish:view-changes` Publish: Publish changes...
+- [x] `publish:open-in-live-site` Publish: Open in live site [n/a: Publish is Obsidian's paid web hosting, not part of this app]
+- [x] `publish:publish-file` Publish: Publish current file [n/a: Publish is Obsidian's paid web hosting, not part of this app]
+- [x] `publish:view-changes` Publish: Publish changes... [n/a: Publish is Obsidian's paid web hosting, not part of this app]
 
 #### `random-note` (1)
 
@@ -752,7 +752,7 @@ Every command id below must exist with the same id so `hotkeys.json`, plugins an
 
 #### `switcher` (1)
 
-- [ ] `switcher:open` Quick switcher: Open quick switcher (Ctrl + O)
+- [x] `switcher:open` Quick switcher: Open quick switcher (Ctrl + O)
 
 #### `sync` (4)
 
@@ -768,7 +768,7 @@ Every command id below must exist with the same id so `hotkeys.json`, plugins an
 #### `theme` (2)
 
 - [x] `theme:switch` Change theme...
-- [ ] `theme:toggle-light-dark` Toggle light/dark mode
+- [x] `theme:toggle-light-dark` Toggle light/dark mode
 
 #### `webviewer` (9)
 
@@ -785,43 +785,43 @@ Every command id below must exist with the same id so `hotkeys.json`, plugins an
 #### `window` (4)
 
 - [x] `window:reset-zoom` Reset zoom
-- [ ] `window:toggle-always-on-top` Toggle window always on top
+- [x] `window:toggle-always-on-top` Toggle window always on top
 - [x] `window:zoom-in` Zoom in
 - [x] `window:zoom-out` Zoom out
 
 #### `workspace` (31)
 
-- [ ] `workspace:close` Close current tab (Ctrl + W)
-- [ ] `workspace:close-others` Close all other tabs
-- [ ] `workspace:close-others-tab-group` Close others in tab group
-- [ ] `workspace:close-tab-group` Close this tab group
+- [x] `workspace:close` Close current tab (Ctrl + W)
+- [x] `workspace:close-others` Close all other tabs
+- [x] `workspace:close-others-tab-group` Close others in tab group
+- [x] `workspace:close-tab-group` Close this tab group
 - [x] `workspace:close-window` Close window (Ctrl + Shift + W)
-- [ ] `workspace:copy-full-path` Copy current file path from system root
-- [ ] `workspace:copy-path` Copy current file path from vault folder
-- [ ] `workspace:copy-url` Copy Obsidian URL for current file
-- [ ] `workspace:edit-file-title` Rename file (F2)
+- [x] `workspace:copy-full-path` Copy current file path from system root
+- [x] `workspace:copy-path` Copy current file path from vault folder
+- [x] `workspace:copy-url` Copy Obsidian URL for current file
+- [x] `workspace:edit-file-title` Rename file (F2)
 - [x] `workspace:export-pdf` Export to PDF...
-- [ ] `workspace:goto-last-tab` Go to last tab (Ctrl + 9)
-- [ ] `workspace:goto-tab-1` Go to tab #1 (Ctrl + 1)
-- [ ] `workspace:goto-tab-2` Go to tab #2 (Ctrl + 2)
-- [ ] `workspace:goto-tab-3` Go to tab #3 (Ctrl + 3)
-- [ ] `workspace:goto-tab-4` Go to tab #4 (Ctrl + 4)
-- [ ] `workspace:goto-tab-5` Go to tab #5 (Ctrl + 5)
-- [ ] `workspace:goto-tab-6` Go to tab #6 (Ctrl + 6)
-- [ ] `workspace:goto-tab-7` Go to tab #7 (Ctrl + 7)
-- [ ] `workspace:goto-tab-8` Go to tab #8 (Ctrl + 8)
+- [x] `workspace:goto-last-tab` Go to last tab (Ctrl + 9)
+- [x] `workspace:goto-tab-1` Go to tab #1 (Ctrl + 1)
+- [x] `workspace:goto-tab-2` Go to tab #2 (Ctrl + 2)
+- [x] `workspace:goto-tab-3` Go to tab #3 (Ctrl + 3)
+- [x] `workspace:goto-tab-4` Go to tab #4 (Ctrl + 4)
+- [x] `workspace:goto-tab-5` Go to tab #5 (Ctrl + 5)
+- [x] `workspace:goto-tab-6` Go to tab #6 (Ctrl + 6)
+- [x] `workspace:goto-tab-7` Go to tab #7 (Ctrl + 7)
+- [x] `workspace:goto-tab-8` Go to tab #8 (Ctrl + 8)
 - [x] `workspace:move-to-new-window` Move current tab to new window
-- [ ] `workspace:new-tab` New tab (Ctrl + T)
+- [x] `workspace:new-tab` New tab (Ctrl + T)
 - [x] `workspace:new-window` New window
-- [ ] `workspace:next-tab` Go to next tab (Ctrl + Tab, Ctrl + PageDown)
+- [x] `workspace:next-tab` Go to next tab (Ctrl + Tab, Ctrl + PageDown)
 - [x] `workspace:open-in-new-window` Open current tab in new window
-- [ ] `workspace:previous-tab` Go to previous tab (Ctrl + Shift + Tab, Ctrl + PageUp)
-- [ ] `workspace:show-trash` Show trash
-- [ ] `workspace:split-horizontal` Split down
-- [ ] `workspace:split-vertical` Split right
-- [ ] `workspace:toggle-pin` Toggle pin
-- [ ] `workspace:toggle-stacked-tabs` Toggle stacked tabs
-- [ ] `workspace:undo-close-pane` Undo close tab (Ctrl + Shift + T)
+- [x] `workspace:previous-tab` Go to previous tab (Ctrl + Shift + Tab, Ctrl + PageUp)
+- [x] `workspace:show-trash` Show trash
+- [x] `workspace:split-horizontal` Split down
+- [x] `workspace:split-vertical` Split right
+- [x] `workspace:toggle-pin` Toggle pin
+- [x] `workspace:toggle-stacked-tabs` Toggle stacked tabs
+- [x] `workspace:undo-close-pane` Undo close tab (Ctrl + Shift + T)
 
 #### `workspaces` (4)
 
@@ -837,12 +837,12 @@ Every command id below must exist with the same id so `hotkeys.json`, plugins an
 
 ## 14. Default hotkeys
 
-- [ ] All 41 defaults below (Windows/Linux / macOS)
-- [ ] Ctrl + Alt + ArrowLeft / Cmd + Option + ArrowLeft: `app:go-back`
-- [ ] Ctrl + Alt + ArrowRight / Cmd + Option + ArrowRight: `app:go-forward`
-- [ ] F1 / F1: `app:open-help`
-- [ ] Ctrl + , / Cmd + ,: `app:open-settings`
-- [ ] Ctrl + P / Cmd + P: `command-palette:open`
+- [x] All 41 defaults below (Windows/Linux / macOS)
+- [x] Ctrl + Alt + ArrowLeft / Cmd + Option + ArrowLeft: `app:go-back`
+- [x] Ctrl + Alt + ArrowRight / Cmd + Option + ArrowRight: `app:go-forward`
+- [x] F1 / F1: `app:open-help`
+- [x] Ctrl + , / Cmd + ,: `app:open-settings`
+- [x] Ctrl + P / Cmd + P: `command-palette:open`
 - [x] Ctrl + D / Cmd + D: `editor:delete-paragraph`
 - [x] Alt + Enter / Option + Enter: `editor:follow-link`
 - [x] Ctrl + K / Cmd + K: `editor:insert-link`
@@ -856,29 +856,29 @@ Every command id below must exist with the same id so `hotkeys.json`, plugins an
 - [x] Ctrl + L / Cmd + L: `editor:toggle-checklist-status`
 - [x] Ctrl + / / Cmd + /: `editor:toggle-comments`
 - [x] Ctrl + I / Cmd + I: `editor:toggle-italics`
-- [ ] Ctrl + N / Cmd + N: `file-explorer:new-file`
-- [ ] Ctrl + Shift + N / Cmd + Shift + N: `file-explorer:new-file-in-new-pane`
-- [ ] Ctrl + Shift + F / Cmd + Shift + F: `global-search:open`
+- [x] Ctrl + N / Cmd + N: `file-explorer:new-file`
+- [x] Ctrl + Shift + N / Cmd + Shift + N: `file-explorer:new-file-in-new-pane`
+- [x] Ctrl + Shift + F / Cmd + Shift + F: `global-search:open`
 - [x] Ctrl + G / Cmd + G: `graph:open`
-- [ ] Ctrl + ; / Cmd + ;: `markdown:add-metadata-property`
-- [ ] Ctrl + E / Cmd + E: `markdown:toggle-preview`
-- [ ] Ctrl + O / Cmd + O: `switcher:open`
-- [ ] Ctrl + W / Cmd + W: `workspace:close`
+- [x] Ctrl + ; / Cmd + ;: `markdown:add-metadata-property`
+- [x] Ctrl + E / Cmd + E: `markdown:toggle-preview`
+- [x] Ctrl + O / Cmd + O: `switcher:open`
+- [x] Ctrl + W / Cmd + W: `workspace:close`
 - [x] Ctrl + Shift + W / Cmd + Shift + W: `workspace:close-window`
-- [ ] F2 / F2: `workspace:edit-file-title`
-- [ ] Ctrl + 9 / Cmd + 9: `workspace:goto-last-tab`
-- [ ] Ctrl + 1 / Cmd + 1: `workspace:goto-tab-1`
-- [ ] Ctrl + 2 / Cmd + 2: `workspace:goto-tab-2`
-- [ ] Ctrl + 3 / Cmd + 3: `workspace:goto-tab-3`
-- [ ] Ctrl + 4 / Cmd + 4: `workspace:goto-tab-4`
-- [ ] Ctrl + 5 / Cmd + 5: `workspace:goto-tab-5`
-- [ ] Ctrl + 6 / Cmd + 6: `workspace:goto-tab-6`
-- [ ] Ctrl + 7 / Cmd + 7: `workspace:goto-tab-7`
-- [ ] Ctrl + 8 / Cmd + 8: `workspace:goto-tab-8`
-- [ ] Ctrl + T / Cmd + T: `workspace:new-tab`
-- [ ] Ctrl + Tab or Ctrl + PageDown / Ctrl + Tab or Ctrl + PageDown: `workspace:next-tab`
-- [ ] Ctrl + Shift + Tab or Ctrl + PageUp / Ctrl + Shift + Tab or Ctrl + PageUp: `workspace:previous-tab`
-- [ ] Ctrl + Shift + T / Cmd + Shift + T: `workspace:undo-close-pane`
+- [x] F2 / F2: `workspace:edit-file-title`
+- [x] Ctrl + 9 / Cmd + 9: `workspace:goto-last-tab`
+- [x] Ctrl + 1 / Cmd + 1: `workspace:goto-tab-1`
+- [x] Ctrl + 2 / Cmd + 2: `workspace:goto-tab-2`
+- [x] Ctrl + 3 / Cmd + 3: `workspace:goto-tab-3`
+- [x] Ctrl + 4 / Cmd + 4: `workspace:goto-tab-4`
+- [x] Ctrl + 5 / Cmd + 5: `workspace:goto-tab-5`
+- [x] Ctrl + 6 / Cmd + 6: `workspace:goto-tab-6`
+- [x] Ctrl + 7 / Cmd + 7: `workspace:goto-tab-7`
+- [x] Ctrl + 8 / Cmd + 8: `workspace:goto-tab-8`
+- [x] Ctrl + T / Cmd + T: `workspace:new-tab`
+- [x] Ctrl + Tab or Ctrl + PageDown / Ctrl + Tab or Ctrl + PageDown: `workspace:next-tab`
+- [x] Ctrl + Shift + Tab or Ctrl + PageUp / Ctrl + Shift + Tab or Ctrl + PageUp: `workspace:previous-tab`
+- [x] Ctrl + Shift + T / Cmd + Shift + T: `workspace:undo-close-pane`
 
 - [ ] Editor keys that are not commands: undo, redo, select all, cut, copy, paste, paste as plain text (Ctrl+Shift+V), arrow and page movement with selection, Tab / Shift+Tab indent, Enter list continuation, Alt+click extra cursor, Ctrl+click link in new tab, Ctrl+hover preview, window zoom (Ctrl+=, Ctrl+-, Ctrl+0)
 
@@ -889,16 +889,16 @@ Every command id below must exist with the same id so `hotkeys.json`, plugins an
 - [ ] `community-plugins.json`, `hotkeys.json`, `types.json`, `bookmarks.json`, `graph.json`, `daily-notes.json`, `templates.json`, `zk-prefixer.json`, `note-composer.json`, `switcher.json`, `command-palette.json`, `file-recovery.json`, `backlink.json`, `canvas.json`, `page-preview.json`, `webviewer.json`, `workspaces.json` (defaults in `docs/reference/settings.json`)
 - [ ] `workspace.json` layout format (never synced)
 - [ ] `plugins/<id>/`, `themes/<name>/`, `snippets/`
-- [ ] Reload config when a file changes on disk (sync or another device)
+- [x] Reload config when a file changes on disk (sync or another device)
 
 ## 16. URIs
 
-- [ ] `open` (vault, file, path, pane type)
-- [ ] `new` (name / file / path, content, clipboard, append, prepend, overwrite, silent, pane type)
-- [ ] `daily`, `unique`, `search`
-- [ ] `hook-get-address`, `choose-vault`, `show-plugin`, `show-theme`
-- [ ] Short forms `vault/<vault>/<file>` and absolute path
-- [ ] `x-success` / `x-error` callbacks behind the "Allow URI callbacks" setting (off)
+- [x] `open` (vault, file, path, pane type)
+- [x] `new` (name / file / path, content, clipboard, append, prepend, overwrite, silent, pane type)
+- [x] `daily`, `unique`, `search`
+- [x] `hook-get-address`, `choose-vault`, `show-plugin`, `show-theme`
+- [x] Short forms `vault/<vault>/<file>` and absolute path
+- [x] `x-success` / `x-error` callbacks behind the "Allow URI callbacks" setting (off)
 - [ ] Register our own scheme; optionally also `obsidian://` when Obsidian is not installed [ours]
 
 ## 17. Sync [ours]
@@ -920,11 +920,11 @@ Bedrock's sync replaces Obsidian Sync (design in `ARCHITECTURE.md`). Parity item
 ## 18. Small states to match
 
 - [ ] Empty new tab; empty sidebar panes; no search results; no backlinks; empty note; empty vault
-- [ ] Tooltips on every icon button (label + hotkey where it has one), shown after a short delay, positioned below or beside the target with an arrow
-- [ ] Notices (toasts) at the top right, stacking, auto-hide; clickable to dismiss
-- [ ] Context menus with icons, separators, submenus, red destructive items, disabled items
-- [ ] Confirm dialogs (delete file, merge, update links after rename)
-- [ ] Modal prompts (rename, move to folder, insert template, choose file)
+- [x] Tooltips on every icon button (label + hotkey where it has one), shown after a short delay, positioned below or beside the target with an arrow
+- [x] Notices (toasts) at the top right, stacking, auto-hide; clickable to dismiss
+- [x] Context menus with icons, separators, submenus, red destructive items, disabled items
+- [x] Confirm dialogs (delete file, merge, update links after rename)
+- [x] Modal prompts (rename, move to folder, insert template, choose file)
 - [ ] Drag ghosts and drop overlays when dragging tabs and files
 - [ ] Loading spinner in tabs and the indexing progress indicator
-- [ ] Error notice when a file cannot be opened or saved
+- [x] Error notice when a file cannot be opened or saved

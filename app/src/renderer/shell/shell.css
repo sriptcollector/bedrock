@@ -275,3 +275,9 @@ body[data-frame="custom"] .workspace-tabs.is-top-right > .workspace-tab-header-c
 body[data-frame="native"] .workspace-tabs.is-top-right > .workspace-tab-header-container {
   padding-right: 8px;
 }
+
+/* With the right sidebar toggle in it, the top-right tab bar keeps just the caption buttons' room
+   (toggle right next to them, like the original). */
+body:not(.mod-macos) .workspace-tabs.is-top-right > .workspace-tab-header-container:has(> .sidebar-toggle-button.mod-right) {
+  padding-right: var(--frame-right-space);
+}

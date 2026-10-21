@@ -125,6 +125,9 @@ function runPaneMenu(app: any, m: Menu, leaf: any, source: string): void {
   const f = view?.file;
   if (f instanceof TFile && !(m as any).__fileMenuFired) app.workspace.trigger("file-menu", m, f, source, leaf);
   (m as any).__fileMenuFired = before;
+  // One "Export to PDF..." item (views may add their own shortcut to the same command).
+  if (m.items.some((x: any) => x !== "separator" && x.titleEl?.textContent === "Export to PDF..."))
+    m.items = m.items.filter((x: any) => x === "separator" || x.titleEl?.textContent !== "Export to PDF");
   // "Open linked view" goes last in its group (after "Open version history").
   const i = m.items.findIndex((x: any) => x !== "separator" && x.__linkedView);
   if (i >= 0) m.items.push(...m.items.splice(i, 1));

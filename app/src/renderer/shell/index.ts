@@ -12,6 +12,7 @@ import { mountUpdates } from "./updates";
 import { installTooltips } from "../ui/tooltip";
 import { mountIndexingStatus, mountRightSidebarToggle, applyFrameStyle } from "./chrome-extras";
 import { watchConfigFolder } from "./config-watch";
+import { EditorView } from "@codemirror/view";
 import nodePath from "node:path";
 import { Notice } from "../ui/notice";
 import { TFile, TFolder, type TAbstractFile } from "../vault/files";
@@ -47,6 +48,16 @@ export function mountShell(app: any): void {
   mountRightSidebarToggle(app);
   void applyFrameStyle(app);
   app.workspace.onLayoutReady(() => watchConfigFolder(app));
+  // Word count follows the selection (the status bar counts only what's selected).
+  let wcTimer: any = null;
+  app.workspace.editorExtensions.push(
+    EditorView.updateListener.of((u) => {
+      if (!u.selectionSet || u.docChanged) return;
+      clearTimeout(wcTimer);
+      wcTimer = setTimeout(() => app.statusBar?.updateCount?.(), 150);
+    }),
+  );
+  app.workspace.onLayoutReady(() => app.workspace.updateOptions());
   // Settings › General › "Notify if startup takes longer than expected".
   const notifyStartup = () => {
     const st = app.indexStats;
