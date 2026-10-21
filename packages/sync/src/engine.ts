@@ -65,6 +65,13 @@ export interface SyncEngineOptions {
   fullScanMs?: number;
   debounceMs?: number;
   ignore?: IgnoreOptions;
+  /**
+   * Selective sync (vault-relative '/' paths). Excluded paths are neither uploaded nor downloaded
+   * on this computer. Files that were already synced are left alone on both sides: excluding them
+   * never deletes them anywhere, and they pick up remote changes again once included.
+   * Change it at runtime with setExclude().
+   */
+  exclude?: (path: string) => boolean;
   uploadConcurrency?: number;
   log?: (msg: string) => void;
 }
@@ -97,6 +104,10 @@ interface PullItem {
 type ApplyResult = 'ok' | 'skip';
 
 const SMALL_FILE = 1024 * 1024;
+/** The empty-vault guard only applies when at least this many synced files would vanish at once. */
+const EMPTY_GUARD_MIN_FILES = 3;
+export const EMPTY_VAULT_MESSAGE =
+  'The vault folder is empty or missing, so sync is paused to keep your notes safe on your other computers. Put the files back (or restart the app) and sync carries on.';
 const COMMIT_BATCH = 500;
 const UPLOAD_BATCH_BYTES = 8 * 1024 * 1024;
 
@@ -157,7 +168,7 @@ export class SyncEngine extends EventEmitter {
     const prefixes = [...(o.ignore?.prefixes ?? [])];
     const relState = relative(this.root, resolve(o.stateDir));
     if (relState && !relState.startsWith('..') && !relState.includes(':')) prefixes.push(toPosix(relState));
-    this.ignore = { prefixes, patterns: o.ignore?.patterns };
+    this.ignore = { prefixes, patterns: o.ignore?.patterns, exclude: o.exclude ?? o.ignore?.exclude };
   }
 
   // ------------------------------------------------------------------ public API
@@ -231,6 +242,37 @@ export class SyncEngine extends EventEmitter {
   notifyRename(from: string, to: string): void {
     this.renameHints.set(pathKey(toPosix(from)), toPosix(to));
     this.request({ paths: new Set([toPosix(from), toPosix(to)]) });
+  }
+
+  /**
+   * Changes the selective-sync rule. Re-reads the whole server list on the next cycle so files
+   * that became included are downloaded (or adopted if this computer already has them).
+   */
+  setExclude(exclude: ((path: string) => boolean) | undefined): void {
+    this.ignore.exclude = exclude;
+    this.repullAll = true;
+    if (this.started) this.request({ full: true });
+  }
+  private repullAll = false;
+
+  private excluded(p: string): boolean {
+    return !!p && !!this.ignore.exclude?.(p);
+  }
+
+  /** The bytes of one version of a file (for diffs in the version history). */
+  async versionContent(path: string, version: number): Promise<Buffer> {
+    await this.ensureReady();
+    const rec = this.state.byLocalPath(toPosix(path)) ?? this.state.all().find((r) => pathKey(r.sp) === pathKey(toPosix(path)));
+    if (!rec || rec.v === 0) throw new SyncError(`"${path}" is not synced yet`, 'client');
+    return this.readVersion(rec.id, version);
+  }
+
+  /** The bytes of the last version of a deleted file (to preview it in the recycle bin). */
+  async trashContent(fileId: string): Promise<Buffer> {
+    await this.ensureReady();
+    const item = (await this.api.trash()).find((t) => t.fileId === fileId);
+    if (!item || item.lastLiveVersion === null) throw new SyncError('That file is not in the recycle bin', 'client');
+    return this.readVersion(fileId, item.lastLiveVersion);
   }
 
   async usage(): Promise<{ usedBytes: number; quotaBytes: number; retentionDays: number }> {
@@ -461,6 +503,10 @@ export class SyncEngine extends EventEmitter {
     let tPush = 0;
     for (let round = 0; ; round++) {
       let t = performance.now();
+      if (round === 0 && this.repullAll) {
+        this.repullAll = false;
+        this.state.data.lastSeq = 0;
+      }
       if (round > 0 || this.vault!.seq !== this.state.data.lastSeq) await this.pull();
       tPull += performance.now() - t;
       t = performance.now();
@@ -496,12 +542,19 @@ export class SyncEngine extends EventEmitter {
   private async scanFull(): Promise<void> {
     const entries = new Map<string, Entry>();
     const temps: string[] = [];
+    if (!existsSync(this.root)) throw new SyncError(EMPTY_VAULT_MESSAGE, 'client');
     await walk(this.root, '', this.ignore, entries, temps);
     await this.cleanTemps(temps);
-    await this.reconcile(entries, this.state.all().filter((r) => !r.ld));
+    const cands = this.state.all().filter((r) => !r.ld && !this.excluded(r.lp));
+    // Guard: a vault folder that suddenly has nothing in it (unplugged drive, folder swapped,
+    // mistaken bulk delete by another program) must not empty the vault on every other computer.
+    if (entries.size === 0 && cands.filter((r) => r.v > 0 && !r.sd && r.kind === 'file').length >= EMPTY_GUARD_MIN_FILES)
+      throw new SyncError(EMPTY_VAULT_MESSAGE, 'client');
+    await this.reconcile(entries, cands);
   }
 
   private async scanSome(paths: Set<string>): Promise<void> {
+    if (!existsSync(this.root)) throw new SyncError(EMPTY_VAULT_MESSAGE, 'client');
     const { entries, scopes } = await scanPaths(this.root, paths, this.ignore);
     const exact = new Set<string>();
     const trees: string[] = [];
@@ -512,7 +565,7 @@ export class SyncEngine extends EventEmitter {
         trees.push(s);
       }
     }
-    const cands = this.state.all().filter((r) => !r.ld && (exact.has(pathKey(r.lp)) || trees.some((t) => isUnder(r.lp, t))));
+    const cands = this.state.all().filter((r) => !r.ld && !this.excluded(r.lp) && (exact.has(pathKey(r.lp)) || trees.some((t) => isUnder(r.lp, t))));
     // paths found that already belong to records outside the candidate set (should not happen) are left alone
     await this.reconcile(entries, cands);
   }
@@ -636,7 +689,10 @@ export class SyncEngine extends EventEmitter {
     for (const c of changes) {
       const rec = this.state.get(c.fileId);
       if (rec && rec.v >= c.version) continue;
-      items.push({ c, meta: decryptMeta(this.keys!, c.fileId, c.meta), rec });
+      const meta = decryptMeta(this.keys!, c.fileId, c.meta);
+      // selective sync: not wanted here (and not already here under a wanted path)
+      if (this.excluded(safePath(meta.path)) && (!rec || rec.ld || this.excluded(rec.lp))) continue;
+      items.push({ c, meta, rec });
     }
     let skippedSeq = Infinity;
     if (items.length) {
@@ -1110,6 +1166,7 @@ export class SyncEngine extends EventEmitter {
 
   private needsPush(r: FileRecord): boolean {
     if (this.skippedTooBig.has(r.id)) return false;
+    if (this.excluded(r.lp)) return false;
     if (r.v === 0) return !r.ld;
     if (r.ld) return !r.sd;
     return r.sd || (r.kind === 'file' && r.lh !== r.sh) || nfc(r.lp) !== r.sp;

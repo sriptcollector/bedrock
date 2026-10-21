@@ -134,16 +134,16 @@ Legend: **[later]** = not needed for the first release. **[ours]** = Bedrock doe
 ## 5. Navigation and finding things
 
 ### File explorer
-- [ ] Tree of folders and files; folders first; non-Markdown files show an uppercase extension tag; Markdown files hide `.md`
-- [ ] Header buttons: new note, new folder, sort order, auto-reveal current file, collapse/expand all
+- [x] Tree of folders and files; folders first; non-Markdown files show an uppercase extension tag; Markdown files hide `.md`
+- [x] Header buttons: new note, new folder, sort order, auto-reveal current file, collapse/expand all
 - [x] Sort: name A-Z (default), name Z-A, modified new-old, modified old-new, created new-old, created old-new
 - [x] Click opens, Ctrl+click opens in new tab, middle-click new tab
-- [ ] Multi-select with Ctrl and Shift; drag and drop files and folders (move); drop files from the OS (copy in)
+- [x] Multi-select with Ctrl and Shift; drag and drop files and folders (move); drop files from the OS (copy in)
 - [ ] Inline rename (F2); cut, copy, paste of files
 - [ ] File context menu: open in new tab, open to the right, open in new window, make a copy, move, bookmark, merge with, copy path (vault path, full path, obsidian URL), version history, open in default app, show in system explorer, rename, delete
 - [ ] Folder context menu: new note, new folder, new canvas, new base, move, bookmark, copy path, search in folder, show in system explorer, rename, delete
-- [ ] Filter box (show search) for the tree
-- [ ] Active file highlighted; indentation guides
+- [x] Filter box (show search) for the tree
+- [x] Active file highlighted; indentation guides
 
 ### Quick switcher
 - [ ] Fuzzy search over file names, paths and aliases; recent files when empty
@@ -157,18 +157,18 @@ Legend: **[later]** = not needed for the first release. **[ours]** = Bedrock doe
 - [x] Only commands that apply to the current context are listed (editor-only commands need an editor)
 
 ### Search
-- [ ] Search pane with query box, match-case toggle, explain-search toggle, collapse results, show more context, sort order (file name, modified, created; both directions)
-- [ ] Results grouped per file with counts and highlighted matches; click jumps to the match
-- [ ] Operators: AND by space, quotes, OR, minus, parentheses, `/regex/`, `file:`, `path:`, `content:`, `tag:`, `line:`, `block:`, `section:`, `task:`, `task-todo:`, `task-done:`, `match-case:`, `ignore-case:`, `[property]`, `[property:value]`
-- [ ] Explain search: each part of the query described in words
-- [ ] Search inside canvas text cards
-- [ ] "Copy search results"; bookmark a search; open search from a tag click
+- [x] Search pane with query box, match-case toggle, explain-search toggle, collapse results, show more context, sort order (file name, modified, created; both directions)
+- [x] Results grouped per file with counts and highlighted matches; click jumps to the match
+- [x] Operators: AND by space, quotes, OR, minus, parentheses, `/regex/`, `file:`, `path:`, `content:`, `tag:`, `line:`, `block:`, `section:`, `task:`, `task-todo:`, `task-done:`, `match-case:`, `ignore-case:`, `[property]`, `[property:value]`
+- [x] Explain search: each part of the query described in words
+- [x] Search inside canvas text cards
+- [x] "Copy search results"; bookmark a search; open search from a tag click
 - [ ] In-note find (Ctrl+F) and replace (Ctrl+H)
 
 ### Bookmarks
-- [ ] Bookmark files, folders, searches, headings, blocks, graph settings, web addresses; groups of bookmarks; drag to reorder; rename; remove
-- [ ] Bookmark icon in the view header filled when the current note is bookmarked
-- [ ] Stored in `bookmarks.json`
+- [x] Bookmark files, folders, searches, headings, blocks, graph settings, web addresses; groups of bookmarks; drag to reorder; rename; remove
+- [x] Bookmark icon in the view header filled when the current note is bookmarked
+- [x] Stored in `bookmarks.json`
 
 ### Page preview
 - [ ] Hover popover showing the linked note (scrollable, editable, expand button)
@@ -176,45 +176,45 @@ Legend: **[later]** = not needed for the first release. **[ours]** = Bedrock doe
 
 ## 6. Links and knowledge
 
-- [ ] Backlinks pane: linked mentions with context cards; unlinked mentions with a "link" button; counts; collapse results; more context; sort; filter
+- [x] Backlinks pane: linked mentions with context cards; unlinked mentions with a "link" button; counts; collapse results; more context; sort; filter
 - [ ] Backlinks at the bottom of each note (setting in Backlinks options and per note from the menu)
-- [ ] Outgoing links pane: links (resolved and unresolved) and unlinked mentions of other notes
-- [ ] Tags pane: tree of nested tags, counts, sort by name or frequency, click to search
-- [ ] Outline pane: heading tree, click to jump, drag to move sections, filter, follow cursor option
-- [ ] All properties pane: every property key with counts and type icons, sort, filter, rename across vault
-- [ ] File properties pane: properties of the active note in the sidebar
+- [x] Outgoing links pane: links (resolved and unresolved) and unlinked mentions of other notes
+- [x] Tags pane: tree of nested tags, counts, sort by name or frequency, click to search
+- [x] Outline pane: heading tree, click to jump, drag to move sections, filter, follow cursor option
+- [x] All properties pane: every property key with counts and type icons, sort, filter, rename across vault
+- [x] File properties pane: properties of the active note in the sidebar
 - [x] Property types: text, list, number, checkbox, date, date and time, plus aliases and tags; stored in `types.json`; inferred from values; change type from the key's menu
 - [ ] Footnotes pane [later]
 - [ ] Rename heading updates links to it; rename file updates links (per setting)
 
 ## 7. Graph view
 
-- [ ] Global graph in a tab; local graph for the current note (opens linked, in a split)
-- [ ] WebGL drawing with a worker-driven force layout; smooth zoom and pan; drag nodes; hover highlights neighbors in the accent color; click opens
-- [ ] Node size grows with link count; unresolved notes faded; optional tag and attachment nodes; labels fade by zoom (text fade threshold)
-- [ ] Settings panel with four collapsible sections and a reset button:
-  - [ ] Filters: file search, tags (off), attachments (off), existing files only (off), orphans (on)
-  - [ ] Groups: color groups from search queries, add/remove/reorder, color picker
-  - [ ] Display: arrows (off), text fade threshold (0), node size (1), link thickness (1), animate (time-lapse by creation date)
-  - [ ] Forces: center, repel (default 10), link force (1), link distance (250)
-- [ ] Local graph extras: depth (1), incoming links (on), outgoing links (on), neighbor links (off)
-- [ ] Colors from CSS variables so themes apply
+- [x] Global graph in a tab; local graph for the current note (opens linked, in a split)
+- [x] WebGL drawing with a worker-driven force layout; smooth zoom and pan; drag nodes; hover highlights neighbors in the accent color; click opens
+- [x] Node size grows with link count; unresolved notes faded; optional tag and attachment nodes; labels fade by zoom (text fade threshold)
+- [x] Settings panel with four collapsible sections and a reset button:
+  - [x] Filters: file search, tags (off), attachments (off), existing files only (off), orphans (on)
+  - [x] Groups: color groups from search queries, add/remove/reorder, color picker
+  - [x] Display: arrows (off), text fade threshold (0), node size (1), link thickness (1), animate (time-lapse by creation date)
+  - [x] Forces: center, repel (default 10), link force (1), link distance (250)
+- [x] Local graph extras: depth (1), incoming links (on), outgoing links (on), neighbor links (off)
+- [x] Colors from CSS variables so themes apply
 - [ ] Settings saved in `graph.json`; bookmark a graph
 
 ## 8. Canvas
 
-- [ ] Open, edit and save `.canvas` files in JSON Canvas 1.0 format (keep unknown fields)
-- [ ] Node types: text (Markdown, editable in place), file (note, image, PDF, any file, with heading/block subpath), link (web page), group (label, background)
-- [ ] Node colors: six presets and custom hex
-- [ ] Edges: from/to sides, arrow ends, color, label; draw by dragging from side handles
-- [ ] Infinite dotted background; zoom and pan; selection box; multi-select; move and resize with snapping (grid and objects, settings)
-- [ ] Right-side controls: canvas settings, zoom in, reset zoom, zoom to fit, zoom out, undo, redo, help
-- [ ] Bottom card menu: add text card, add note from vault, add media; drag files in from the explorer
-- [ ] Node toolbar when selected: delete, color, zoom to selection, edit
-- [ ] Card names shown always (setting: always, on hover, never)
-- [ ] Wheel behaviour (pan default, zoom option); Ctrl+drag behaviour (menu default)
-- [ ] Hide card content when zoomed out past a threshold (setting)
-- [ ] Commands: new canvas, export as image, jump to group, convert card to file
+- [x] Open, edit and save `.canvas` files in JSON Canvas 1.0 format (keep unknown fields)
+- [x] Node types: text (Markdown, editable in place), file (note, image, PDF, any file, with heading/block subpath), link (web page), group (label, background)
+- [x] Node colors: six presets and custom hex
+- [x] Edges: from/to sides, arrow ends, color, label; draw by dragging from side handles
+- [x] Infinite dotted background; zoom and pan; selection box; multi-select; move and resize with snapping (grid and objects, settings)
+- [x] Right-side controls: canvas settings, zoom in, reset zoom, zoom to fit, zoom out, undo, redo, help
+- [x] Bottom card menu: add text card, add note from vault, add media; drag files in from the explorer
+- [x] Node toolbar when selected: delete, color, zoom to selection, edit
+- [x] Card names shown always (setting: always, on hover, never)
+- [x] Wheel behaviour (pan default, zoom option); Ctrl+drag behaviour (menu default)
+- [x] Hide card content when zoomed out past a threshold (setting)
+- [x] Commands: new canvas, export as image, jump to group, convert card to file
 - [ ] Canvas embeds in notes; canvas files in search and graph
 
 ## 9. Daily notes, templates and note tools
@@ -359,7 +359,7 @@ Legend: **[later]** = not needed for the first release. **[ours]** = Bedrock doe
 
 ### Settings > Sync
 
-- [ ] Signed-out state: short explanation plus Sign up / Log in (Bedrock: replace with our Sync settings, see "Sync")
+- [x] Signed-out state: short explanation plus Sign up / Log in (Bedrock: replace with our Sync settings, see "Sync")
 
 ### Settings > Backlinks
 
@@ -367,13 +367,13 @@ Legend: **[later]** = not needed for the first release. **[ours]** = Bedrock doe
 
 ### Settings > Canvas
 
-- [ ] "Default location for new canvas files": dropdown, Vault folder (options: Vault folder, Same folder as current file, In the folder specified below)
-- [ ] "Folder to create new canvas files in": text, empty (placeholder "Example: folder 1/folder 2")
-- [ ] "Default mouse wheel behavior": dropdown, Pan (options: Pan, Zoom)
-- [ ] "Default Ctrl + Drag behavior": dropdown, Show menu (options: Show menu, Add card, Add note from vault, Add media from vault, Add web page, Create group)
-- [ ] "Show card names": dropdown, Always (options: Always, On hover, Never)
-- [ ] "Snap to grid": toggle, on
-- [ ] "Snap to objects": toggle, on
+- [x] "Default location for new canvas files": dropdown, Vault folder (options: Vault folder, Same folder as current file, In the folder specified below)
+- [x] "Folder to create new canvas files in": text, empty (placeholder "Example: folder 1/folder 2")
+- [x] "Default mouse wheel behavior": dropdown, Pan (options: Pan, Zoom)
+- [x] "Default Ctrl + Drag behavior": dropdown, Show menu (options: Show menu, Add card, Add note from vault, Add media from vault, Add web page, Create group)
+- [x] "Show card names": dropdown, Always (options: Always, On hover, Never)
+- [x] "Snap to grid": toggle, on
+- [x] "Snap to objects": toggle, on
 - [ ] "Zoom threshold for hiding card content": slider, 0; restore-default button
 
 ### Settings > Page preview
@@ -452,9 +452,9 @@ Legend: **[later]** = not needed for the first release. **[ours]** = Bedrock doe
 - [ ] `file-explorer` Files (on)
 - [ ] `global-search` Search (on)
 - [ ] `switcher` Quick switcher (on)
-- [ ] `graph` Graph view (on)
+- [x] `graph` Graph view (on)
 - [ ] `backlink` Backlinks (on)
-- [ ] `canvas` Canvas (on)
+- [x] `canvas` Canvas (on)
 - [ ] `outgoing-link` Outgoing links (on)
 - [ ] `tag-pane` Tags view (on)
 - [ ] `footnotes` Footnotes view (off) [later]
@@ -526,9 +526,9 @@ Every command id below must exist with the same id so `hotkeys.json`, plugins an
 
 #### `backlink` (3)
 
-- [ ] `backlink:open` Backlinks: Show backlinks
-- [ ] `backlink:open-backlinks` Backlinks: Open backlinks for the current note
-- [ ] `backlink:toggle-backlinks-in-document` Backlinks: Toggle backlinks in document
+- [x] `backlink:open` Backlinks: Show backlinks
+- [x] `backlink:open-backlinks` Backlinks: Open backlinks for the current note
+- [x] `backlink:toggle-backlinks-in-document` Backlinks: Toggle backlinks in document
 
 #### `bases` (6)
 
@@ -541,20 +541,20 @@ Every command id below must exist with the same id so `hotkeys.json`, plugins an
 
 #### `bookmarks` (7)
 
-- [ ] `bookmarks:bookmark-all-tabs` Bookmarks: Bookmark all tabs...
-- [ ] `bookmarks:bookmark-current-heading` Bookmarks: Bookmark heading under cursor... [editor]
-- [ ] `bookmarks:bookmark-current-search` Bookmarks: Bookmark current search...
-- [ ] `bookmarks:bookmark-current-section` Bookmarks: Bookmark block under cursor... [editor]
-- [ ] `bookmarks:bookmark-current-view` Bookmarks: Bookmark...
-- [ ] `bookmarks:open` Bookmarks: Show bookmarks
-- [ ] `bookmarks:unbookmark-current-view` Bookmarks: Remove bookmark for the current file
+- [x] `bookmarks:bookmark-all-tabs` Bookmarks: Bookmark all tabs...
+- [x] `bookmarks:bookmark-current-heading` Bookmarks: Bookmark heading under cursor... [editor]
+- [x] `bookmarks:bookmark-current-search` Bookmarks: Bookmark current search...
+- [x] `bookmarks:bookmark-current-section` Bookmarks: Bookmark block under cursor... [editor]
+- [x] `bookmarks:bookmark-current-view` Bookmarks: Bookmark...
+- [x] `bookmarks:open` Bookmarks: Show bookmarks
+- [x] `bookmarks:unbookmark-current-view` Bookmarks: Remove bookmark for the current file
 
 #### `canvas` (4)
 
-- [ ] `canvas:convert-to-file` Canvas: Convert to file...
-- [ ] `canvas:export-as-image` Canvas: Export as image
-- [ ] `canvas:jump-to-group` Canvas: Jump to group
-- [ ] `canvas:new-file` Canvas: Create new canvas
+- [x] `canvas:convert-to-file` Canvas: Convert to file...
+- [x] `canvas:export-as-image` Canvas: Export as image
+- [x] `canvas:jump-to-group` Canvas: Jump to group
+- [x] `canvas:new-file` Canvas: Create new canvas
 
 #### `command-palette` (1)
 
@@ -675,13 +675,13 @@ Every command id below must exist with the same id so `hotkeys.json`, plugins an
 
 #### `global-search` (1)
 
-- [ ] `global-search:open` Search: Search in all files (Ctrl + Shift + F)
+- [x] `global-search:open` Search: Search in all files (Ctrl + Shift + F)
 
 #### `graph` (3)
 
-- [ ] `graph:animate` Graph view: Start graph timelapse animation
-- [ ] `graph:open` Graph view: Open graph view (Ctrl + G)
-- [ ] `graph:open-local` Graph view: Open local graph
+- [x] `graph:animate` Graph view: Start graph timelapse animation
+- [x] `graph:open` Graph view: Open graph view (Ctrl + G)
+- [x] `graph:open-local` Graph view: Open local graph
 
 #### `insert-current-date` (1)
 
@@ -723,18 +723,18 @@ Every command id below must exist with the same id so `hotkeys.json`, plugins an
 
 #### `outgoing-links` (2)
 
-- [ ] `outgoing-links:open` Outgoing links: Show outgoing links
-- [ ] `outgoing-links:open-for-current` Outgoing links: Open outgoing links for the current file
+- [x] `outgoing-links:open` Outgoing links: Show outgoing links
+- [x] `outgoing-links:open-for-current` Outgoing links: Open outgoing links for the current file
 
 #### `outline` (2)
 
-- [ ] `outline:open` Outline: Show outline
-- [ ] `outline:open-for-current` Outline: Open outline of the current file
+- [x] `outline:open` Outline: Show outline
+- [x] `outline:open-for-current` Outline: Open outline of the current file
 
 #### `properties` (2)
 
-- [ ] `properties:open` Properties view: Show all properties
-- [ ] `properties:open-local` Properties view: Show file properties
+- [x] `properties:open` Properties view: Show all properties
+- [x] `properties:open-local` Properties view: Show file properties
 
 #### `publish` (3)
 
@@ -756,14 +756,14 @@ Every command id below must exist with the same id so `hotkeys.json`, plugins an
 
 #### `sync` (4)
 
-- [ ] `sync:open-sync-log` Sync: Open activity log
-- [ ] `sync:open-sync-view` Sync: Show Sync history
-- [ ] `sync:setup` Sync: Set up Sync
-- [ ] `sync:view-version-history` Sync: Open version history for the current file
+- [x] `sync:open-sync-log` Sync: Open activity log
+- [x] `sync:open-sync-view` Sync: Show Sync history
+- [x] `sync:setup` Sync: Set up Sync
+- [x] `sync:view-version-history` Sync: Open version history for the current file
 
 #### `tag-pane` (1)
 
-- [ ] `tag-pane:open` Tags view: Show tags
+- [x] `tag-pane:open` Tags view: Show tags
 
 #### `theme` (2)
 
@@ -859,7 +859,7 @@ Every command id below must exist with the same id so `hotkeys.json`, plugins an
 - [ ] Ctrl + N / Cmd + N: `file-explorer:new-file`
 - [ ] Ctrl + Shift + N / Cmd + Shift + N: `file-explorer:new-file-in-new-pane`
 - [ ] Ctrl + Shift + F / Cmd + Shift + F: `global-search:open`
-- [ ] Ctrl + G / Cmd + G: `graph:open`
+- [x] Ctrl + G / Cmd + G: `graph:open`
 - [ ] Ctrl + ; / Cmd + ;: `markdown:add-metadata-property`
 - [ ] Ctrl + E / Cmd + E: `markdown:toggle-preview`
 - [ ] Ctrl + O / Cmd + O: `switcher:open`
@@ -904,18 +904,18 @@ Every command id below must exist with the same id so `hotkeys.json`, plugins an
 ## 17. Sync [ours]
 
 Bedrock's sync replaces Obsidian Sync (design in `ARCHITECTURE.md`). Parity items users will look for:
-- [ ] Built in and free; signs in through the Toolbay account; no vault password
-- [ ] End-to-end encryption (contents, names, metadata)
-- [ ] Status bar sync icon with states: synced, syncing, paused, offline, error, not set up; click opens the sync panel
-- [ ] Sync settings tab: account and vault info, device name, pause/resume, storage used, log
-- [ ] Selective sync: images, audio, video, PDFs, other types toggles; excluded folders
-- [ ] Settings sync categories: main settings, appearance, themes and snippets, hotkeys, active core plugins, core plugin settings, active community plugins, installed community plugins
-- [ ] Version history per file with diff and restore (90 days)
-- [ ] Deleted files list with restore
+- [x] Built in and free; signs in through the Toolbay account; no vault password
+- [x] End-to-end encryption (contents, names, metadata)
+- [x] Status bar sync icon with states: synced, syncing, paused, offline, error, not set up; click opens the sync panel
+- [x] Sync settings tab: account and vault info, device name, pause/resume, storage used, log
+- [x] Selective sync: images, audio, video, PDFs, other types toggles; excluded folders
+- [x] Settings sync categories: main settings, appearance, themes and snippets, hotkeys, active core plugins, core plugin settings, active community plugins, installed community plugins
+- [x] Version history per file with diff and restore (90 days)
+- [x] Deleted files list with restore
 - [ ] Conflict handling: three-way merge for text, conflict copy when it cannot merge, notice to the user, snapshot saved before merging
-- [ ] Guard: an empty or missing local vault pauses sync instead of deleting remote files
+- [x] Guard: an empty or missing local vault pauses sync instead of deleting remote files
 - [ ] Sync log (what changed, when, from which device)
-- [ ] Works offline; catches up on reconnect
+- [x] Works offline; catches up on reconnect
 
 ## 18. Small states to match
 

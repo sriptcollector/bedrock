@@ -46,6 +46,11 @@ export class InternalPlugin extends Component {
   get available(): boolean {
     return !!this.impl || this.info.available || !!this.manager.externallyAvailable.has(this.id);
   }
+  /** Modules that build a core plugin's views mark it available (views/sidebar does this). */
+  set available(v: boolean) {
+    if (v) this.manager.externallyAvailable.add(this.id);
+    else this.manager.externallyAvailable.delete(this.id);
+  }
   get options(): Record<string, any> {
     return this.instance.options;
   }
@@ -201,7 +206,10 @@ export class InternalPlugins {
     this.loaded = true;
     for (const p of Object.values(this.plugins)) {
       await p.loadData();
-      if (this.shouldBeOn(p.id)) {
+      const on = this.shouldBeOn(p.id);
+      // core-plugins.json is authoritative, even if another module flagged the plugin early.
+      if (!on && p.enabled && !p.impl) p.enabled = false;
+      if (on) {
         // Plugins without an implementation still count as enabled (their views are built elsewhere).
         await p.enable();
       }

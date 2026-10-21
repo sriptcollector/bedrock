@@ -1,5 +1,7 @@
 // File explorer ("file-explorer" view): lazy tree (only expanded folders render), sort orders,
-// new note/folder, inline rename, drag to move, context menu with the "file-menu" event.
+// new note/folder, auto-reveal, collapse/expand all, filter box, inline rename (F2), multi-select
+// (Ctrl/Cmd and Shift click), drag to move (several at once), files dropped from the OS are copied
+// in, page preview on hover, and the original's context menus plus the "file-menu" event.
 import { ItemView } from "../workspace/view";
 import type { WorkspaceLeaf } from "../workspace/leaf";
 import { TAbstractFile, TFile, TFolder } from "../vault/files";
@@ -8,19 +10,22 @@ import { Menu } from "../ui/menu";
 import { Keymap } from "../commands/keymap";
 import { FILE_DRAG_TYPE } from "../workspace/dnd";
 import { Notice } from "../ui/notice";
+import { fillFileMenu, fillFolderMenu, FolderSuggestModal } from "./sidebar/file-menu";
+import nodeFs from "node:fs";
 
 type SortOrder = "alphabetical" | "alphabeticalReverse" | "byModifiedTime" | "byModifiedTimeReverse" | "byCreatedTime" | "byCreatedTimeReverse";
 
-const SORT_LABELS: [SortOrder, string][] = [
-  ["alphabetical", "File name (A to Z)"],
-  ["alphabeticalReverse", "File name (Z to A)"],
-  ["byModifiedTime", "Modified time (new to old)"],
-  ["byModifiedTimeReverse", "Modified time (old to new)"],
-  ["byCreatedTime", "Created time (new to old)"],
-  ["byCreatedTimeReverse", "Created time (old to new)"],
+const SORT_LABELS: [SortOrder, string, string][] = [
+  ["alphabetical", "File name (A to Z)", "name"],
+  ["alphabeticalReverse", "File name (Z to A)", "name"],
+  ["byModifiedTime", "Modified time (new to old)", "mtime"],
+  ["byModifiedTimeReverse", "Modified time (old to new)", "mtime"],
+  ["byCreatedTime", "Created time (new to old)", "ctime"],
+  ["byCreatedTimeReverse", "Created time (old to new)", "ctime"],
 ];
 
 const collator = new Intl.Collator(undefined, { numeric: true, sensitivity: "base" });
+const MULTI_DRAG_TYPE = "application/x-bedrock-files";
 
 interface NodeEls {
   el: HTMLElement;
@@ -32,12 +37,21 @@ export class FileExplorerView extends ItemView {
   icon = "folder-closed";
   sortOrder: SortOrder = "alphabetical";
   autoReveal = false;
+  showSearch = false;
+  searchQuery = "";
   private expanded = new Set<string>();
   private nodes = new Map<string, NodeEls>();
   private dirty = new Set<string>();
   private renderTimer: any = null;
   private filesEl: HTMLElement;
   private activePath: string | null = null;
+  private selected = new Set<string>();
+  private anchorPath: string | null = null;
+  private revealBtn: HTMLElement;
+  private collapseBtn: HTMLElement;
+  private searchBtn: HTMLElement;
+  private searchWrap: HTMLElement;
+  private searchInput: HTMLInputElement;
 
   constructor(leaf: WorkspaceLeaf) {
     super(leaf);
@@ -60,11 +74,14 @@ export class FileExplorerView extends ItemView {
     return out;
   }
   getState(): any {
-    return { sortOrder: this.sortOrder, autoReveal: this.autoReveal };
+    return { sortOrder: this.sortOrder, autoReveal: this.autoReveal, showSearch: this.showSearch, searchQuery: this.searchQuery };
   }
   async setState(state: any): Promise<void> {
     if (state?.sortOrder && SORT_LABELS.some(([k]) => k === state.sortOrder)) this.sortOrder = state.sortOrder;
     if (typeof state?.autoReveal === "boolean") this.autoReveal = state.autoReveal;
+    if (typeof state?.showSearch === "boolean") this.showSearch = state.showSearch;
+    if (typeof state?.searchQuery === "string") this.searchQuery = state.searchQuery;
+    this.syncHeader();
     this.rebuild();
   }
 
@@ -82,15 +99,16 @@ export class FileExplorerView extends ItemView {
       b.addEventListener("click", cb);
       return b;
     };
-    btn("square-pen", "New note", () => this.createNote(this.app.vault.getRoot()));
+    btn("edit", "New note", () => this.createNote(this.app.vault.getRoot()));
     btn("folder-plus", "New folder", () => this.createFolder(this.app.vault.getRoot()));
-    btn("arrow-up-narrow-wide", "Change sort order", (e) => {
+    btn("sort-asc", "Change sort order", (e) => {
       const m = new Menu();
-      for (const [k, label] of SORT_LABELS)
+      for (const [k, label, sec] of SORT_LABELS)
         m.addItem((i) =>
           i
             .setTitle(label)
             .setChecked(this.sortOrder === k)
+            .setSection(sec)
             .onClick(() => {
               this.sortOrder = k;
               this.rebuild();
@@ -99,19 +117,58 @@ export class FileExplorerView extends ItemView {
         );
       m.showAtMouseEvent(e);
     });
-    btn("chevrons-down-up", "Collapse all", () => {
-      this.expanded.clear();
+    this.revealBtn = btn("gallery-vertical", "Auto-reveal current file", () => {
+      this.autoReveal = !this.autoReveal;
+      this.syncHeader();
+      const f = this.app.workspace.getActiveFile();
+      if (this.autoReveal && f) this.revealInFolder(f);
+      this.app.workspace.requestSaveLayout();
+    });
+    this.collapseBtn = btn("chevrons-down-up", "Collapse all", () => {
+      if (this.expanded.size) this.expanded.clear();
+      else for (const f of this.app.vault.getAllFolders(false)) this.expanded.add(f.path);
       this.saveExpanded();
       this.rebuild();
     });
-    this.filesEl = this.contentEl.createDiv("nav-files-container node-insert-event");
+    this.searchBtn = btn("search", "Show search filter", () => {
+      this.showSearch = !this.showSearch;
+      this.syncHeader();
+      if (this.showSearch) this.searchInput.focus();
+      else if (this.searchQuery) {
+        this.searchQuery = "";
+        this.rebuild();
+      }
+    });
+    this.searchBtn.hide();
+    this.searchWrap = nav.createDiv("search-input-container");
+    this.searchInput = this.searchWrap.createEl("input", { attr: { enterkeyhint: "search", type: "search", spellcheck: "false", placeholder: "Search..." } }) as HTMLInputElement;
+    const clear = this.searchWrap.createDiv({ cls: "search-input-clear-button", attr: { "aria-label": "Clear search" } });
+    this.searchInput.addEventListener("input", () => {
+      this.searchQuery = this.searchInput.value;
+      clear.toggle(!!this.searchQuery);
+      this.rebuild();
+    });
+    clear.addEventListener("click", () => {
+      this.searchInput.value = "";
+      this.searchQuery = "";
+      clear.hide();
+      this.rebuild();
+    });
+    clear.hide();
+
+    this.filesEl = this.contentEl.createDiv({ cls: "nav-files-container node-insert-event", attr: { tabindex: "-1" } });
     this.filesEl.addEventListener("contextmenu", (e) => {
       if ((e.target as HTMLElement).closest(".tree-item-self")) return;
       e.preventDefault();
       const m = new Menu();
-      this.fillFolderMenu(m, this.app.vault.getRoot());
+      fillFolderMenu(this.app, m, this.app.vault.getRoot(), this.hooks());
+      this.app.workspace.trigger("file-menu", m, this.app.vault.getRoot(), "file-explorer-context-menu", this.leaf);
       m.showAtMouseEvent(e);
     });
+    this.filesEl.addEventListener("click", (e) => {
+      if (!(e.target as HTMLElement).closest(".tree-item-self")) this.clearSelection();
+    });
+    this.filesEl.addEventListener("keydown", (e) => this.onKey(e));
     this.setupRootDrop();
     try {
       const saved = JSON.parse(this.app.loadLocalStorage(this.storageKey()) ?? "[]");
@@ -129,16 +186,39 @@ export class FileExplorerView extends ItemView {
         this.markDirty(oldParent ?? v.getRoot(), old);
         this.markDirty(f.parent);
         if (this.expanded.delete(old)) this.expanded.add(f.path);
+        if (this.selected.delete(old)) this.selected.add(f.path);
       }),
     );
     this.registerEvent(v.on("modify", (f: TAbstractFile) => this.sortOrder !== "alphabetical" && this.sortOrder !== "alphabeticalReverse" && this.markDirty(f.parent)));
     this.registerEvent(this.app.workspace.on("file-open", (f: TFile | null) => this.setActive(f)));
     this.registerEvent(v.on("config-changed", (k: string) => k === "showUnsupportedFiles" && this.rebuild()));
+    this.syncHeader();
     this.rebuild();
+  }
+
+  private hooks() {
+    return {
+      explorer: true,
+      rename: (f: TAbstractFile) => this.startRename(f),
+      newNote: (folder: TFolder) => this.createNote(folder),
+      newFolder: (folder: TFolder) => this.createFolder(folder),
+    };
+  }
+
+  private syncHeader(): void {
+    if (!this.revealBtn) return;
+    this.revealBtn.toggleClass("is-active", this.autoReveal);
+    const anyOpen = this.expanded.size > 0;
+    this.collapseBtn.setAttr("aria-label", anyOpen ? "Collapse all" : "Expand all");
+    setIcon(this.collapseBtn, anyOpen ? "chevrons-down-up" : "chevrons-up-down");
+    this.searchBtn.toggleClass("is-active", this.showSearch);
+    this.searchWrap.toggle(this.showSearch);
+    if (this.searchInput.value !== this.searchQuery) this.searchInput.value = this.searchQuery;
   }
 
   private saveExpanded(): void {
     this.app.saveLocalStorage(this.storageKey(), JSON.stringify([...this.expanded]));
+    this.syncHeader();
   }
 
   // ---------- rendering ----------
@@ -152,15 +232,23 @@ export class FileExplorerView extends ItemView {
     rootSelf.createDiv({ cls: "tree-item-inner nav-folder-title-content", text: this.app.vault.getName() });
     const childrenEl = rootEl.createDiv("tree-item-children nav-folder-children");
     this.nodes.set("/", { el: rootEl, selfEl: rootSelf, childrenEl });
-    this.renderChildren(root, childrenEl);
+    this.renderChildren(root, childrenEl, 0);
     this.setActive(this.app.workspace.getActiveFile());
+    this.syncHeader();
   }
 
   private isVisible(f: TAbstractFile): boolean {
-    if (f instanceof TFolder) return true;
+    if (f instanceof TFolder) return !this.searchQuery || this.folderMatches(f);
     const file = f as TFile;
+    if (this.searchQuery && !file.path.toLowerCase().includes(this.searchQuery.toLowerCase())) return false;
     if (this.app.vault.getConfig("showUnsupportedFiles")) return true;
     return file.extension === "md" || file.extension === "canvas" || file.extension === "base" || this.app.viewRegistry.isExtensionRegistered(file.extension);
+  }
+
+  private folderMatches(folder: TFolder): boolean {
+    const q = this.searchQuery.toLowerCase();
+    if (folder.path.toLowerCase().includes(q)) return true;
+    return folder.children.some((c) => (c instanceof TFolder ? this.folderMatches(c) : c.path.toLowerCase().includes(q)));
   }
 
   private sorted(folder: TFolder): TAbstractFile[] {
@@ -193,53 +281,172 @@ export class FileExplorerView extends ItemView {
     return [...folders, ...files];
   }
 
-  private renderChildren(folder: TFolder, childrenEl: HTMLElement): void {
+  private renderChildren(folder: TFolder, childrenEl: HTMLElement, depth: number): void {
     childrenEl.empty();
-    for (const c of this.sorted(folder)) childrenEl.appendChild(this.renderItem(c));
+    for (const c of this.sorted(folder)) childrenEl.appendChild(this.renderItem(c, depth));
   }
 
-  private renderItem(f: TAbstractFile): HTMLElement {
+  private isOpen(f: TFolder): boolean {
+    return this.expanded.has(f.path) || (!!this.searchQuery && this.folderMatches(f));
+  }
+
+  private renderItem(f: TAbstractFile, depth: number): HTMLElement {
+    const indent = `margin-inline-start: ${-17 * depth}px !important; padding-inline-start: ${24 + 17 * depth}px !important;`;
     if (f instanceof TFolder) {
       const el = createDiv("tree-item nav-folder");
-      const self = el.createDiv({ cls: "tree-item-self nav-folder-title is-clickable mod-collapsible", attr: { "data-path": f.path, draggable: "true" } });
-      const icon = self.createDiv("tree-item-icon collapse-icon");
-      setIcon(icon, "chevron-right");
+      const self = el.createDiv({ cls: "tree-item-self nav-folder-title is-clickable mod-collapsible", attr: { "data-path": f.path, draggable: "true", style: indent } });
+      const icon = self.createDiv("tree-item-icon collapse-icon nav-folder-collapse-indicator");
+      setIcon(icon, "right-triangle");
       self.createDiv({ cls: "tree-item-inner nav-folder-title-content", text: f.name });
       const childrenEl = el.createDiv("tree-item-children nav-folder-children");
-      const open = this.expanded.has(f.path);
+      const open = this.isOpen(f);
       el.toggleClass("is-collapsed", !open);
       icon.toggleClass("is-collapsed", !open);
-      if (open) this.renderChildren(f, childrenEl);
-      self.addEventListener("click", () => this.toggleFolder(f));
+      if (open) this.renderChildren(f, childrenEl, depth + 1);
+      self.addEventListener("click", (e) => {
+        if (this.handleSelectClick(e, f)) return;
+        this.clearSelection();
+        this.anchorPath = f.path;
+        this.toggleFolder(f);
+      });
       this.bindCommon(self, f);
+      if (this.selected.has(f.path)) self.addClass("is-selected");
       this.nodes.set(f.path, { el, selfEl: self, childrenEl });
       return el;
     }
     const file = f as TFile;
     const el = createDiv("tree-item nav-file");
-    const self = el.createDiv({ cls: "tree-item-self nav-file-title is-clickable", attr: { "data-path": file.path, draggable: "true" } });
-    self.createDiv({ cls: "tree-item-inner nav-file-title-content", text: file.extension === "md" ? file.basename : file.basename });
+    const self = el.createDiv({ cls: "tree-item-self nav-file-title tappable is-clickable", attr: { "data-path": file.path, draggable: "true", style: indent } });
+    self.createDiv({ cls: "tree-item-inner nav-file-title-content", text: file.basename });
     if (file.extension !== "md") self.createDiv({ cls: "nav-file-tag", text: file.extension });
-    self.addEventListener("click", (e) => this.openFile(file, e));
+    self.addEventListener("click", (e) => {
+      if (this.handleSelectClick(e, file)) return;
+      this.clearSelection();
+      this.anchorPath = file.path;
+      this.openFile(file, e);
+    });
     self.addEventListener("auxclick", (e) => e.button === 1 && this.openFile(file, e));
+    self.addEventListener("mouseover", (e) =>
+      this.app.workspace.trigger("hover-link", { event: e, source: "file-explorer", hoverParent: this, targetEl: self, linktext: file.path, sourcePath: "" }),
+    );
     this.bindCommon(self, file);
     if (file.path === this.activePath) self.addClass("is-active");
+    if (this.selected.has(file.path)) self.addClass("is-selected");
     this.nodes.set(file.path, { el, selfEl: self });
     return el;
   }
 
+  // ---------- selection ----------
+  /** Alt-click toggles an item in the selection, Shift-click selects a range (as observed in the original). */
+  private handleSelectClick(e: MouseEvent, f: TAbstractFile): boolean {
+    if (e.altKey && !e.ctrlKey && !e.metaKey && !e.shiftKey) {
+      e.preventDefault();
+      if (!this.selected.size && this.activePath && this.activePath !== f.path) this.select(this.activePath, true);
+      this.select(f.path, !this.selected.has(f.path));
+      this.anchorPath = f.path;
+      return true;
+    }
+    if (e.shiftKey) {
+      e.preventDefault();
+      const order = this.visiblePaths();
+      const a = order.indexOf(this.anchorPath ?? this.activePath ?? f.path);
+      const b = order.indexOf(f.path);
+      if (a < 0 || b < 0) return false;
+      this.clearSelection();
+      for (const p of order.slice(Math.min(a, b), Math.max(a, b) + 1)) this.select(p, true);
+      return true;
+    }
+    return false;
+  }
+
+  private visiblePaths(): string[] {
+    return Array.from(this.filesEl.querySelectorAll<HTMLElement>(".tree-item-self[data-path]"))
+      .map((e) => e.dataset.path!)
+      .filter((p) => p !== "/");
+  }
+
+  private select(path: string, on: boolean): void {
+    if (on) this.selected.add(path);
+    else this.selected.delete(path);
+    this.nodes.get(path)?.selfEl.toggleClass("is-selected", on);
+  }
+
+  clearSelection(): void {
+    for (const p of this.selected) this.nodes.get(p)?.selfEl.removeClass("is-selected");
+    this.selected.clear();
+  }
+
+  private selectedFiles(): TAbstractFile[] {
+    return [...this.selected].map((p) => this.app.vault.getAbstractFileByPath(p)).filter(Boolean) as TAbstractFile[];
+  }
+
+  private onKey(e: KeyboardEvent): void {
+    const target = this.selectedFiles()[0] ?? (this.activePath ? this.app.vault.getAbstractFileByPath(this.activePath) : null);
+    if (!target || (e.target as HTMLElement).isContentEditable) return;
+    if (e.key === "F2") {
+      e.preventDefault();
+      this.startRename(target);
+    } else if (e.key === "Delete" || (e.key === "Backspace" && (e.metaKey || e.ctrlKey))) {
+      e.preventDefault();
+      const many = this.selectedFiles();
+      if (many.length > 1) this.deleteMany(many);
+      else this.app.fileManager.promptForDeletion(target);
+    } else if (e.key === "Escape") this.clearSelection();
+  }
+
+  private async deleteMany(files: TAbstractFile[]): Promise<void> {
+    const ok = await this.app.ui.confirm({ title: `Delete ${files.length} files`, body: `Are you sure you want to delete these ${files.length} files?`, cta: "Delete", danger: true });
+    if (!ok) return;
+    for (const f of files) await this.app.fileManager.trashFile(f);
+    this.clearSelection();
+  }
+
+  private multiMenu(m: Menu, files: TAbstractFile[]): void {
+    m.addItem((i) =>
+      i
+        .setTitle(`Move ${files.length} items to...`)
+        .setIcon("folder-tree")
+        .setSection("action")
+        .onClick(() => new FolderSuggestModal(this.app, (folder) => files.forEach((f) => this.moveInto(f.path, folder))).open()),
+    );
+    m.addItem((i) =>
+      i
+        .setTitle("Bookmark...")
+        .setIcon("bookmark")
+        .setSection("action")
+        .onClick(() => {
+          const bm = (this.app as any).bookmarks;
+          if (!bm) return;
+          bm.add({ type: "group", title: `${files.length} items`, items: files.map((f, n) => ({ type: f instanceof TFolder ? "folder" : "file", path: f.path, ctime: Date.now() + n })) });
+        }),
+    );
+    m.addItem((i) => i.setTitle(`Delete ${files.length} items`).setIcon("trash-2").setWarning(true).setSection("danger").onClick(() => this.deleteMany(files)));
+  }
+
+  // ---------- drag and drop, menus ----------
   private bindCommon(self: HTMLElement, f: TAbstractFile): void {
     self.addEventListener("contextmenu", (e) => {
       e.preventDefault();
       e.stopPropagation();
       const m = new Menu();
-      if (f instanceof TFolder) this.fillFolderMenu(m, f);
-      else this.fillFileMenu(m, f as TFile);
-      this.app.workspace.trigger("file-menu", m, f, "file-explorer-context-menu", this.leaf);
+      if (this.selected.size > 1 && this.selected.has(f.path)) {
+        const files = this.selectedFiles();
+        this.multiMenu(m, files);
+        this.app.workspace.trigger("files-menu", m, files, "file-explorer-context-menu", this.leaf);
+      } else {
+        if (!this.selected.has(f.path)) this.clearSelection();
+        if (f instanceof TFolder) fillFolderMenu(this.app, m, f, this.hooks());
+        else fillFileMenu(this.app, m, f as TFile, this.hooks());
+        this.app.workspace.trigger("file-menu", m, f, "file-explorer-context-menu", this.leaf);
+      }
+      self.addClass("has-focus");
+      m.onHide(() => self.removeClass("has-focus"));
       m.showAtMouseEvent(e);
     });
     self.addEventListener("dragstart", (e) => {
+      const group = this.selected.has(f.path) && this.selected.size > 1 ? [...this.selected] : [f.path];
       e.dataTransfer!.setData(FILE_DRAG_TYPE, f.path);
+      e.dataTransfer!.setData(MULTI_DRAG_TYPE, JSON.stringify(group));
       if (f instanceof TFile) {
         e.dataTransfer!.setData("text/plain", this.app.fileManager.generateMarkdownLink(f, this.app.workspace.getActiveFile()?.path ?? ""));
       }
@@ -247,31 +454,64 @@ export class FileExplorerView extends ItemView {
     });
     if (f instanceof TFolder) {
       self.addEventListener("dragover", (e) => {
-        if (!e.dataTransfer?.types.includes(FILE_DRAG_TYPE)) return;
+        const types = e.dataTransfer?.types ?? [];
+        if (!types.includes(FILE_DRAG_TYPE) && !types.includes("Files")) return;
         e.preventDefault();
         self.addClass("is-being-dragged-over");
       });
       self.addEventListener("dragleave", () => self.removeClass("is-being-dragged-over"));
       self.addEventListener("drop", (e) => {
         self.removeClass("is-being-dragged-over");
-        const p = e.dataTransfer?.getData(FILE_DRAG_TYPE);
-        if (!p) return;
-        e.preventDefault();
-        e.stopPropagation();
-        this.moveInto(p, f);
+        if (this.handleDrop(e, f)) {
+          e.preventDefault();
+          e.stopPropagation();
+        }
       });
     }
   }
 
+  /** Move dragged vault items, or copy files dropped from the OS, into `folder`. */
+  private handleDrop(e: DragEvent, folder: TFolder): boolean {
+    const multi = e.dataTransfer?.getData(MULTI_DRAG_TYPE);
+    const single = e.dataTransfer?.getData(FILE_DRAG_TYPE);
+    if (multi || single) {
+      let paths: string[] = [];
+      try {
+        paths = multi ? JSON.parse(multi) : [single!];
+      } catch {
+        paths = single ? [single] : [];
+      }
+      for (const p of paths) this.moveInto(p, folder);
+      return true;
+    }
+    const osFiles = Array.from(e.dataTransfer?.files ?? []);
+    if (!osFiles.length) return false;
+    (async () => {
+      for (const file of osFiles) {
+        const src = (file as any).path as string | undefined;
+        try {
+          const data = src ? nodeFs.readFileSync(src) : Buffer.from(await file.arrayBuffer());
+          const dot = file.name.lastIndexOf(".");
+          const base = folder.getParentPrefix() + (dot > 0 ? file.name.slice(0, dot) : file.name);
+          const ext = dot > 0 ? file.name.slice(dot + 1) : "";
+          const target = this.app.vault.getAvailablePath(base, ext);
+          await this.app.vault.createBinary(target, data.buffer.slice(data.byteOffset, data.byteOffset + data.byteLength));
+        } catch (err: any) {
+          new Notice(`Couldn't copy "${file.name}" into the vault: ${err?.message ?? err}`);
+        }
+      }
+      if (!folder.isRoot()) this.toggleFolder(folder, true);
+    })();
+    return true;
+  }
+
   private setupRootDrop(): void {
     this.filesEl.addEventListener("dragover", (e) => {
-      if (e.dataTransfer?.types.includes(FILE_DRAG_TYPE)) e.preventDefault();
+      const types = e.dataTransfer?.types ?? [];
+      if (types.includes(FILE_DRAG_TYPE) || types.includes("Files")) e.preventDefault();
     });
     this.filesEl.addEventListener("drop", (e) => {
-      const p = e.dataTransfer?.getData(FILE_DRAG_TYPE);
-      if (!p) return;
-      e.preventDefault();
-      this.moveInto(p, this.app.vault.getRoot());
+      if (this.handleDrop(e, this.app.vault.getRoot())) e.preventDefault();
     });
   }
 
@@ -297,15 +537,20 @@ export class FileExplorerView extends ItemView {
     this.renderTimer = setTimeout(() => this.flush(), 30);
   }
 
+  private depthOf(path: string): number {
+    return path === "/" ? 0 : path.split("/").length;
+  }
+
   private flush(): void {
     for (const p of this.dirty) {
       const folder = this.app.vault.getFolderByPath(p) ?? (p === "/" ? this.app.vault.getRoot() : null);
       const node = this.nodes.get(p);
       if (!folder || !node?.childrenEl) continue;
-      if (p !== "/" && !this.expanded.has(p)) continue;
-      this.renderChildren(folder, node.childrenEl);
+      if (p !== "/" && !this.isOpen(folder)) continue;
+      this.renderChildren(folder, node.childrenEl, this.depthOf(p === "/" ? "/" : p));
     }
     this.dirty.clear();
+    if (this.activePath) this.nodes.get(this.activePath)?.selfEl.addClass("is-active");
   }
 
   private toggleFolder(f: TFolder, open?: boolean): void {
@@ -317,7 +562,7 @@ export class FileExplorerView extends ItemView {
     if (!node) return;
     node.el.toggleClass("is-collapsed", !willOpen);
     node.selfEl.querySelector(".collapse-icon")?.toggleClass("is-collapsed", !willOpen);
-    if (willOpen && node.childrenEl) this.renderChildren(f, node.childrenEl);
+    if (willOpen && node.childrenEl) this.renderChildren(f, node.childrenEl, this.depthOf(f.path));
     else node.childrenEl?.empty();
   }
 
@@ -325,11 +570,11 @@ export class FileExplorerView extends ItemView {
     if (this.activePath) this.nodes.get(this.activePath)?.selfEl.removeClass("is-active");
     this.activePath = file?.path ?? null;
     if (!file) return;
-    if (this.autoReveal) this.revealInFolder(file);
+    if (this.autoReveal) this.revealInFolder(file, false);
     this.nodes.get(file.path)?.selfEl.addClass("is-active");
   }
 
-  revealInFolder(f: TAbstractFile): void {
+  revealInFolder(f: TAbstractFile, flash = true): void {
     const parts = f.path.split("/");
     let p = "";
     for (const seg of parts.slice(0, -1)) {
@@ -338,8 +583,8 @@ export class FileExplorerView extends ItemView {
       if (folder && !this.expanded.has(p)) this.toggleFolder(folder, true);
     }
     const n = this.nodes.get(f.path);
-    n?.selfEl.scrollIntoView({ block: "center" });
-    if (n) {
+    n?.selfEl.scrollIntoView({ block: "nearest" });
+    if (n && flash) {
       n.selfEl.addClass("has-focus");
       setTimeout(() => n.selfEl.removeClass("has-focus"), 1200);
     }
@@ -370,7 +615,7 @@ export class FileExplorerView extends ItemView {
   }
 
   startRename(f: TAbstractFile): void {
-    this.revealInFolder(f);
+    this.revealInFolder(f, false);
     const node = this.nodes.get(f.path);
     if (!node) return;
     const title = node.selfEl.querySelector<HTMLElement>(".tree-item-inner")!;
@@ -401,6 +646,7 @@ export class FileExplorerView extends ItemView {
       }
     };
     title.addEventListener("keydown", (e) => {
+      e.stopPropagation();
       if (e.key === "Enter") {
         e.preventDefault();
         finish(true);
@@ -410,54 +656,5 @@ export class FileExplorerView extends ItemView {
       }
     });
     title.addEventListener("blur", () => finish(true), { once: true });
-  }
-
-  private fillFolderMenu(m: Menu, folder: TFolder): void {
-    m.addItem((i) => i.setTitle("New note").setIcon("square-pen").setSection("new").onClick(() => this.createNote(folder)));
-    m.addItem((i) => i.setTitle("New folder").setIcon("folder-plus").setSection("new").onClick(() => this.createFolder(folder)));
-    if (!folder.isRoot()) {
-      m.addItem((i) => i.setTitle("Rename...").setIcon("pencil").setSection("action").onClick(() => this.startRename(folder)));
-      m.addItem((i) =>
-        i
-          .setTitle("Delete")
-          .setIcon("trash-2")
-          .setWarning(true)
-          .setSection("danger")
-          .onClick(() => this.app.fileManager.promptForDeletion(folder)),
-      );
-    }
-    m.addItem((i) => i.setTitle("Reveal in system explorer").setIcon("folder-open").setSection("system").onClick(() => this.app.showInFolder(folder.path)));
-  }
-
-  private fillFileMenu(m: Menu, file: TFile): void {
-    m.addItem((i) => i.setTitle("Open in new tab").setIcon("file-plus").setSection("open").onClick(() => this.app.workspace.getLeaf("tab").openFile(file)));
-    m.addItem((i) => i.setTitle("Open to the right").setIcon("columns-2").setSection("open").onClick(() => this.app.workspace.getLeaf("split").openFile(file)));
-    m.addItem((i) =>
-      i
-        .setTitle("Make a copy")
-        .setIcon("copy")
-        .setSection("action")
-        .onClick(async () => {
-          const base = file.parent && !file.parent.isRoot() ? file.parent.path + "/" + file.basename : file.basename;
-          await this.app.vault.copy(file, this.app.vault.getAvailablePath(base, file.extension));
-        }),
-    );
-    m.addItem((i) => i.setTitle("Rename...").setIcon("pencil").setSection("action").onClick(() => this.startRename(file)));
-    m.addItem((i) =>
-      i
-        .setTitle("Copy path")
-        .setIcon("clipboard-copy")
-        .setSection("info")
-        .onClick(() => navigator.clipboard.writeText(file.path)),
-    );
-    m.addItem((i) => i.setTitle("Reveal in system explorer").setIcon("folder-open").setSection("system").onClick(() => this.app.showInFolder(file.path)));
-    m.addItem((i) =>
-      i
-        .setTitle("Delete")
-        .setIcon("trash-2")
-        .setWarning(true)
-        .setSection("danger")
-        .onClick(() => this.app.fileManager.promptForDeletion(file)),
-    );
   }
 }

@@ -20,6 +20,17 @@ export interface PopoutOptions {
   onClose?: () => void;
 }
 
+const NEED_OWN_BUTTONS = false;
+
+export function toHex(c: string): string | null {
+  const m = /^#([0-9a-f]{3}|[0-9a-f]{6})$/i.exec(c.trim());
+  if (m) return c.trim();
+  const r = /rgba?(([^)]+))/.exec(c);
+  if (!r) return null;
+  const [a, b, d] = r[1].split(",").map((x) => Math.round(parseFloat(x)));
+  return "#" + [a, b, d].map((x) => Math.max(0, Math.min(255, x || 0)).toString(16).padStart(2, "0")).join("");
+}
+
 const MIRRORED_BODY_PREFIXES = ["theme-", "mod-", "is-frameless", "is-hidden-frameless", "styled-scrollbars", "show-", "is-floating-nav", "auto-full-screen", "is-translucent"];
 
 let mainFocusHooked = false;
@@ -60,7 +71,9 @@ export class PopoutWindow {
     }
     const o = this.opts;
     const bg = getComputedStyle(document.body).getPropertyValue("--background-primary").trim();
-    const features = [`popup`, `width=${o.width}`, `height=${o.height}`, `minWidth=${o.minWidth ?? 600}`, `minHeight=${o.minHeight ?? 400}`, bg ? `background=${encodeURIComponent(bg)}` : ""].filter(Boolean).join(",");
+    const tb = getComputedStyle(document.body).getPropertyValue("--titlebar-background").trim();
+    const fg = getComputedStyle(document.body).getPropertyValue("--icon-color").trim() || getComputedStyle(document.body).getPropertyValue("--text-muted").trim();
+    const features = [`popup`, `width=${o.width}`, `height=${o.height}`, `minWidth=${o.minWidth ?? 600}`, `minHeight=${o.minHeight ?? 400}`, toHex(tb || bg) ? `background=${encodeURIComponent(toHex(tb || bg)!)}` : "", toHex(fg) ? `symbol=${encodeURIComponent(toHex(fg)!)}` : ""].filter(Boolean).join(",");
     let w: Window | null = null;
     try {
       w = window.open("about:blank", this.frameName, features);
@@ -85,6 +98,7 @@ export class PopoutWindow {
     this.mirrorBody();
     this.bodyEl = d.body;
     this.buildTitleBar();
+    this.recolourOverlay();
     hookMainFocus();
     const setActive = () => {
       (window as any).activeWindow = w;
@@ -152,7 +166,9 @@ export class PopoutWindow {
     const bar = d.body.createDiv("titlebar");
     const inner = bar.createDiv("titlebar-inner");
     this.titleEl = inner.createDiv({ cls: "titlebar-text", text: this.opts.title });
-    if (process.platform === "darwin") return;
+    // Windows/Linux: native caption buttons are drawn over this bar (titleBarOverlay, as in the
+    // vault window); only recolour them with the theme.
+    if (process.platform === "darwin" || !NEED_OWN_BUTTONS) return;
     const btns = inner.createDiv("titlebar-button-container mod-right");
     const mk = (cls: string, icon: string, label: string, action: string) => {
       const b = btns.createDiv({ cls: `titlebar-button ${cls}`, attr: { "aria-label": label } });
@@ -166,6 +182,20 @@ export class PopoutWindow {
     mk("mod-minimize", "minus", "Minimize", "minimize");
     mk("mod-maximize", "square", "Maximize", "maximize");
     mk("mod-close", "x", "Close window", "close");
+  }
+
+  private lastOverlay = "";
+  /** Match the native caption buttons to the theme (Windows/Linux). */
+  private recolourOverlay(): void {
+    if (process.platform === "darwin" || !this.doc) return;
+    const bar = this.doc.querySelector(".titlebar") as HTMLElement | null;
+    const w = this.doc.defaultView!;
+    const bg = toHex(bar ? w.getComputedStyle(bar).backgroundColor : "") ?? "#00000000";
+    const fg = toHex(w.getComputedStyle(this.doc.body).getPropertyValue("--icon-color") || w.getComputedStyle(this.doc.body).color) ?? "#888888";
+    const key = bg + "|" + fg;
+    if (key === this.lastOverlay) return;
+    this.lastOverlay = key;
+    void ipcRenderer.invoke(SETTINGS_IPC.popoutControl, this.frameName, "overlay:" + key);
   }
 
   private setState(s: { maximized: boolean; focused: boolean; fullscreen?: boolean }): void {
@@ -235,6 +265,7 @@ export class PopoutWindow {
       const mirrored = Array.from(document.body.classList).filter((c) => MIRRORED_BODY_PREFIXES.some((p) => c.startsWith(p)));
       d.body.className = [...mirrored, ...extra, ...keepOwn].join(" ");
       d.body.setAttribute("style", document.body.getAttribute("style") ?? "");
+      this.recolourOverlay();
     };
     sync();
     d.body.addClass("is-focused");

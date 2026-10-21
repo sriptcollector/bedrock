@@ -297,6 +297,9 @@ async function renderMermaid(els: HTMLElement[]): Promise<void> {
 // ---------- embeds ----------
 const MAX_EMBED_DEPTH = 5;
 
+/** Extra embed renderers by file extension (the canvas view registers "canvas"). */
+export const embedRenderers: Record<string, (app: any, el: HTMLElement, file: TFile, subpath: string, component: Component) => void | Promise<void>> = {};
+
 export async function renderEmbed(app: any, span: HTMLElement, sourcePath: string, component: Component, depth: number): Promise<void> {
   const src = span.getAttribute("src") ?? "";
   const alt = span.getAttribute("alt") ?? "";
@@ -335,6 +338,11 @@ export async function renderEmbed(app: any, span: HTMLElement, sourcePath: strin
   if (ext === "pdf") {
     span.addClass("pdf-embed", "is-loaded");
     span.createEl("iframe", { attr: { src: app.vault.getResourcePath(file).split("?")[0] + (subpath ? subpath.replace(/^#/, "#") : ""), style: "width:100%;height:600px;border:0" } });
+    return;
+  }
+  const custom = embedRenderers[ext];
+  if (custom) {
+    await custom(app, span, file, subpath, component);
     return;
   }
   if (ext !== "md") {

@@ -27,6 +27,11 @@ export interface IgnoreOptions {
   prefixes?: string[];
   /** Extra regular expressions matched against the vault-relative path. */
   patterns?: RegExp[];
+  /**
+   * Selective sync: paths this computer chose not to sync (file types, folders, settings
+   * categories). Checked last. The engine never deletes anything because of it (see SyncEngine).
+   */
+  exclude?: (rel: string) => boolean;
 }
 
 export function isIgnored(rel: string, opts?: IgnoreOptions): boolean {
@@ -46,5 +51,6 @@ export function isIgnored(rel: string, opts?: IgnoreOptions): boolean {
     }
   }
   if (opts?.patterns) for (const re of opts.patterns) if (re.test(rel)) return true;
+  if (opts?.exclude?.(rel)) return true;
   return false;
 }

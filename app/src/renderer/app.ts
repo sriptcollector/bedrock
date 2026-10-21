@@ -23,6 +23,9 @@ import { Notice } from "./ui/notice";
 import { MarkdownView } from "./editor/markdown-view";
 import { FileExplorerView } from "./views/file-explorer";
 import { registerSimpleViews, IMAGE_EXTS } from "./views/simple-views";
+import { registerGraph } from "./views/graph/view";
+import { registerCanvas } from "./views/canvas/view";
+import { registerSidebar } from "./views/sidebar";
 import { PropertyTypes } from "./editor/properties";
 import { mountSyncUi } from "./sync-ui";
 import { InternalPlugins } from "./core-plugins/manager";
@@ -61,9 +64,9 @@ const CORE_PLUGINS: Record<string, { name: string; description: string; availabl
   "file-explorer": { name: "Files", description: "See all files in your vault.", available: true },
   "global-search": { name: "Search", description: "Search for text and files in your vault.", available: false },
   switcher: { name: "Quick switcher", description: "Jump to any file with the keyboard.", available: true },
-  graph: { name: "Graph view", description: "See how your notes link together.", available: false },
+  graph: { name: "Graph view", description: "See how your notes link together.", available: true },
   backlink: { name: "Backlinks", description: "See which notes link to the current note.", available: false },
-  canvas: { name: "Canvas", description: "Lay out notes and media on an infinite board.", available: false },
+  canvas: { name: "Canvas", description: "Lay out notes and media on an infinite board.", available: true },
   "outgoing-link": { name: "Outgoing links", description: "See the links in the current note.", available: false },
   "tag-pane": { name: "Tags view", description: "See all tags in your vault.", available: false },
   properties: { name: "Properties view", description: "See all properties in your vault.", available: false },
@@ -204,12 +207,22 @@ export class App {
     const body = document.body;
     body.empty();
     this.titleBar = new TitleBar(this.native, this.boot.platform);
-    body.appendChild(this.titleBar.containerEl);
     const appContainer = body.createDiv("app-container");
     const main = appContainer.createDiv("horizontal-main-container");
     main.appendChild(this.workspace.containerEl);
     this.statusBar = new StatusBar(this);
     appContainer.appendChild(this.statusBar.containerEl);
+    // Last in the DOM: Chromium applies drag/no-drag regions in document order.
+    body.appendChild(this.titleBar.containerEl);
+    const markTopRight = () => TitleBar.markTopRight();
+    this.workspace.on("layout-change", markTopRight);
+    this.workspace.on("resize", markTopRight);
+    window.addEventListener("resize", markTopRight);
+    this.workspace.on("css-change", () => this.titleBar.syncOverlayColors());
+    requestAnimationFrame(() => {
+      markTopRight();
+      this.titleBar.syncOverlayColors();
+    });
     this.setting = createSettingsModal(this);
     body.addEventListener("dragover", (e) => e.preventDefault());
     body.addEventListener("drop", (e) => e.preventDefault());
@@ -221,11 +234,16 @@ export class App {
     r.registerExtensions(["md"], "markdown");
     r.registerView("file-explorer", (leaf: WorkspaceLeaf) => new FileExplorerView(leaf));
     registerSimpleViews(this);
+    registerGraph(this);
+    registerCanvas(this);
+    registerSidebar(this);
   }
 
   private registerRibbon(): void {
     const rb = this.workspace.leftRibbon;
     rb.addRibbonItemButton("switcher:open", "file-search", "Open quick switcher", () => this.commands.executeCommandById("switcher:open"));
+    rb.addRibbonItemButton("graph:Open graph view", "git-fork", "Open graph view", () => this.commands.executeCommandById("graph:open"));
+    rb.addRibbonItemButton("canvas:Create new canvas", "layout-dashboard", "Create new canvas", () => this.commands.executeCommandById("canvas:new-file"));
     rb.addRibbonItemButton("command-palette:open", "terminal", "Open command palette", () => this.commands.executeCommandById("command-palette:open"));
     rb.addRibbonItemButton("file-explorer:new-file", "square-pen", "Create new note", () => this.commands.executeCommandById("file-explorer:new-file"));
     rb.addSettingsButton("folder-open", "Open another folder as vault", () => this.native.openVaultDialog());

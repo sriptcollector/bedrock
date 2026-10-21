@@ -4,6 +4,7 @@ export const IPC = {
   bootInfo: "bedrock:boot-info",
   windowControl: "bedrock:window-control", // "minimize" | "maximize" | "close" | "hide"
   windowState: "bedrock:window-state",
+  titleBarOverlay: "bedrock:titlebar-overlay", // {color, symbolColor}: recolour native caption buttons
   openVaultDialog: "bedrock:open-vault-dialog",
   openVault: "bedrock:open-vault",
   importIntoMainVault: "bedrock:import-into-main-vault",
@@ -15,10 +16,13 @@ export const IPC = {
   setTitle: "bedrock:set-title",
   vaultList: "bedrock:vault-list",
   pickFolder: "bedrock:pick-folder",
+  syncCall: "bedrock:sync-call", // {op, ...args}: see main/sync/host.ts and shared/sync.ts
   // main -> renderer (send)
   windowStateChanged: "bedrock:window-state-changed",
   openPath: "bedrock:open-path",
   command: "bedrock:command",
+  syncUpdate: "bedrock:sync-update", // SyncSnapshot
+  syncEvent: "bedrock:sync-event", // SyncUiEvent
 } as const;
 
 export interface BootInfo {

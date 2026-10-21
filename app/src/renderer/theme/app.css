@@ -366,31 +366,19 @@ kbd {
   display: none;
 }
 .titlebar-button-container.mod-right {
-  display: flex;
-  pointer-events: auto;
+  /* Space held for the system caption buttons (drawn by the OS over this corner). */
+  width: var(--frame-right-space);
+  height: 39px;
   -webkit-app-region: no-drag;
 }
-.titlebar-button {
-  width: 46px;
-  height: 100%;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  color: var(--text-muted);
-  cursor: default;
+body {
+  --frame-right-space: 0px;
 }
-.titlebar-button .svg-icon {
-  width: 14px;
-  height: 14px;
-  stroke-width: 1.5px;
+body.is-hidden-frameless:not(.mod-macos) {
+  --frame-right-space: 126px;
 }
-.titlebar-button:hover {
-  background: var(--background-modifier-hover);
-  color: var(--text-normal);
-}
-.titlebar-button.mod-close:hover {
-  background: #e81123;
-  color: #fff;
+.workspace-tabs.mod-top-right-space > .workspace-tab-header-container {
+  padding-right: calc(var(--frame-right-space) + 8px);
 }
 .app-container {
   flex: 1;

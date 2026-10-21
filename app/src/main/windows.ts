@@ -69,6 +69,7 @@ export function iconPath(): string {
 export function createVaultWindow(opts: { vaultPath: string; isMain: boolean; show: boolean; openFile?: string; smokeTest?: boolean }): BrowserWindow {
   const key = opts.isMain ? "main" : opts.vaultPath;
   const b = loadBounds(key);
+  const nativeFrame = readAppSettings().frame === "native";
   const win = new BrowserWindow({
     x: b.x,
     y: b.y,
@@ -80,8 +81,12 @@ export function createVaultWindow(opts: { vaultPath: string; isMain: boolean; sh
     title: BRAND.displayName,
     icon: fs.existsSync(iconPath()) ? iconPath() : undefined,
     backgroundColor: "#1e1e1e",
-    frame: isMac || readAppSettings().frame === "native",
-    titleBarStyle: isMac ? "hiddenInset" : undefined,
+    // Like Obsidian 1.14 on Windows: no native frame, but native caption buttons drawn over our
+    // tab bar (titleBarOverlay). That gives working minimize/maximize/close, Windows snap layouts on
+    // hover, and double-click/drag on our -webkit-app-region: drag areas.
+    // Settings › Interface › Window frame style "Native frame" uses the OS frame (after relaunch).
+    titleBarStyle: isMac ? "hiddenInset" : nativeFrame ? "default" : "hidden",
+    titleBarOverlay: isMac || nativeFrame ? undefined : { color: "#00000000", symbolColor: "#b3b3b3", height: 39 },
     trafficLightPosition: isMac ? { x: 12, y: 12 } : undefined,
     webPreferences: {
       // Like Obsidian: community plugins expect require('fs'), require('electron'), require('obsidian').

@@ -68,8 +68,11 @@ export function popoutWindowOptions(frameName: string, features: string): Browse
     height: Number(f.height) || 700,
     minWidth: Number(f.minWidth) || 600,
     minHeight: Number(f.minHeight) || 400,
+    // Same window chrome as the vault window: no frame, native caption buttons over our title bar
+    // (titleBarOverlay), recoloured from the renderer on theme changes. Native frame if chosen.
     frame: frame || isMac,
-    titleBarStyle: isMac ? "hiddenInset" : undefined,
+    titleBarStyle: isMac ? "hiddenInset" : frame ? undefined : "hidden",
+    titleBarOverlay: isMac || frame ? undefined : { color: f.background ? decodeURIComponent(f.background) : "#00000000", symbolColor: f.symbol ? decodeURIComponent(f.symbol) : "#888888", height: 30 },
     backgroundColor: f.background ? decodeURIComponent(f.background) : undefined,
     autoHideMenuBar: true,
     show: true,
@@ -109,6 +112,14 @@ export function registerSettingsIpc(): void {
       if (w.isMinimized()) w.restore();
       w.focus();
     } else if (action === "devtools") w.webContents.toggleDevTools();
+    else if (action.startsWith("overlay:")) {
+      const [color, symbolColor] = action.slice(8).split("|");
+      try {
+        w.setTitleBarOverlay({ color, symbolColor, height: 30 });
+      } catch {
+        /* native frame: no overlay */
+      }
+    }
     return { maximized: w.isMaximized(), focused: w.isFocused(), fullscreen: w.isFullScreen() };
   });
   ipcMain.handle(SETTINGS_IPC.getAppSettings, () => readAppSettings());
