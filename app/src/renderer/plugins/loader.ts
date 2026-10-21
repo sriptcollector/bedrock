@@ -91,6 +91,22 @@ export class PluginManager {
     await this.loadManifests();
     const ids = await this.readEnabledList();
     this.enabledPlugins = new Set(ids);
+    // First time this vault is opened on this computer with plugins switched on in it: ask whether
+    // to trust it (like Obsidian), instead of silently running or silently ignoring them.
+    // The question doesn't block startup (and is skipped in headless self-tests).
+    if (this.app.loadLocalStorage("community-plugins-enabled") === null && ids.some((id) => this.manifests[id]) && !this.app.boot?.selftest && !this.app.boot?.smokeTest) {
+      void this.app.ui
+        .confirm({
+          title: "Trust this vault?",
+          body: `This vault has ${ids.length} community ${ids.length === 1 ? "plugin" : "plugins"} turned on. Plugins are made by other people and can read and change your files. Only turn them on if you trust where this vault came from. You can change this later in Settings › Community plugins.`,
+          cta: "Trust and turn on plugins",
+        })
+        .then(async (trust: boolean) => {
+          this.setEnabled(!!trust);
+          if (trust) for (const id of ids) await this.loadPlugin(id);
+        });
+      return;
+    }
     if (!this.isEnabled()) return;
     for (const id of ids) await this.loadPlugin(id);
   }
