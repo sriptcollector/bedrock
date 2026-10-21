@@ -64,7 +64,7 @@ const EXPECT = {
   "window:reset-zoom": (b, a) => a.zoom === 0 || `zoom ${a.zoom}`,
   "window:zoom-in": (b, a) => a.zoom > b.zoom || `${b.zoom} -> ${a.zoom}`,
   "window:zoom-out": (b, a) => a.zoom < b.zoom || `${b.zoom} -> ${a.zoom}`,
-  "window:toggle-always-on-top": (b, a) => a.popoutOnTop !== b.popoutOnTop || "unchanged",
+  "window:toggle-always-on-top": (b, a) => a.popoutOnTop !== b.popoutOnTop || "unchanged " + b.dbg,
   "workspace:close": (b, a) => a.rootLeaves === b.rootLeaves - 1 || `${b.rootLeaves} -> ${a.rootLeaves}`,
   "workspace:close-others": (b, a) => a.rootLeaves === 1 || `${a.rootLeaves}`,
   "workspace:close-others-tab-group": (b, a) => a.groupTabs === 1 || `${a.groupTabs}`,
@@ -140,7 +140,10 @@ const PAGE_HELPERS = () => {
       document.querySelectorAll(".menu").forEach((m) => m.remove());
       app.setting?.close?.();
       app.shell.closeVaultManager?.();
-      for (const w of app.workspace.floatingSplit.children.slice()) w.close();
+      if (app.workspace.floatingSplit.children.length) {
+        for (const w of app.workspace.floatingSplit.children.slice()) w.close();
+        await sleep(400);
+      }
       await sleep(50);
       if (app.workspace.rightSplit.collapsed) app.workspace.rightSplit.expand();
       if (app.workspace.leftSplit.collapsed) app.workspace.leftSplit.expand();
@@ -166,6 +169,8 @@ const PAGE_HELPERS = () => {
         const pl = app.workspace.openPopoutLeaf();
         await pl.openFile(beta, { active: true });
         await sleep(300);
+        app.workspace.setActiveLeaf(pl, { focus: true });
+        await sleep(300);
       }
       if (variant === "tabs9") {
         const g = l1.parent;
@@ -178,6 +183,9 @@ const PAGE_HELPERS = () => {
       }
       if (variant === "heading" || variant === "selection") {
         const ed = l1.view.editor;
+        await app.vault.modify(app.vault.getFileByPath("Welcome.md"), "# Title\n\nBody line here\n\n## Second\n\nMore text\n");
+        await sleep(400);
+        if (ed.getValue().indexOf("# Title") !== 0) ed.setValue("# Title\n\nBody line here\n\n## Second\n\nMore text\n");
         const lines = ed.getValue().split("\n");
         const h = lines.findIndex((x) => /^#{1,6} /.test(x));
         if (variant === "heading") ed.setCursor({ line: Math.max(0, h), ch: 1 });
@@ -186,6 +194,16 @@ const PAGE_HELPERS = () => {
           ed.setSelection({ line: b, ch: 0 }, { line: b, ch: lines[b].length });
         }
         l1.view.editor.focus();
+      }
+      if (variant === "on-link" || variant === "table" || variant === "formatted") {
+        const ed = l1.view.editor;
+        const text = variant === "table" ? "| a | b | c |\n| --- | --- | --- |\n| 1 | 2 | 3 |\n| 4 | 5 | 6 |\n| 7 | 8 | 9 |\n" : variant === "formatted" ? "Some **bold** and *italic* text\n" : "See [[Beta]] here\n";
+        ed.setValue(text);
+        if (variant === "table") ed.setCursor({ line: 3, ch: 6 });
+        else if (variant === "formatted") ed.setSelection({ line: 0, ch: 0 }, { line: 0, ch: 27 });
+        else ed.setCursor({ line: 0, ch: 7 });
+        ed.focus();
+        await sleep(50);
       }
       if (variant === "search") await app.globalSearch.openGlobalSearch("hello");
       if (variant === "bookmarked") app.bookmarks.add({ type: "file", path: "Welcome.md" });
@@ -275,12 +293,19 @@ const PAGE_HELPERS = () => {
         recording: !!document.querySelector(".side-dock-ribbon-action.is-recording"),
         helpOpen: !!app.shell.isHelpOpen?.(),
         popoutOnTop: !!ws.floatingSplit.children[0]?.doc?.body.classList.contains("is-always-on-top"),
+        dbg: [leaf?.getContainer?.()?.type, ws.floatingSplit.children.length, ws.floatingSplit.children[0]?.doc?.body.className].join("/"),
       };
     },
   };
 };
 
 const VARIANT = {
+  "editor:follow-link": "on-link",
+  "editor:open-link-in-new-leaf": "on-link",
+  "editor:open-link-in-new-split": "on-link",
+  "editor:open-link-in-new-window": "on-link",
+  "editor:rename-heading": "heading",
+  "editor:clear-formatting": "formatted",
   "workspace:goto-last-tab": "tabs9",
   "workspace:close-tab-group": "split",
   "workspace:close-others-tab-group": "split",
@@ -308,6 +333,8 @@ const VARIANT = {
 
 const L = await launch();
 const { win, errors } = L;
+// File choosers (Insert attachment) are answered with no files instead of opening the OS dialog.
+win.on("filechooser", (fc) => void fc.setFiles([]).catch(() => {}));
 try {
   // All core plugins on so every core command exists.
   await win.evaluate(async () => {
@@ -335,7 +362,7 @@ try {
 
   for (const c of ref) {
     const id = c.id;
-    if (only && !id.startsWith(only)) continue;
+    if (only && !only.split(",").some((o) => id.startsWith(o))) continue;
     if (NOT_APPLICABLE[id]) {
       C.skip(id, NOT_APPLICABLE[id]);
       continue;
@@ -345,7 +372,7 @@ try {
       C.check(`${id} registered`, false, "command id missing");
       continue;
     }
-    const variant = VARIANT[id] ?? VARIANT_EXTRA[id] ?? (c.needsActiveEditor ? "source" : null);
+    const variant = VARIANT[id] ?? VARIANT_EXTRA[id] ?? (id.startsWith("editor:table-") ? "table" : c.needsActiveEditor ? "source" : null);
     if (variant === "history-forward") await win.evaluate(() => (window.__sweepForward = true));
     await win.evaluate((v) => window.__sweep.reset(v === "history-forward" ? "history" : v), variant);
     await win.evaluate(() => (window.__sweepForward = false));
@@ -357,7 +384,7 @@ try {
     } catch (e) {
       ran = String(e);
     }
-    await win.waitForTimeout(id.startsWith("audio-recorder") || /window|popout|vault|sandbox/.test(id) ? 900 : 350);
+    await win.waitForTimeout(id.startsWith("audio-recorder") || /window|popout|vault|sandbox|debug/.test(id) ? 900 : 350);
     const after = await win.evaluate(() => window.__sweep.snap());
     const calls = await win.evaluate(() => window.__sweepCalls);
     const newErrors = errors.slice(errBefore).filter((e) => !/Permission denied|NotAllowedError|Requested device not found/i.test(e));

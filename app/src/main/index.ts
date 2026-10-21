@@ -17,6 +17,7 @@ import { installCrashHandling, log } from "./log";
 import { startAgents, stopAgents } from "./agents/host";
 import { registerShellIpc, handleUri, uriArg, registerProtocols } from "./shell-host";
 import { spawn } from "node:child_process";
+import { registerEditorIpc } from "./editor-ipc";
 
 // ---- identity & app data (before anything touches userData) ----
 app.setName(BRAND.displayName);
@@ -195,6 +196,7 @@ function startApp(): void {
     e.preventDefault();
     void app.whenReady().then(() => handleUri(url, BrowserWindow.getFocusedWindow()));
   });
+  registerEditorIpc();
 
   app.whenReady().then(() => {
     if (process.platform !== "darwin") Menu.setApplicationMenu(null);

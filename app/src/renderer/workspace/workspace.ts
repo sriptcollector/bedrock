@@ -396,9 +396,9 @@ export class Workspace extends Events {
   }
   iterateAllLeaves(cb: (l: WorkspaceLeaf) => any): void {
     this.iterateLeaves(this.rootSplit, cb);
+    this.iterateLeaves(this.floatingSplit, cb);
     this.iterateLeaves(this.leftSplit, cb);
     this.iterateLeaves(this.rightSplit, cb);
-    this.iterateLeaves(this.floatingSplit, cb);
   }
   getLeavesOfType(type: string): WorkspaceLeaf[] {
     const out: WorkspaceLeaf[] = [];
@@ -769,5 +769,11 @@ export class Workspace extends Events {
     this.trigger("layout-change");
     this.requestSaveLayout();
     return leaf;
+  }
+  /** The popout window holding `leaf`, if any. */
+  getWindowOf(leaf: WorkspaceLeaf): WorkspaceWindow | null {
+    let x: any = leaf;
+    while (x && !(x instanceof WorkspaceWindow)) x = x.parent;
+    return x ?? null;
   }
 }

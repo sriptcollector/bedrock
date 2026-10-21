@@ -17,6 +17,7 @@ export const obsidianTags = {
   comment: Tag.define(),
   math: Tag.define(),
   frontmatter: Tag.define(),
+  footref: Tag.define(),
 };
 
 const HighlightDelim = { resolve: "Highlight", mark: "HighlightMark" };
@@ -36,6 +37,10 @@ export const ObsidianSyntax: MarkdownConfig = {
     { name: "CommentBlock", block: true },
     { name: "InlineMath" },
     { name: "BlockMath", block: true },
+    { name: "FootnoteReference" },
+    { name: "FootnoteDefinition", block: true },
+    { name: "FootnoteMark" },
+    { name: "FootnoteLabel" },
   ],
   props: [
     styleTags({
@@ -48,9 +53,33 @@ export const ObsidianSyntax: MarkdownConfig = {
       Hashtag: obsidianTags.hashtag,
       "Comment CommentBlock": obsidianTags.comment,
       "InlineMath BlockMath": obsidianTags.math,
+      "FootnoteReference/...": obsidianTags.footref,
+      FootnoteMark: obsidianTags.linkMark,
     }),
   ],
   parseBlock: [
+    {
+      // [^label]: text — claimed before link reference definitions.
+      name: "FootnoteDefinition",
+      before: "LinkReference",
+      leaf(_cx: BlockContext, leaf: any) {
+        const m = /^\[\^([^\]\s]+)\]:[ \t]?/.exec(leaf.content);
+        if (!m) return null;
+        return {
+          nextLine: () => false,
+          finish(cx: BlockContext, lf: any) {
+            const s = lf.start;
+            const label = m[1];
+            const markEnd = s + 2 + label.length + 2;
+            const children = [cx.elt("FootnoteMark", s, s + 2), cx.elt("FootnoteLabel", s + 2, s + 2 + label.length), cx.elt("FootnoteMark", s + 2 + label.length, markEnd)];
+            const rest = lf.content.slice(m[0].length);
+            children.push(...cx.parser.parseInline(rest, s + m[0].length));
+            cx.addLeafElement(lf, cx.elt("FootnoteDefinition", s, s + lf.content.length, children));
+            return true;
+          },
+        };
+      },
+    } as any,
     {
       name: "Frontmatter",
       before: "HorizontalRule",
@@ -123,6 +152,18 @@ export const ObsidianSyntax: MarkdownConfig = {
     },
   ],
   parseInline: [
+    {
+      name: "FootnoteReference",
+      before: "Link",
+      parse(cx: InlineContext, next: number, pos: number): number {
+        if (next !== 91 /* [ */ || cx.char(pos + 1) !== 94 /* ^ */) return -1;
+        const rest = cx.slice(pos + 2, Math.min(cx.end, pos + 200));
+        const m = /^([^\]\s]+)\]/.exec(rest);
+        if (!m) return -1;
+        const end = pos + 2 + m[0].length;
+        return cx.addElement(cx.elt("FootnoteReference", pos, end, [cx.elt("FootnoteMark", pos, pos + 2), cx.elt("FootnoteLabel", pos + 2, end - 1), cx.elt("FootnoteMark", end - 1, end)]));
+      },
+    },
     {
       name: "WikiLink",
       before: "Link",
@@ -236,6 +277,7 @@ export const markdownHighlighter = tagHighlighter([
   { tag: obsidianTags.comment, class: "cm-comment" },
   { tag: obsidianTags.math, class: "cm-math" },
   { tag: obsidianTags.frontmatter, class: "cm-hmd-frontmatter" },
+  { tag: obsidianTags.footref, class: "cm-footref cm-hmd-barelink" },
 ]);
 
 /** Classes for code inside fenced blocks (CodeMirror 5-style names, as Obsidian themes expect). */
