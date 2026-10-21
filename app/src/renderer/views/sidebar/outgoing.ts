@@ -48,7 +48,7 @@ export class OutgoingLinkView extends ItemView {
   file: TFile | null = null;
   private fixedFile: string | null = null;
   linksCollapsed = false;
-  unlinkedCollapsed = false;
+  unlinkedCollapsed = true;
   private paneEl: HTMLElement;
   private linksHeader: { el: HTMLElement; flair: HTMLElement };
   private linksEl: HTMLElement;

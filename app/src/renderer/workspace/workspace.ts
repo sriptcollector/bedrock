@@ -295,7 +295,9 @@ export class Workspace extends Events {
   detachLeaf(leaf: WorkspaceLeaf): void {
     if (this.isLastRootLeaf(leaf)) {
       leaf.setPinned(false);
-      leaf.setViewState({ type: "empty", state: {} });
+      // Closing the last tab gives a fresh empty tab: no history (and the queued state change
+      // must not push the closed file back, hence fromHistory).
+      leaf.setViewState({ type: "empty", state: {} }, undefined, true);
       leaf.history.backHistory = [];
       leaf.history.forwardHistory = [];
       return;

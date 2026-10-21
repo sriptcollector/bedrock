@@ -937,10 +937,10 @@ body.mod-macos .workspace-ribbon.mod-left .sidebar-toggle-button {
   display: flex;
   color: var(--text-faint);
   transition: transform var(--anim-duration-fast);
-  transform: rotate(90deg);
+  transform: none;
 }
 .tree-item-icon.collapse-icon.is-collapsed {
-  transform: rotate(0deg);
+  transform: rotate(-90deg);
 }
 .tree-item-icon .svg-icon {
   width: 12px;
@@ -1560,6 +1560,10 @@ body.mod-macos .workspace-ribbon.mod-left .sidebar-toggle-button {
 .metadata-properties-heading .svg-icon {
   width: var(--icon-xs);
   height: var(--icon-xs);
+  transition: transform var(--anim-duration-fast);
+}
+.metadata-container.is-collapsed .metadata-properties-heading .collapse-indicator .svg-icon {
+  transform: rotate(-90deg);
 }
 .metadata-container.is-collapsed .metadata-content {
   display: none;
@@ -1650,6 +1654,57 @@ body.mod-macos .workspace-ribbon.mod-left .sidebar-toggle-button {
   user-select: text;
   white-space: pre-wrap;
   word-break: break-word;
+}
+.metadata-link {
+  display: flex;
+  align-items: center;
+  width: 100%;
+  min-height: var(--metadata-input-height);
+  padding: var(--metadata-input-padding);
+}
+.metadata-link-inner {
+  cursor: var(--cursor-link);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.metadata-link-inner.internal-link {
+  color: var(--link-color);
+}
+.metadata-link-inner.internal-link.is-unresolved {
+  color: var(--link-unresolved-color);
+  opacity: var(--link-unresolved-opacity);
+}
+.metadata-link-inner.external-link {
+  color: var(--link-external-color);
+  background: none;
+  padding: 0;
+}
+.metadata-link-inner:hover {
+  text-decoration: underline;
+}
+.metadata-link-flair {
+  display: flex;
+  margin-inline-start: auto;
+  padding-inline-start: 4px;
+  color: var(--text-faint);
+  opacity: 0;
+  cursor: var(--cursor);
+}
+.metadata-property:hover .metadata-link-flair {
+  opacity: 1;
+}
+.metadata-link-flair .svg-icon {
+  width: var(--icon-xs);
+  height: var(--icon-xs);
+}
+.multi-select-pill-content.internal-link {
+  color: var(--link-color);
+  cursor: var(--cursor-link);
+}
+.multi-select-pill-content.internal-link.is-unresolved {
+  color: var(--link-unresolved-color);
+  opacity: var(--link-unresolved-opacity);
 }
 .metadata-input-longtext:empty::before {
   content: attr(placeholder);

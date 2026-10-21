@@ -86,7 +86,7 @@ Legend: **[later]** = not needed for the first release. **[ours]** = Bedrock doe
 - [x] List bullets drawn as dots; numbered lists keep numbers; task boxes are clickable checkboxes
 - [x] Quotes drawn with a left border
 - [x] Block widgets when the cursor is outside: properties form, tables, callouts, embeds, images, math, Mermaid, HTML; each with an "edit this block" button
-- [ ] No flicker while dragging a selection or typing with an input method (decorations mapped, not rebuilt)
+- [x] No flicker while dragging a selection or typing with an input method (decorations mapped, not rebuilt)
 - [x] Same `cm-*` token classes and `HyperMD-*` line classes as Obsidian so themes work
 
 ### Syntax support
@@ -240,7 +240,7 @@ Legend: **[later]** = not needed for the first release. **[ours]** = Bedrock doe
 - [x] Interface font, text font, monospace font pickers (system fonts); font size slider (default 16) with restore-default; Ctrl+scroll font size (setting, off)
 - [x] Every public CSS variable name from `docs/reference/css-variables.json` defined with the same default values
 - [ ] Same DOM class names and nesting for every component (UI-SPEC section 4)
-- [ ] Lucide icons by name; our own drawings for the few custom icons (sidebar toggles, links in/out, fold triangle)
+- [x] Lucide icons by name; our own drawings for the few custom icons (sidebar toggles, links in/out, fold triangle)
 - [x] Community themes: theme browser (search, sort, light/dark filters, installed only, preview images, detail page, install/use/uninstall, update check); one active theme; `themes/<name>/theme.css` + `manifest.json`
 - [x] CSS snippets: list `.obsidian/snippets/*.css`, toggle each, reload list, open folder
 - [ ] Translucent window (setting) [later]

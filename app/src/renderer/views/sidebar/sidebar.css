@@ -73,10 +73,10 @@
   height: 10px;
   stroke-width: 4px;
   transition: transform 100ms ease-in-out;
-  transform: rotate(90deg);
+  transform: none;
 }
 .tree-item-icon.collapse-icon.is-collapsed .svg-icon {
-  transform: rotate(0deg);
+  transform: rotate(-90deg);
 }
 .tree-item-icon.collapse-icon:hover {
   color: var(--text-normal);
