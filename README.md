@@ -24,6 +24,43 @@ On first start Bedrock makes your vault at `Documents\Bedrock` with a short welc
 existing Obsidian vault, go to Settings › General › Advanced and either open it as a separate vault
 or import it into your synced vault.
 
+## Connect an AI agent
+
+AI apps such as Claude Code, Claude Desktop, Cursor and VS Code can search, read and edit your
+notes. It's on by default and only works on your own computer.
+
+1. Open **Settings › Connect an AI agent**.
+2. Click **Connect** next to Claude Code, Claude Desktop or Cursor. (Restart Claude Desktop or
+   Cursor afterwards.) For other apps, copy the setup shown under **Other apps**.
+3. Ask your agent things like "find my notes about the garden and add today's ideas to my daily
+   note".
+
+What agents can do: full-text search (the same search language as the app), read notes, create,
+edit (whole note, find and replace, or one section under a heading), append, rename or move with
+links updated everywhere, delete (to the vault's `.trash` folder, never permanently), list notes
+and folders, backlinks and outgoing links, tags, find notes by their properties, set a property,
+get or create today's daily note, and, while the app is open, see and open the note you're looking at.
+
+Their edits are ordinary edits: they show up in open notes right away, sync to your other
+computers and keep version history. Agents reach your notes only on this computer, through a
+helper the agent app starts itself or through `http://127.0.0.1` with a private token. Turn it off
+any time with the switch at the top of that settings page.
+
+Terminals and coding agents can also use the `bedrock` command (installed with the app on
+Windows; on macOS click **Install command line tool** in the same settings page):
+
+```
+bedrock search "meeting tag:#work"      bedrock read "Projects/Plan"
+bedrock new "Inbox/Idea" --content "…"  bedrock append "Log" "Called Sam"
+bedrock daily --append "- shipped it"   bedrock mv "Draft" "Archive/Draft"
+bedrock tags                            bedrock backlinks "Plan"
+bedrock props status=active "due<2026-12-01"
+bedrock open "Plan"                     bedrock mcp      (stdio MCP server)
+```
+
+Add `--json` to any command for JSON output. Full reference, the REST API and its OpenAPI file:
+[docs/AGENT-API.md](docs/AGENT-API.md).
+
 ## Build from source
 
 ```

@@ -32,10 +32,14 @@ export interface AgentState {
   appConnected: boolean;
 }
 
-/** How an MCP client starts us: the app's own executable with --mcp (dev: electron <appDir> --mcp). */
+/**
+ * How an MCP client starts the stdio server: the app's own executable running dist/cli.js in Node
+ * mode (ELECTRON_RUN_AS_NODE=1). `<exe> --mcp` works too, but the Electron binary itself writes an
+ * empty line to stdout at startup (before any app code runs), which MCP clients log as a bad
+ * message; Node mode keeps stdout clean and starts about twice as fast.
+ */
 export function mcpLaunchCommand(): LaunchCommand {
-  if (app.isPackaged) return { command: process.execPath, args: ["--mcp"] };
-  return { command: process.execPath, args: [app.getAppPath(), "--mcp"] };
+  return { command: process.execPath, args: [cliScript(), "mcp"], env: { ELECTRON_RUN_AS_NODE: "1" } };
 }
 
 /** The bundled CLI script (inside app.asar when packaged). */

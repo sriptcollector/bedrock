@@ -18,6 +18,8 @@ export type ClientId = "claude-code" | "claude-desktop" | "cursor";
 export interface LaunchCommand {
   command: string;
   args: string[];
+  /** Extra environment for the server process (ELECTRON_RUN_AS_NODE=1: run the CLI in Node mode). */
+  env: Record<string, string>;
 }
 
 export interface ClientState {
@@ -138,7 +140,12 @@ function entryIn(file: string, key = "mcpServers"): any {
   }
 }
 
-const sameCommand = (e: any, cmd: LaunchCommand) => !!e && typeof e.command === "string" && path.resolve(e.command).toLowerCase() === path.resolve(cmd.command).toLowerCase() && JSON.stringify(e.args ?? []) === JSON.stringify(cmd.args);
+const sameCommand = (e: any, cmd: LaunchCommand) =>
+  !!e &&
+  typeof e.command === "string" &&
+  path.resolve(e.command).toLowerCase() === path.resolve(cmd.command).toLowerCase() &&
+  JSON.stringify(e.args ?? []) === JSON.stringify(cmd.args) &&
+  Object.entries(cmd.env).every(([k, v]) => e.env?.[k] === v);
 
 export function clientStates(cmd: LaunchCommand): ClientState[] {
   const cc = claudeCodeConfigPath();
@@ -169,16 +176,17 @@ function run(file: string, args: string[]): Promise<{ code: number; out: string 
 
 /** Connect one client. Returns a sentence for the person. */
 export async function connectClient(id: ClientId, cmd: LaunchCommand): Promise<string> {
-  const stdioEntry = { command: cmd.command, args: cmd.args };
+  const stdioEntry = { command: cmd.command, args: cmd.args, env: cmd.env };
   if (id === "claude-code") {
     const cli = findClaudeCli();
     if (cli) {
       await run(cli, ["mcp", "remove", "--scope", "user", SERVER_NAME]);
-      const r = await run(cli, ["mcp", "add", "--scope", "user", SERVER_NAME, "--", cmd.command, ...cmd.args]);
+      const envArgs = Object.entries(cmd.env).flatMap(([k, v]) => ["--env", `${k}=${v}`]);
+      const r = await run(cli, ["mcp", "add", ...envArgs, "--scope", "user", SERVER_NAME, "--", cmd.command, ...cmd.args]);
       if (r.code === 0) return `Connected. Claude Code can use your notes in new sessions (added with “claude mcp add”).`;
       // fall through to the file when the CLI fails
     }
-    const { backup } = mergeServerEntry(claudeCodeConfigPath(), { type: "stdio", ...stdioEntry, env: {} });
+    const { backup } = mergeServerEntry(claudeCodeConfigPath(), { type: "stdio", ...stdioEntry });
     return `Connected. Claude Code can use your notes in new sessions.${backup ? ` A backup of its settings is at ${backup}.` : ""}`;
   }
   const file = id === "claude-desktop" ? claudeDesktopConfigPath() : cursorConfigPath();
@@ -207,10 +215,11 @@ export interface Snippet {
 
 /** Copyable setup for other apps. */
 export function snippets(cmd: LaunchCommand, http: { url: string; token: string } | null): Snippet[] {
-  const stdio = { command: cmd.command, args: cmd.args };
+  const stdio = { command: cmd.command, args: cmd.args, env: cmd.env };
   const shellQuote = (s: string) => (/[\s"]/.test(s) ? `"${s}"` : s);
+  const envFlags = Object.entries(cmd.env).map(([k, v]) => `--env ${k}=${v} `).join("");
   const out: Snippet[] = [
-    { id: "claude-code-cli", title: "Claude Code (command)", where: "Run in a terminal", text: `claude mcp add --scope user ${SERVER_NAME} -- ${[cmd.command, ...cmd.args].map(shellQuote).join(" ")}` },
+    { id: "claude-code-cli", title: "Claude Code (command)", where: "Run in a terminal", text: `claude mcp add ${envFlags}--scope user ${SERVER_NAME} -- ${[cmd.command, ...cmd.args].map(shellQuote).join(" ")}` },
     { id: "vscode", title: "VS Code (GitHub Copilot)", where: "Command Palette › “MCP: Open User Configuration”, or .vscode/mcp.json in a project", text: JSON.stringify({ servers: { [SERVER_NAME]: { type: "stdio", ...stdio } } }, null, 2) },
     { id: "windsurf", title: "Windsurf", where: "~/.codeium/windsurf/mcp_config.json", text: JSON.stringify({ mcpServers: { [SERVER_NAME]: stdio } }, null, 2) },
     { id: "generic-stdio", title: "Any MCP app (stdio)", where: "The app's MCP settings file", text: JSON.stringify({ mcpServers: { [SERVER_NAME]: stdio } }, null, 2) },

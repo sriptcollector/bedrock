@@ -530,7 +530,8 @@ describe("agent settings (app data, never the vault)", () => {
 // ------------------------------------------------------------------ Connect buttons
 
 describe("connect AI apps (temp config files only)", () => {
-  const cmd = { command: "C:\\Programs\\Bedrock\\bedrock.exe", args: ["--mcp"] };
+  const cmd = { command: "C:\\Programs\\Bedrock\\bedrock.exe", args: ["C:\\Programs\\Bedrock\\resources\\app.asar\\dist\\cli.js", "mcp"], env: { ELECTRON_RUN_AS_NODE: "1" } };
+  const entry = { command: cmd.command, args: cmd.args, env: cmd.env };
   let dir: string;
   beforeEach(() => {
     dir = path.join(tmpRoot, "clients-" + ++n);
@@ -555,12 +556,12 @@ describe("connect AI apps (temp config files only)", () => {
     const after = JSON.parse(fs.readFileSync(file, "utf8"));
     expect(after.mcpServers.other).toEqual(before.mcpServers.other);
     expect(after.globalShortcut).toBe("Ctrl+Space");
-    expect(after.mcpServers.bedrock).toEqual({ command: cmd.command, args: ["--mcp"] });
+    expect(after.mcpServers.bedrock).toEqual(entry);
     const backups = fs.readdirSync(path.dirname(file)).filter((f) => f.startsWith("claude_desktop_config.json.bak-"));
     expect(backups.length).toBe(1);
     expect(JSON.parse(fs.readFileSync(path.join(path.dirname(file), backups[0]), "utf8"))).toEqual(before);
     expect(clientStates(cmd).find((c) => c.id === "claude-desktop")).toMatchObject({ connected: true, stale: false });
-    expect(clientStates({ command: "D:\\old\\bedrock.exe", args: ["--mcp"] }).find((c) => c.id === "claude-desktop")).toMatchObject({ connected: true, stale: true });
+    expect(clientStates({ ...cmd, command: "D:\\old\\bedrock.exe" }).find((c) => c.id === "claude-desktop")).toMatchObject({ connected: true, stale: true });
     await disconnectClient("claude-desktop");
     const gone = JSON.parse(fs.readFileSync(file, "utf8"));
     expect(gone.mcpServers).toEqual({ other: before.mcpServers.other });
@@ -568,13 +569,13 @@ describe("connect AI apps (temp config files only)", () => {
 
   it("writes Cursor's and Claude Code's files (no CLI) and creates them when missing", async () => {
     await connectClient("cursor", cmd);
-    expect(JSON.parse(fs.readFileSync(process.env.BEDROCK_CURSOR_CONFIG!, "utf8"))).toEqual({ mcpServers: { bedrock: { command: cmd.command, args: ["--mcp"] } } });
+    expect(JSON.parse(fs.readFileSync(process.env.BEDROCK_CURSOR_CONFIG!, "utf8"))).toEqual({ mcpServers: { bedrock: entry } });
     fs.writeFileSync(process.env.BEDROCK_CLAUDE_CODE_CONFIG!, JSON.stringify({ numStartups: 7, projects: { a: {} }, mcpServers: { keep: { type: "http", url: "x" } } }));
     await connectClient("claude-code", cmd);
     const cc = JSON.parse(fs.readFileSync(process.env.BEDROCK_CLAUDE_CODE_CONFIG!, "utf8"));
     expect(cc.numStartups).toBe(7);
     expect(cc.mcpServers.keep).toEqual({ type: "http", url: "x" });
-    expect(cc.mcpServers.bedrock).toEqual({ type: "stdio", command: cmd.command, args: ["--mcp"], env: {} });
+    expect(cc.mcpServers.bedrock).toEqual({ type: "stdio", ...entry });
     expect(clientStates(cmd).filter((c) => c.connected).map((c) => c.id).sort()).toEqual(["claude-code", "cursor"]);
   });
 
@@ -589,7 +590,7 @@ describe("connect AI apps (temp config files only)", () => {
     const s = snippets(cmd, { url: "http://127.0.0.1:27125", token: "tok" });
     const ids = s.map((x) => x.id);
     expect(ids).toEqual(expect.arrayContaining(["vscode", "windsurf", "generic-http", "claude-code-cli", "rest"]));
-    expect(JSON.parse(s.find((x) => x.id === "vscode")!.text)).toEqual({ servers: { bedrock: { type: "stdio", command: cmd.command, args: ["--mcp"] } } });
+    expect(JSON.parse(s.find((x) => x.id === "vscode")!.text)).toEqual({ servers: { bedrock: { type: "stdio", ...entry } } });
     expect(JSON.parse(s.find((x) => x.id === "generic-http")!.text).mcpServers.bedrock).toEqual({ type: "http", url: "http://127.0.0.1:27125/mcp", headers: { Authorization: "Bearer tok" } });
   });
 });
@@ -655,5 +656,20 @@ describe("bedrock CLI (on the folder)", () => {
     expect((await run("frobnicate")).code).toBe(2);
     expect((await run("get_active_note")).code).toBe(2);
     expect((await runCli(["help"], { write: () => {} }, { write: () => {} }))).toBe(0);
+  });
+});
+
+// ------------------------------------------------------------------ docs
+
+describe("docs/AGENT-API.md", () => {
+  it("has the current OpenAPI description (run node app/scripts/agent-openapi.mjs)", async () => {
+    const { buildOpenApi } = await import("../../src/main/agents/openapi");
+    const doc = fs.readFileSync(path.resolve(__dirname, "../../../docs/AGENT-API.md"), "utf8");
+    const m = /<!-- openapi:start -->\n```json\n([\s\S]*?)\n```\n<!-- openapi:end -->/.exec(doc.replace(/\r\n/g, "\n"));
+    expect(m, "openapi block").toBeTruthy();
+    const spec = buildOpenApi();
+    expect(JSON.parse(m![1])).toEqual(JSON.parse(JSON.stringify(spec)));
+    const routes = Object.keys(spec.paths);
+    for (const p of ["/v1/search", "/v1/note", "/v1/note/move", "/v1/properties/query", "/v1/daily", "/v1/tools/{name}", "/mcp"]) expect(routes).toContain(p);
   });
 });
