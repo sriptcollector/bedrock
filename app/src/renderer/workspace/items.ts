@@ -283,6 +283,12 @@ export class WorkspaceTabs extends WorkspaceParent {
     const lb = this.tabListButtonEl.createSpan("clickable-icon");
     setIcon(lb, "chevron-down");
     lb.addEventListener("click", (e) => this.showTabList(e));
+    // The right sidebar's toggle sits in whichever tab group holds the top-right corner
+    // (shown by CSS on .mod-top-right-space).
+    const rt = this.tabHeaderContainerEl.createDiv("sidebar-toggle-button mod-right");
+    const rtb = rt.createDiv({ cls: "clickable-icon", attr: { "aria-label": "Toggle right sidebar" } });
+    setIcon(rtb, "sidebar-right");
+    rtb.addEventListener("click", () => this.workspace.rightSplit.toggle());
     this.tabsContainerEl = this.containerEl.createDiv("workspace-tab-container");
     this.tabHeaderContainerEl.addEventListener("dblclick", (e) => {
       if (e.target === this.tabHeaderContainerEl || e.target === this.spacerEl || e.target === this.tabHeaderContainerInnerEl) {
@@ -419,6 +425,22 @@ export interface RibbonItem {
   hidden: boolean;
 }
 
+/** Default left-ribbon order (the core plugins' load order in the original). */
+export const DEFAULT_RIBBON_ORDER = [
+  "switcher:Open quick switcher",
+  "graph:Open graph view",
+  "canvas:Create new canvas",
+  "daily-notes:Open today's daily note",
+  "templates:Insert template",
+  "command-palette:Open command palette",
+  "bases:Create new base",
+  "zk-prefixer:Create new unique note",
+  "random-note:Open random note",
+  "audio-recorder:Start/stop recording",
+  "workspaces:Manage workspace layouts",
+  "publish:Publish changes...",
+];
+
 export class WorkspaceRibbon {
   containerEl: HTMLElement;
   actionsEl: HTMLElement;
@@ -431,7 +453,7 @@ export class WorkspaceRibbon {
     if (side === "left") {
       const top = this.containerEl.createDiv("sidebar-toggle-button mod-left");
       const btn = top.createDiv({ cls: "clickable-icon", attr: { "aria-label": "Toggle left sidebar" } });
-      setIcon(btn, "panel-left");
+      setIcon(btn, "sidebar-toggle-button-icon");
       btn.addEventListener("click", () => workspace.leftSplit.toggle());
     }
     this.actionsEl = this.containerEl.createDiv("side-dock-actions");
@@ -464,6 +486,7 @@ export class WorkspaceRibbon {
     const item: RibbonItem = { id, icon, title, callback, buttonEl: el, hidden: !!this.hiddenItems[id] };
     if (item.hidden) el.hide();
     this.items.push(item);
+    this.applyOrder();
     return el;
   }
 
@@ -497,8 +520,9 @@ export class WorkspaceRibbon {
 
   /** Order follows the key order of hiddenItems (Settings › Interface › Ribbon menu configuration). */
   applyOrder(): void {
-    const order = Object.keys(this.hiddenItems);
-    if (!order.length) return;
+    // Saved order first; ids not saved yet fall back to the core plugins' default order.
+    const saved = Object.keys(this.hiddenItems);
+    const order = [...saved, ...DEFAULT_RIBBON_ORDER.filter((id) => !saved.includes(id))];
     const rank = (id: string) => {
       const i = order.indexOf(id);
       return i < 0 ? order.length : i;

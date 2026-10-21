@@ -43,7 +43,12 @@ export class FileManager {
     if (this.vault.getConfig("promptDelete")) {
       const ok = await this.app.ui.confirm({
         title: file instanceof TFolder ? "Delete folder" : "Delete file",
-        body: `Are you sure you want to delete "${file.name}"?` + (file instanceof TFolder ? ` It contains ${file.getFileCount()} files.` : ""),
+        body:
+          `Are you sure you want to delete "${file.name}"?` +
+          (file instanceof TFolder ? ` It contains ${file.getFileCount()} files.` : "") +
+          "\n" +
+          (({ none: "It will be deleted permanently.", local: "It will be moved to the .trash folder in this vault." } as Record<string, string>)[this.vault.getConfig("trashOption")] ??
+            "It will be moved to your system trash."),
         cta: "Delete",
         danger: true,
         dontAskAgain: () => this.vault.setConfig("promptDelete", false),

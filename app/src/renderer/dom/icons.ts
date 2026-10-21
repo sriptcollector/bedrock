@@ -5,6 +5,14 @@ import { icons as lucide } from "lucide";
 type IconNode = [string, Record<string, string | number>][];
 
 const custom = new Map<string, string>();
+// Our own drawings for the app's few non-Lucide icons (100x100 box like addIcon): a window
+// outline with a solid panel on the side the button toggles.
+const sidePanel = (x: number) =>
+  `<rect x="10" y="16" width="80" height="68" rx="12" fill="none" stroke="currentColor" stroke-width="8.5"/>` +
+  `<rect x="${x}" y="27" width="17" height="46" rx="4" fill="currentColor"/>`;
+custom.set("sidebar-toggle-button-icon", sidePanel(22));
+custom.set("sidebar-left", sidePanel(22));
+custom.set("sidebar-right", sidePanel(61));
 const pascalToKebab = new Map<string, string>();
 const kebabToPascal = new Map<string, string>();
 for (const k of Object.keys(lucide)) {

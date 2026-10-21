@@ -2,48 +2,6 @@
    preview, file explorer polish. Written from scratch on the public variable and class names;
    sizes from docs/UI-SPEC.md and measurements of the original. Loaded after app.css. */
 
-body {
-  --nav-item-color: var(--text-muted);
-  --nav-item-color-hover: var(--text-normal);
-  --nav-item-color-active: var(--text-normal);
-  --nav-item-color-selected: var(--text-normal);
-  --nav-item-color-highlighted: var(--text-accent);
-  --nav-item-background-hover: var(--background-modifier-hover);
-  --nav-item-background-active: var(--background-modifier-hover);
-  --nav-item-background-selected: color-mix(in oklch, hsl(var(--accent-h), var(--accent-s), var(--accent-l)) 15%, transparent);
-  --nav-item-padding: 4px 8px 4px 24px;
-  --nav-item-parent-padding: 4px 8px 4px 24px;
-  --nav-item-children-margin-start: 12px;
-  --nav-item-children-padding-start: 4px;
-  --nav-item-margin-bottom: 2px;
-  --nav-item-radius: 8px;
-  --nav-item-white-space: pre;
-  --nav-heading-color: var(--text-normal);
-  --nav-heading-weight: 500;
-  --nav-collapse-icon-color: var(--text-faint);
-  --nav-tag-color: var(--text-faint);
-  --nav-tag-color-active: var(--text-muted);
-  --nav-tag-weight: 600;
-  --nav-tag-radius: 4px;
-  --collapse-icon-color: var(--text-faint);
-  --flair-color: var(--text-faint);
-  --search-result-background: var(--background-primary);
-  --search-icon-color: var(--text-muted);
-  --search-icon-size: 16px;
-  --search-clear-button-color: var(--text-muted);
-  --search-clear-button-size: 13px;
-  --search-input-radius: 5px;
-  --highlight-background: color-mix(in oklch, #e0ac00 30%, transparent);
-  --popover-width: 450px;
-  --popover-height: 400px;
-  --popover-max-height: 95vh;
-  --popover-font-size: 16px;
-  --layer-popover: 30;
-}
-body.theme-dark {
-  --highlight-background: color-mix(in oklch, #e0de71 30%, transparent);
-}
-
 /* ------------------------------------------------------------ shared tree items */
 .workspace-split.mod-sidedock .workspace-leaf-content[data-type="search"] > .view-header,
 .workspace-split.mod-sidedock .workspace-leaf-content[data-type="backlink"] > .view-header,

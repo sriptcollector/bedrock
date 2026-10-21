@@ -1,5 +1,7 @@
 // Window chrome: our own title bar buttons on Windows/Linux (frameless window) and the status bar.
 import { IPC } from "../../shared/ipc";
+import { setIcon } from "../dom/icons";
+import { Menu } from "./menu";
 
 export class TitleBar {
   containerEl: HTMLElement;
@@ -48,14 +50,56 @@ export class StatusBar {
 
   constructor(private app: any) {
     this.containerEl = createDiv("status-bar");
+    this.modeEl = this.containerEl.createDiv("status-bar-item plugin-editor-status mod-clickable");
+    this.modeEl.addEventListener("click", (e) => this.showModeMenu(e));
     this.countEl = this.containerEl.createDiv("status-bar-item plugin-word-count");
-    const update = () => this.updateCount();
+    const update = () => {
+      this.updateCount();
+      this.updateMode();
+    };
+    app.workspace.on("layout-change", () => this.updateMode());
     app.workspace.on("active-leaf-change", update);
     app.workspace.on("editor-change", () => {
       clearTimeout((this as any).t);
       (this as any).t = setTimeout(update, 300);
     });
     app.workspace.on("file-open", update);
+  }
+
+  private modeEl: HTMLElement;
+
+  /** Editing mode of the active note: Live Preview / Source mode / Reading view. */
+  updateMode(): void {
+    const v = this.app.workspace.activeLeaf?.view;
+    if (!v || v.getViewType?.() !== "markdown") {
+      this.modeEl.hide();
+      return;
+    }
+    const st = v.getState?.() ?? {};
+    const [label, icon] = st.mode === "preview" ? ["Reading view", "book-open"] : st.source ? ["Source mode", "code-2"] : ["Live Preview", "edit-3"];
+    this.modeEl.show();
+    if (this.modeEl.getAttribute("aria-label") === label) return;
+    this.modeEl.setAttribute("aria-label", label);
+    this.modeEl.setAttribute("data-tooltip-position", "top");
+    this.modeEl.empty();
+    setIcon(this.modeEl.createSpan("status-bar-item-icon"), icon);
+  }
+
+  private showModeMenu(e: MouseEvent): void {
+    const v = this.app.workspace.activeLeaf?.view;
+    if (!v || v.getViewType?.() !== "markdown") return;
+    const st = v.getState?.() ?? {};
+    const set = (mode: string, source: boolean) => {
+      v.leaf.setViewState({ ...v.leaf.getViewState(), state: { ...st, mode, source } }).then(() => this.updateMode());
+    };
+    const m = new Menu();
+    m.addItem((i) => i.setTitle("Live Preview").setChecked(st.mode !== "preview" && !st.source).onClick(() => set("source", false)));
+    m.addItem((i) => i.setTitle("Source mode").setChecked(st.mode !== "preview" && !!st.source).onClick(() => set("source", true)));
+    m.addItem((i) => i.setTitle("Reading view").setChecked(st.mode === "preview").onClick(() => set("preview", !!st.source)));
+    const r = this.modeEl.getBoundingClientRect();
+    m.showAtPosition({ x: r.left, y: r.top });
+    m.dom.style.top = Math.max(8, r.top - 4 - m.dom.offsetHeight) + "px";
+    e.preventDefault();
   }
 
   updateCount(): void {

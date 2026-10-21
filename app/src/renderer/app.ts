@@ -20,6 +20,9 @@ import { CustomCss } from "./theme/custom-css";
 import { TitleBar, StatusBar } from "./ui/chrome";
 import { confirmDialog, promptDialog, setModalApp } from "./ui/modal";
 import { Notice } from "./ui/notice";
+import { Menu } from "./ui/menu";
+import { installTooltips } from "./ui/tooltip";
+import { setIcon } from "./dom/icons";
 import { MarkdownView } from "./editor/markdown-view";
 import { FileExplorerView } from "./views/file-explorer";
 import { registerSimpleViews, IMAGE_EXTS } from "./views/simple-views";
@@ -226,6 +229,7 @@ export class App {
       this.titleBar.syncOverlayColors();
     });
     this.setting = createSettingsModal(this);
+    installTooltips(document);
     body.addEventListener("dragover", (e) => e.preventDefault());
     body.addEventListener("drop", (e) => e.preventDefault());
   }
@@ -243,14 +247,36 @@ export class App {
 
   private registerRibbon(): void {
     const rb = this.workspace.leftRibbon;
-    rb.addRibbonItemButton("switcher:open", "file-search", "Open quick switcher", () => this.commands.executeCommandById("switcher:open"));
+    rb.addRibbonItemButton("switcher:Open quick switcher", "file-search", "Open quick switcher", () => this.commands.executeCommandById("switcher:open"));
     rb.addRibbonItemButton("graph:Open graph view", "git-fork", "Open graph view", () => this.commands.executeCommandById("graph:open"));
     rb.addRibbonItemButton("canvas:Create new canvas", "layout-dashboard", "Create new canvas", () => this.commands.executeCommandById("canvas:new-file"));
-    rb.addRibbonItemButton("command-palette:open", "terminal", "Open command palette", () => this.commands.executeCommandById("command-palette:open"));
-    rb.addRibbonItemButton("file-explorer:new-file", "square-pen", "Create new note", () => this.commands.executeCommandById("file-explorer:new-file"));
-    rb.addSettingsButton("folder-open", "Open another folder as vault", () => this.native.openVaultDialog());
-    rb.addSettingsButton("help-circle", "Help", () => this.openExternal(`https://github.com/${BRAND.repo}#readme`));
-    rb.addSettingsButton("settings", "Settings", () => this.setting.open());
+    rb.addRibbonItemButton("command-palette:Open command palette", "terminal", "Open command palette", () => this.commands.executeCommandById("command-palette:open"));
+    this.buildVaultProfile();
+  }
+
+  /** Bottom of the left sidebar: vault switcher (name + menu), help and settings. */
+  private buildVaultProfile(): void {
+    const el = this.workspace.leftSplit.containerEl.createDiv("workspace-sidedock-vault-profile");
+    const sw = el.createDiv({ cls: "workspace-drawer-vault-switcher", attr: { "aria-label": "Switch vault" } });
+    setIcon(sw.createDiv("workspace-drawer-vault-switcher-icon"), "chevrons-up-down");
+    sw.createDiv({ cls: "workspace-drawer-vault-name", text: this.vault.getName() });
+    sw.addEventListener("click", () => {
+      const m = new Menu();
+      m.addItem((i) => i.setTitle(this.vault.getName()).setChecked(true));
+      m.addSeparator();
+      m.addItem((i) => i.setTitle("Open another folder as vault").setIcon("folder-open").onClick(() => this.native.openVaultDialog()));
+      const r = sw.getBoundingClientRect();
+      m.showAtPosition({ x: r.left, y: r.top - 4 });
+      // Open upwards from the switcher, like the original.
+      m.dom.style.top = Math.max(8, r.top - 4 - m.dom.offsetHeight) + "px";
+    });
+    const actions = el.createDiv("workspace-drawer-vault-actions");
+    const help = actions.createSpan({ cls: "clickable-icon", attr: { "aria-label": "Help" } });
+    setIcon(help, "help-circle");
+    help.addEventListener("click", () => this.openExternal(`https://github.com/${BRAND.repo}#readme`));
+    const gear = actions.createSpan({ cls: "clickable-icon", attr: { "aria-label": "Settings" } });
+    setIcon(gear, "settings");
+    gear.addEventListener("click", () => this.setting.open());
   }
 
   private onKeyDown(e: KeyboardEvent): void {

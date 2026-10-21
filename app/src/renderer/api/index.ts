@@ -1,6 +1,7 @@
 // The `obsidian` module: what community plugins get from require("obsidian").
 // Typed by the MIT `obsidian` package (obsidian.d.ts); the implementation is our own.
 import moment from "moment";
+import { showTooltip } from "../ui/tooltip";
 import { ipcRenderer } from "electron";
 export { Events, Component, type EventRef } from "./events";
 export { TAbstractFile, TFile, TFolder } from "../vault/files";
@@ -298,11 +299,14 @@ export async function request(req: RequestUrlParam | string): Promise<string> {
   return (await requestUrl(req)).text;
 }
 
-export function setTooltip(el: HTMLElement, tooltip: string, _o?: any): void {
-  el.setAttribute("aria-label", tooltip);
+export function setTooltip(el: HTMLElement, tooltip: string, o?: { placement?: string; delay?: number }): void {
+  if (tooltip) el.setAttribute("aria-label", tooltip);
+  else el.removeAttribute("aria-label");
+  if (o?.placement) el.setAttribute("data-tooltip-position", o.placement);
+  if (o?.delay !== undefined) el.setAttribute("data-tooltip-delay", String(o.delay));
 }
-export function displayTooltip(el: HTMLElement, content: string | DocumentFragment): void {
-  el.setAttribute("aria-label", typeof content === "string" ? content : content.textContent ?? "");
+export function displayTooltip(el: HTMLElement, content: string | DocumentFragment, o?: { placement?: any }): void {
+  showTooltip(el, content, o?.placement);
 }
 
 export function iterateRefs(refs: any[], cb: (ref: any) => boolean | void): boolean {

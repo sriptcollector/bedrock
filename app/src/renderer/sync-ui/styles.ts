@@ -14,7 +14,7 @@ export const SYNC_CSS = `
 .menu-item.sync-menu-status { color: var(--text-muted); max-width: 320px; white-space: normal; cursor: default; }
 .menu-item.sync-menu-status .menu-item-title { white-space: normal; font-size: var(--font-ui-smaller); line-height: var(--line-height-tight); }
 
-.modal.mod-sync-history { width: var(--dialog-max-width, 1100px); max-width: 92vw; height: 80vh; padding: 0; overflow: hidden; }
+.modal.mod-sync-history { width: var(--modal-width); max-width: var(--modal-max-width); height: var(--modal-height); max-height: var(--modal-max-height); padding: 0; overflow: hidden; }
 .mod-sync-history .modal-content { height: 100%; }
 .sync-history { display: flex; height: 100%; min-height: 0; }
 .sync-history-sidebar { width: 260px; flex-shrink: 0; display: flex; flex-direction: column; border-right: 1px solid var(--background-modifier-border); background: var(--background-secondary); min-height: 0; }

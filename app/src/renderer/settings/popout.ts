@@ -3,6 +3,7 @@
 // window's) renderer, so every setting tab, plugin settings tab and modal keeps working with the
 // same objects. Styles, theme classes and CSS variables are mirrored from the main window.
 import { ipcRenderer } from "electron";
+import { installTooltips } from "../ui/tooltip";
 import { setIcon } from "../dom/icons";
 import { installDomHelpers } from "../dom/augment";
 import { SETTINGS_IPC } from "../../shared/ipc-settings";
@@ -163,6 +164,7 @@ export class PopoutWindow {
 
   private buildTitleBar(): void {
     const d = this.doc!;
+    installTooltips(d);
     const bar = d.body.createDiv("titlebar");
     const inner = bar.createDiv("titlebar-inner");
     this.titleEl = inner.createDiv({ cls: "titlebar-text", text: this.opts.title });

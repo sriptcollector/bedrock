@@ -1211,17 +1211,32 @@ body.is-popout-window .modal-container {
 }
 .modal-sidebar.mod-history {
   flex: 0 0 250px;
+  display: flex;
+  min-height: 0;
+}
+.modal-sidebar-inner {
+  flex: 1 1 auto;
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  background-color: var(--background-secondary);
   border-right: 1px solid var(--background-modifier-border);
+}
+.modal-sidebar-inner .search-input-container {
+  margin: 8px 8px 0;
+}
+.modal-sidebar-list {
+  display: flex;
+  flex-direction: column;
+  flex: 1 1 auto;
+  min-height: 0;
   overflow-y: auto;
   padding: 8px;
 }
-.modal-sidebar-inner .search-input-container {
-  margin-bottom: 8px;
-}
 .modal-sidebar-item {
-  padding: 6px 8px;
-  border-radius: var(--radius-m);
-  cursor: pointer;
+  padding: 8px;
+  border-radius: var(--radius-s);
+  cursor: var(--cursor);
 }
 .modal-sidebar-item:hover {
   background-color: var(--background-modifier-hover);

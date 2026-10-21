@@ -27,7 +27,7 @@ export class Modal {
     this.containerEl = createDiv("modal-container mod-dim");
     this.bgEl = this.containerEl.createDiv("modal-bg");
     this.modalEl = this.containerEl.createDiv("modal");
-    const close = this.modalEl.createDiv("modal-close-button");
+    const close = this.modalEl.createDiv({ cls: "modal-close-button modal-header-button mod-raised clickable-icon", attr: { "aria-label": "Close" } });
     setIcon(close, "x");
     close.addEventListener("click", () => this.close());
     this.headerEl = this.modalEl.createDiv("modal-header");
@@ -241,17 +241,19 @@ export function confirmDialog(app: any, o: { title: string; body: string; cta: s
     const m = new Modal(app);
     let result = false;
     m.setTitle(o.title);
-    m.contentEl.createEl("p", { text: o.body });
+    m.containerEl.addClass("mod-confirmation");
+    // One paragraph per line of the body.
+    for (const line of o.body.split("\n")) m.contentEl.createEl("p", { cls: "u-break-word", text: line });
     let dont = false;
+    const btns = m.modalEl.createDiv("modal-button-container");
     if (o.dontAskAgain) {
-      const lab = m.contentEl.createEl("label", { cls: "mod-checkbox" });
+      const lab = btns.createEl("label", { cls: "mod-checkbox" });
       const cb = lab.createEl("input", { type: "checkbox" });
-      lab.appendText(" Don't ask again");
+      lab.appendText("Don't ask again");
       cb.addEventListener("change", () => (dont = cb.checked));
     }
-    const btns = m.modalEl.createDiv("modal-button-container");
-    const ok = btns.createEl("button", { cls: o.danger ? "mod-warning" : "mod-cta", text: o.cta });
-    const cancel = btns.createEl("button", { text: "Cancel" });
+    const cancel = btns.createEl("button", { cls: "mod-cancel", text: "Cancel" });
+    const ok = btns.createEl("button", { cls: o.danger ? "mod-cta mod-destructive mod-warning" : "mod-cta", text: o.cta });
     ok.addEventListener("click", () => {
       result = true;
       if (dont) o.dontAskAgain?.();

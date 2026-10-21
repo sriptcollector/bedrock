@@ -3,6 +3,7 @@ import { Component } from "../api/events";
 import { setIcon } from "../dom/icons";
 
 let openMenu: Menu | null = null;
+const SECTION_ORDER = ["title", "", "new", "open", "action-primary", "action", "clipboard", "selection", "type", "info", "view", "system", "close", "danger"];
 
 export class MenuItem {
   dom: HTMLElement;
@@ -21,13 +22,15 @@ export class MenuItem {
     this.dom.addEventListener("click", (e) => {
       if (this.disabled) return;
       if (this.submenu) return;
-      this.menu.hide();
+      this.menu.rootMenu().hide();
       this.callback?.(e);
     });
     this.dom.addEventListener("mouseenter", () => {
-      if (this.submenu) {
+      // Only one submenu open per menu.
+      for (const it of this.menu.items) if (it !== "separator" && it !== this) it.submenu?.hide();
+      if (this.submenu && !this.disabled) {
         const r = this.dom.getBoundingClientRect();
-        this.submenu.showAtPosition({ x: r.right, y: r.top });
+        this.submenu.showAtPosition({ x: r.right, y: r.top - 7, flipX: r.left }, this.dom.ownerDocument);
       }
     });
   }
@@ -71,6 +74,7 @@ export class MenuItem {
   }
   setSubmenu(): Menu {
     this.submenu = new Menu();
+    this.submenu.parentMenu = this.menu;
     this.dom.addClass("has-submenu");
     return this.submenu;
   }
@@ -114,6 +118,12 @@ export class Menu extends Component {
     // Group by section (in insertion order), separators between groups.
     const order: string[] = [];
     for (const it of this.items) if (it !== "separator" && !order.includes(it.section)) order.push(it.section);
+    // Well-known sections keep a fixed order (plugins add to them); others go before "system".
+    const rank = (sec: string) => {
+      const i = SECTION_ORDER.indexOf(sec);
+      return i >= 0 ? i : SECTION_ORDER.indexOf("system") - 0.5;
+    };
+    order.sort((a, b) => rank(a) - rank(b));
     let first = true;
     if (order.length > 1) {
       for (const sec of order) {
@@ -135,8 +145,8 @@ export class Menu extends Component {
     return this.showAtPosition({ x: evt.clientX, y: evt.clientY }, doc);
   }
 
-  showAtPosition(pos: { x: number; y: number; width?: number; overlap?: boolean; left?: boolean }, docArg?: Document): this {
-    if (openMenu && openMenu !== this && !openMenu.dom.contains(this.dom)) openMenu.hide();
+  showAtPosition(pos: { x: number; y: number; width?: number; overlap?: boolean; left?: boolean; flipX?: number }, docArg?: Document): this {
+    if (!this.parentMenu && openMenu && openMenu !== this) openMenu.hide();
     this.render();
     // Popout windows (settings) show menus in their own document.
     const document: Document = docArg ?? (window as any).activeDocument ?? window.document;
@@ -144,15 +154,24 @@ export class Menu extends Component {
     document.body.appendChild(this.dom);
     this.load();
     const r = this.dom.getBoundingClientRect();
-    let x = pos.x;
+    let x = pos.left === true ? pos.x - r.width : pos.x;
     let y = pos.y;
-    if (x + r.width > win.innerWidth - 4) x = Math.max(4, win.innerWidth - r.width - 4);
-    if (y + r.height > win.innerHeight - 4) y = Math.max(4, win.innerHeight - r.height - 4);
+    // Not enough room: open to the other side of the point (or of the parent item for
+    // submenus), like the original; clamp only as a last resort.
+    if (x + r.width > win.innerWidth - 4) {
+      const flip = (pos.flipX ?? x) - r.width;
+      x = flip >= 4 ? flip : Math.max(4, win.innerWidth - r.width - 4);
+    }
+    if (y + r.height > win.innerHeight - 4) {
+      const flip = this.parentMenu ? win.innerHeight - r.height - 4 : y - r.height;
+      y = flip >= 4 ? flip : Math.max(4, win.innerHeight - r.height - 4);
+    }
     this.dom.style.left = x + "px";
     this.dom.style.top = y + "px";
+    if (this.parentMenu) return this;
     openMenu = this;
     const off = (e: MouseEvent) => {
-      if (!this.dom.contains(e.target as Node)) this.hide();
+      if (!this.containsTarget(e.target as Node)) this.hide();
     };
     const key = (e: KeyboardEvent) => {
       if (e.key === "Escape") this.hide();
@@ -166,6 +185,21 @@ export class Menu extends Component {
       document.removeEventListener("keydown", key, true);
     });
     return this;
+  }
+
+  parentMenu: Menu | null = null;
+
+  rootMenu(): Menu {
+    let m: Menu = this;
+    while (m.parentMenu) m = m.parentMenu;
+    return m;
+  }
+
+  /** True when the node is inside this menu or one of its open submenus. */
+  containsTarget(n: Node | null): boolean {
+    if (!n) return false;
+    if (this.dom.contains(n)) return true;
+    return this.items.some((it) => it !== "separator" && !!it.submenu?.dom.isConnected && it.submenu.containsTarget(n));
   }
 
   hide(): this {
