@@ -4,7 +4,7 @@ import moment from "moment";
 import { Modal, FuzzySuggestModal } from "../ui/modal";
 import { Notice } from "../ui/notice";
 import { Setting } from "../ui/setting";
-import { EditorSuggest } from "../api/suggest";
+import { EditorSuggest } from "../editor/suggest";
 import { ItemView } from "../workspace/view";
 import { CoreOptionsTab } from "./shared";
 import type { CorePluginImpl, InternalPlugin } from "./manager";

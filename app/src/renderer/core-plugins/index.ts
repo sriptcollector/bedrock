@@ -1,5 +1,4 @@
 // Registers the behaviour of the core plugins built in this folder with app.internalPlugins.
-import { installEditorSuggests } from "../api/suggest";
 import { templatesPlugin } from "./templates";
 import { dailyNotesPlugin } from "./daily-notes";
 import { zkPrefixerPlugin } from "./zk-prefixer";
@@ -23,7 +22,6 @@ import {
 export { InternalPlugins, InternalPlugin, type CorePluginImpl } from "./manager";
 
 export function registerCorePlugins(app: any): void {
-  installEditorSuggests(app);
   const ip = app.internalPlugins;
   for (const impl of [
     templatesPlugin,

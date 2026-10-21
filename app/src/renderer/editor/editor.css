@@ -1,0 +1,502 @@
+/* Editor additions: fold indicators, list indentation guides, table editor, embed actions,
+   image resize, suggestions, highlight colours, reading-view folds, print. Bedrock's own CSS,
+   written on the public class names and variables themes target. */
+
+/* ---- fold indicators (inline, at the start of foldable lines) */
+.markdown-source-view .cm-line {
+  position: relative;
+}
+.cm-fold-indicator {
+  position: absolute;
+  left: 0;
+  width: 0;
+  height: 100%;
+  display: inline-block;
+}
+.cm-fold-indicator .collapse-indicator {
+  position: absolute;
+  right: 4px;
+  top: 0;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  padding-inline-end: 4px;
+  color: var(--text-faint);
+  opacity: 0;
+  cursor: var(--cursor);
+  transition: opacity 0.1s ease-in-out;
+}
+.cm-fold-indicator .collapse-indicator svg {
+  width: 10px;
+  height: 10px;
+  transform: rotate(90deg);
+  transition: transform 0.1s ease-in-out;
+}
+.cm-fold-indicator.is-collapsed .collapse-indicator svg {
+  transform: rotate(0deg);
+}
+.cm-line:hover .cm-fold-indicator .collapse-indicator,
+.cm-fold-indicator.is-collapsed .collapse-indicator {
+  opacity: 1;
+}
+.cm-fold-indicator .collapse-indicator:hover {
+  color: var(--text-muted);
+}
+.markdown-source-view .cm-foldPlaceholder {
+  display: inline-block;
+  margin-inline-start: 4px;
+  padding: 0 4px;
+  line-height: 1;
+  cursor: var(--cursor);
+}
+
+/* ---- list indentation guides */
+.markdown-source-view.mod-cm6 .cm-hmd-list-indent .cm-indent {
+  display: inline-block;
+}
+.show-indentation-guide .markdown-source-view.mod-cm6 .cm-hmd-list-indent .cm-indent,
+.markdown-source-view.mod-cm6.show-indentation-guide .cm-hmd-list-indent .cm-indent {
+  position: relative;
+}
+.show-indentation-guide .markdown-source-view.mod-cm6.is-live-preview .cm-hmd-list-indent .cm-indent::before,
+.markdown-source-view.mod-cm6.is-live-preview.show-indentation-guide .cm-hmd-list-indent .cm-indent::before {
+  content: "";
+  position: absolute;
+  top: -1px;
+  bottom: -1px;
+  inset-inline-start: var(--indentation-guide-editing-indent, 0.85em);
+  border-inline-end: var(--indentation-guide-width, 1px) solid var(--indentation-guide-color, rgba(0, 0, 0, 0.12));
+}
+
+/* ---- list item drag by bullet */
+.markdown-source-view.is-live-preview .list-bullet {
+  cursor: grab;
+}
+.cm-editor.is-dragging-list-item,
+.cm-editor.is-dragging-list-item * {
+  cursor: grabbing !important;
+}
+.cm-list-drop-indicator {
+  position: fixed;
+  height: 2px;
+  background-color: var(--interactive-accent);
+  pointer-events: none;
+  z-index: var(--layer-popover, 30);
+}
+
+/* ---- highlight colours (==, colour emoji, text, ==) */
+.cm-highlight-red .cm-highlight,
+.cm-highlight-orange .cm-highlight,
+.cm-highlight-yellow .cm-highlight,
+.cm-highlight-green .cm-highlight,
+.cm-highlight-blue .cm-highlight,
+.cm-highlight-purple .cm-highlight {
+  background-color: transparent;
+}
+.cm-highlight.cm-highlight-red,
+.markdown-rendered mark.highlight-red {
+  background-color: color-mix(in srgb, rgb(var(--color-red-rgb)) 28%, var(--background-primary));
+}
+.cm-highlight.cm-highlight-orange,
+.markdown-rendered mark.highlight-orange {
+  background-color: color-mix(in srgb, rgb(var(--color-orange-rgb)) 28%, var(--background-primary));
+}
+.cm-highlight.cm-highlight-yellow,
+.markdown-rendered mark.highlight-yellow {
+  background-color: color-mix(in srgb, rgb(var(--color-yellow-rgb)) 28%, var(--background-primary));
+}
+.cm-highlight.cm-highlight-green,
+.markdown-rendered mark.highlight-green {
+  background-color: color-mix(in srgb, rgb(var(--color-green-rgb)) 28%, var(--background-primary));
+}
+.cm-highlight.cm-highlight-blue,
+.markdown-rendered mark.highlight-blue {
+  background-color: color-mix(in srgb, rgb(var(--color-blue-rgb)) 28%, var(--background-primary));
+}
+.cm-highlight.cm-highlight-purple,
+.markdown-rendered mark.highlight-purple {
+  background-color: color-mix(in srgb, rgb(var(--color-purple-rgb)) 28%, var(--background-primary));
+}
+
+/* ---- escapes, footnotes */
+.markdown-source-view.is-live-preview .cm-hmd-footnote.cm-link .cm-underline,
+.markdown-source-view.is-live-preview .cm-hmd-footnote.cm-underline {
+  color: var(--link-color);
+  cursor: var(--cursor);
+}
+.cm-footref {
+  color: var(--text-muted);
+}
+
+/* ---- embed actions (edit block, zoom) */
+.cm-embed-block {
+  position: relative;
+}
+.cm-embed-block .embed-actions {
+  position: absolute;
+  top: 4px;
+  inset-inline-end: 4px;
+  display: flex;
+  gap: 2px;
+  opacity: 0;
+  transition: opacity 0.1s ease-in-out;
+  z-index: 2;
+}
+.cm-embed-block:hover > .embed-actions,
+.cm-embed-block:hover .embed-actions {
+  opacity: 1;
+}
+.cm-embed-block .embed-action {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: var(--size-2-2, 4px) var(--size-2-3, 6px);
+  border-radius: var(--radius-s, 4px);
+  color: var(--text-muted);
+  background-color: var(--background-primary);
+  cursor: var(--cursor);
+}
+.cm-embed-block .embed-action:hover {
+  background-color: var(--background-modifier-hover);
+  color: var(--text-normal);
+}
+.cm-embed-block .embed-action svg {
+  width: var(--icon-s, 16px);
+  height: var(--icon-s, 16px);
+}
+.cm-embed-block .embed-actions .edit-block-button {
+  position: static;
+  background-color: var(--background-primary);
+  font-family: inherit;
+  opacity: 1;
+  font-size: inherit;
+  padding: var(--size-2-2, 4px) var(--size-2-3, 6px);
+}
+.cm-html-embed {
+  display: block;
+}
+.cm-inline-html {
+  display: inline;
+}
+.internal-embed.cm-embed-block.is-block {
+  display: block;
+}
+
+/* ---- image resize */
+.image-embed .image-wrapper {
+  position: relative;
+  display: inline-block;
+  max-width: 100%;
+}
+.image-embed .image-resize-corner {
+  position: absolute;
+  inset-inline-end: 0;
+  bottom: 0;
+  width: 12px;
+  height: 12px;
+  cursor: nwse-resize;
+  opacity: 0;
+}
+.image-embed:hover .image-resize-corner {
+  opacity: 1;
+  border-inline-end: 2px solid var(--interactive-accent);
+  border-bottom: 2px solid var(--interactive-accent);
+}
+
+/* ---- table editor (live preview) */
+.markdown-source-view.mod-cm6 .cm-table-widget {
+  overflow-x: auto;
+  margin: 0 -16px;
+  padding: 0;
+}
+.markdown-source-view.mod-cm6 .cm-table-widget .table-wrapper {
+  position: relative;
+  display: inline-block;
+  padding: 16px;
+  box-sizing: border-box;
+}
+.markdown-source-view.mod-cm6 .cm-table-widget table.table-editor {
+  border-collapse: collapse;
+  margin: 0;
+  outline: none;
+}
+.markdown-source-view.mod-cm6 .cm-table-widget th,
+.markdown-source-view.mod-cm6 .cm-table-widget td {
+  position: relative;
+  border: var(--table-border-width, 1px) solid var(--table-border-color, var(--background-modifier-border));
+  padding: 0;
+  vertical-align: top;
+  min-width: 3em;
+}
+.markdown-source-view.mod-cm6 .cm-table-widget th {
+  font-weight: var(--table-header-weight, 600);
+}
+.markdown-source-view.mod-cm6 .cm-table-widget .table-cell-wrapper {
+  padding: var(--size-2-2, 4px) var(--size-4-2, 8px);
+  min-height: 1.3em;
+  cursor: text;
+  white-space: pre-wrap;
+}
+.markdown-source-view.mod-cm6 .cm-table-widget .table-cell-wrapper .cm-editor {
+  background: transparent;
+}
+.markdown-source-view.mod-cm6 .cm-table-widget .table-cell-wrapper .cm-content {
+  padding: 0;
+  font-weight: inherit;
+}
+.markdown-source-view.mod-cm6 .cm-table-widget .table-cell-wrapper .cm-line {
+  padding: 0;
+}
+.markdown-source-view.mod-cm6 .cm-table-widget td:has(.cm-editor.cm-focused),
+.markdown-source-view.mod-cm6 .cm-table-widget th:has(.cm-editor.cm-focused) {
+  outline: 2px solid var(--interactive-accent);
+  outline-offset: -1px;
+}
+.cm-table-widget .table-col-drag-handle,
+.cm-table-widget .table-row-drag-handle {
+  position: absolute;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--text-faint);
+  background: var(--background-primary);
+  border-radius: var(--radius-s, 4px);
+  opacity: 0;
+  cursor: grab;
+  z-index: 1;
+}
+.cm-table-widget .table-col-drag-handle {
+  top: -13px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 24px;
+  height: 12px;
+}
+.cm-table-widget .table-row-drag-handle {
+  left: -13px;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 12px;
+  height: 24px;
+}
+.cm-table-widget .table-col-drag-handle svg,
+.cm-table-widget .table-row-drag-handle svg {
+  width: 14px;
+  height: 14px;
+}
+.cm-table-widget th:hover > .table-col-drag-handle,
+.cm-table-widget .mod-active-col-handle > .table-col-drag-handle,
+.cm-table-widget tr:hover > :first-child > .table-row-drag-handle,
+.cm-table-widget .mod-active-row-handle > .table-row-drag-handle {
+  opacity: 1;
+}
+.cm-table-widget .table-col-drag-handle:hover,
+.cm-table-widget .table-row-drag-handle:hover {
+  color: var(--text-normal);
+  background: var(--background-modifier-hover);
+}
+.cm-table-widget.is-dragging .is-drop-target {
+  background: var(--background-modifier-hover);
+}
+.cm-table-widget .table-row-btn,
+.cm-table-widget .table-col-btn {
+  position: absolute;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--text-faint);
+  background: var(--background-secondary);
+  border-radius: var(--radius-s, 4px);
+  opacity: 0;
+  cursor: var(--cursor);
+}
+.cm-table-widget .table-row-btn {
+  left: 16px;
+  right: 16px;
+  bottom: 2px;
+  height: 12px;
+}
+.cm-table-widget .table-col-btn {
+  top: 16px;
+  bottom: 16px;
+  right: 2px;
+  width: 12px;
+}
+.cm-table-widget .table-row-btn svg,
+.cm-table-widget .table-col-btn svg {
+  width: 12px;
+  height: 12px;
+}
+.cm-table-widget:hover .table-row-btn,
+.cm-table-widget:hover .table-col-btn {
+  opacity: 1;
+}
+.cm-table-widget .table-row-btn:hover,
+.cm-table-widget .table-col-btn:hover {
+  color: var(--text-normal);
+  background: var(--background-modifier-hover);
+}
+
+/* ---- editor suggestions */
+.suggestion-container {
+  position: fixed;
+  z-index: var(--layer-popover, 30);
+  max-width: 500px;
+  min-width: 200px;
+  max-height: 300px;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  background-color: var(--background-primary);
+  border: var(--border-width, 1px) solid var(--background-modifier-border-hover, var(--background-modifier-border));
+  border-radius: var(--radius-m, 8px);
+  box-shadow: var(--shadow-s);
+  padding: var(--size-2-2, 4px) 0 0;
+}
+.suggestion-container > .suggestion {
+  overflow-y: auto;
+  padding: 0 var(--size-2-2, 4px) var(--size-2-2, 4px);
+}
+.suggestion-container .suggestion-item:not(.mod-complex) {
+  display: block;
+}
+.suggestion-container .suggestion-icon {
+  display: flex;
+  align-items: center;
+  margin-inline-end: var(--size-4-2, 8px);
+}
+.highlight-swatch {
+  width: 14px;
+  height: 14px;
+  border-radius: var(--radius-s, 4px);
+  background-color: var(--text-highlight-bg);
+}
+.highlight-swatch[data-highlight="red"] { background-color: rgba(var(--color-red-rgb, 233, 49, 71), 0.4); }
+.highlight-swatch[data-highlight="orange"] { background-color: rgba(var(--color-orange-rgb, 236, 117, 0), 0.4); }
+.highlight-swatch[data-highlight="yellow"] { background-color: rgba(var(--color-yellow-rgb, 224, 172, 0), 0.4); }
+.highlight-swatch[data-highlight="green"] { background-color: rgba(var(--color-green-rgb, 8, 185, 78), 0.4); }
+.highlight-swatch[data-highlight="blue"] { background-color: rgba(var(--color-blue-rgb, 8, 109, 221), 0.4); }
+.highlight-swatch[data-highlight="purple"] { background-color: rgba(var(--color-purple-rgb, 120, 82, 238), 0.4); }
+.suggestion-container .suggestion-item.mod-complex {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+.suggestion-container .suggestion-flair {
+  color: var(--text-faint);
+  display: inline-flex;
+}
+.suggestion-container .suggestion-flair svg {
+  width: var(--icon-xs, 14px);
+  height: var(--icon-xs, 14px);
+}
+.suggestion-container .prompt-instructions {
+  border-top: 1px solid var(--background-modifier-border);
+}
+
+/* ---- callouts in live preview: no trailing gap under the last block */
+.cm-callout .callout-content > :last-child,
+.cm-callout .callout-content > div:last-child > :last-child {
+  margin-bottom: 0;
+}
+
+/* ---- reading view extras */
+.markdown-rendered ul.has-list-bullet > li {
+  list-style: none;
+  position: relative;
+}
+.markdown-rendered ul.has-list-bullet > li > .list-bullet {
+  position: absolute;
+  inset-inline-start: -1.2em;
+  top: 0;
+  width: 1.2em;
+  height: 1.5em;
+}
+.markdown-rendered ul.has-list-bullet > li.task-list-item > .list-bullet {
+  display: none;
+}
+.markdown-rendered li > .list-collapse-indicator {
+  position: absolute;
+  inset-inline-start: -2.4em;
+  top: 0.2em;
+  opacity: 0;
+  color: var(--text-faint);
+  cursor: var(--cursor);
+}
+.markdown-rendered li > .list-collapse-indicator svg {
+  width: 10px;
+  height: 10px;
+  transform: rotate(90deg);
+}
+.markdown-rendered li > .list-collapse-indicator.is-collapsed svg {
+  transform: rotate(0deg);
+}
+.markdown-rendered li:hover > .list-collapse-indicator,
+.markdown-rendered li > .list-collapse-indicator.is-collapsed {
+  opacity: 1;
+}
+.markdown-rendered ol > li {
+  position: relative;
+}
+.markdown-preview-view .heading-collapse-indicator {
+  position: absolute;
+  margin-inline-start: -22px;
+  padding-inline-end: 6px;
+  opacity: 0;
+  color: var(--text-faint);
+  cursor: var(--cursor);
+}
+.markdown-preview-view .heading-collapse-indicator svg {
+  width: 10px;
+  height: 10px;
+  transform: rotate(90deg);
+}
+.markdown-preview-view .heading-collapse-indicator.is-collapsed svg {
+  transform: rotate(0deg);
+}
+.markdown-preview-view h1:hover .heading-collapse-indicator,
+.markdown-preview-view h2:hover .heading-collapse-indicator,
+.markdown-preview-view h3:hover .heading-collapse-indicator,
+.markdown-preview-view h4:hover .heading-collapse-indicator,
+.markdown-preview-view h5:hover .heading-collapse-indicator,
+.markdown-preview-view h6:hover .heading-collapse-indicator,
+.markdown-preview-view .heading-collapse-indicator.is-collapsed {
+  opacity: 1;
+}
+.markdown-preview-section > .is-collapsed-section {
+  display: none;
+}
+.markdown-preview-view .markdown-preview-pusher {
+  width: 1px;
+  height: 0.1px;
+  margin-bottom: 0;
+}
+.markdown-preview-view .footnote-popover {
+  max-width: 400px;
+}
+
+/* ---- right-to-left */
+.markdown-source-view.is-rtl .cm-content,
+.cm-editor.is-rtl .cm-content {
+  direction: rtl;
+}
+
+/* ---- print / export to PDF */
+@media print {
+  body.is-printing > :not(.print) {
+    display: none !important;
+  }
+  .print .markdown-preview-view {
+    padding: 0;
+    overflow: visible;
+  }
+  .print .inline-title,
+  .print h1.print-title {
+    margin-bottom: 1em;
+  }
+  .print .heading-collapse-indicator,
+  .print .copy-code-button,
+  .print .edit-block-button {
+    display: none;
+  }
+}

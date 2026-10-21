@@ -18,6 +18,25 @@ import os from "node:os";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 
+// Settings open in their own window (like Obsidian 1.14); returns the page that shows them.
+async function openSettings(X, tab) {
+  const before = new Set(X.app.windows());
+  await X.win.evaluate((i) => window.app.setting.openTabById(i), tab);
+  for (let i = 0; i < 50; i++) {
+    const fresh = X.app.windows().find((w) => !before.has(w));
+    if (fresh) return fresh;
+    const other = X.app.windows().find((w) => w !== X.win && !w.isClosed());
+    if (other && (await other.$(".vertical-tab-content-container, .vertical-tab-content").catch(() => null))) return other;
+    if (await X.win.$(".modal.mod-settings").catch(() => null)) return X.win;
+    await new Promise((r) => setTimeout(r, 100));
+  }
+  return X.win;
+}
+async function closeSettings(X) {
+  await X.win.evaluate(() => window.app.setting.close?.());
+}
+
+
 const here = path.dirname(fileURLToPath(import.meta.url));
 const appDir = path.resolve(here, "../..");
 const root = path.resolve(appDir, "..");
@@ -467,13 +486,13 @@ try {
 
   // ---- settings tab, status menu, paused, error, signed-out states
   if (step("states")) {
-    await A.win.evaluate(() => window.app.setting.openTabById("sync"));
-    await A.win.waitForSelector(".bedrock-sync-settings .sync-status-setting", { timeout: 5000 });
-    const txt = await A.win.textContent(".bedrock-sync-settings");
+    let SW = await openSettings(A, "sync");
+    await SW.waitForSelector(".bedrock-sync-settings .sync-status-setting", { timeout: 10000 });
+    const txt = await SW.textContent(".bedrock-sync-settings");
     check("Sync settings tab shows account, status, storage and selective sync", /Signed in as Test u1/.test(txt) && /Storage used/.test(txt) && /Sync images/.test(txt) && /Installed community plugins/.test(txt));
-    await waitFor(() => A.win.evaluate(() => !!document.querySelector(".sync-usage-bar")), 5000);
+    await waitFor(() => SW.evaluate(() => !!document.querySelector(".sync-usage-bar")), 5000);
     await shot(A, "10-settings-sync");
-    await A.win.keyboard.press("Escape");
+    await closeSettings(A);
 
     await A.win.click(".status-bar-item.plugin-sync");
     await A.win.waitForSelector(".menu .menu-item", { timeout: 3000 });
@@ -499,11 +518,11 @@ try {
     writeF(A, "After sign-out.md", "local only\n");
     await sleep(3000);
     check("sync stops after sign-out", !exists(B, "After sign-out.md"));
-    await A.win.evaluate(() => window.app.setting.openTabById("sync"));
-    await A.win.waitForSelector(".sync-signin-button", { timeout: 5000 });
-    check("signed-out settings show the sign-in button", (await A.win.textContent(".sync-signin-button")) === "Sign in to Toolbay to sync");
+    SW = await openSettings(A, "sync");
+    await SW.waitForSelector(".sync-signin-button", { timeout: 10000 });
+    check("signed-out settings show the sign-in button", (await SW.textContent(".sync-signin-button")) === "Sign in to Toolbay to sync");
     await shot(A, "14-signed-out");
-    await A.win.keyboard.press("Escape");
+    await closeSettings(A);
     fs.writeFileSync(path.join(A.kc, "ai.toolbay.desktop--session"), "dev:u1");
     check("signing back in resumes and uploads what was written meanwhile", !!(await waitFor(() => exists(B, "After sign-out.md"), 20000)));
   }

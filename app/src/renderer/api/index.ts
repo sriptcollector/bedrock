@@ -43,7 +43,9 @@ export {
 export { Scope, Keymap, Platform } from "../commands/keymap";
 export { SettingGroup, SettingPage } from "../settings/render";
 export { SecretStorage, SecretComponent } from "../settings/secret-storage";
-export { PopoverSuggest, AbstractInputSuggest, EditorSuggest } from "./suggest";
+export { PopoverSuggest, AbstractInputSuggest } from "./suggest";
+// One EditorSuggest system: the editor's manager runs built-in and plugin suggests in order.
+export { EditorSuggest } from "../editor/suggest";
 export {
   ConfirmationModal,
   ConfirmationButton,

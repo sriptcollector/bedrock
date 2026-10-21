@@ -8,10 +8,16 @@ import type { TFile } from "../vault/files";
 import { Editor } from "./editor";
 import { buildEditorExtensions, compartments, configExtensions, configFromVault } from "./extensions";
 import { setLivePreview } from "./fields";
-import { refreshLivePreview } from "./live-preview";
+import { refreshLivePreview, cellLivePreviewExtensions } from "./live-preview";
+import { markdownSupport, syntaxHighlightExtensions } from "./syntax";
+import { editorInfoField, editorLivePreviewField } from "./fields";
+import { showEditorMenu } from "./commands";
+import { openSuggestAt } from "./suggest";
+import { applyFoldInfoEffects, foldStorageKey, getFoldInfo, type FoldInfo } from "./folding";
+import { foldable, foldedRanges, foldEffect, unfoldEffect } from "@codemirror/language";
 import { PropertiesEditor } from "./properties";
 import { getFrontMatterInfo, parseYaml, stringifyYaml } from "../../core/parse";
-import { renderMarkdownInto } from "../markdown/renderer";
+import { ReadingRenderer } from "../markdown/reading";
 import { resolveSubpath } from "../metadata/cache";
 import { Component } from "../api/events";
 import { Notice } from "../ui/notice";
@@ -24,14 +30,29 @@ class PreviewMode extends Component {
   containerEl: HTMLElement;
   sizerEl: HTMLElement;
   headerEl: HTMLElement;
-  private renderComp: Component | null = null;
+  reading: ReadingRenderer;
   private renderedFor: string | null = null;
+  private renderedPath = "";
   constructor(private view: MarkdownView) {
     super();
     this.containerEl = createDiv("markdown-reading-view");
     const pv = this.containerEl.createDiv("markdown-preview-view markdown-rendered node-insert-event allow-fold-headings allow-fold-lists show-indentation-guide show-properties");
     this.sizerEl = pv.createDiv("markdown-preview-sizer markdown-preview-section");
-    this.headerEl = createDiv("mod-header");
+    this.headerEl = createDiv("mod-header mod-ui");
+    this.reading = this.addChild(
+      new ReadingRenderer({
+        app: view.app,
+        get sourcePath() {
+          return view.file?.path ?? "";
+        },
+        previewEl: pv,
+        sizerEl: this.sizerEl,
+        headerEl: this.headerEl,
+        toggleTask: (line) => view.toggleTaskAtLine(line),
+        saveFolds: (lines) => view.setHeadingFolds(lines),
+        loadFolds: () => view.headingFolds(),
+      }),
+    );
   }
   get previewEl(): HTMLElement {
     return this.containerEl.firstElementChild as HTMLElement;
@@ -41,12 +62,9 @@ class PreviewMode extends Component {
     const text = this.view.data;
     if (!full && this.renderedFor === text) return;
     this.renderedFor = text;
-    const scroll = this.previewEl.scrollTop;
-    if (this.renderComp) this.removeChild(this.renderComp);
-    this.renderComp = this.addChild(new Component());
-    this.sizerEl.empty();
-    this.sizerEl.createDiv("markdown-preview-pusher");
-    this.sizerEl.appendChild(this.headerEl);
+    const path = this.view.file?.path ?? "";
+    const scroll = path === this.renderedPath ? this.previewEl.scrollTop : 0;
+    this.renderedPath = path;
     this.view.mountHeader(this.headerEl, true);
     const fm = getFrontMatterInfo(text);
     const body = fm.exists ? text.slice(fm.contentStart) : text;
@@ -57,33 +75,18 @@ class PreviewMode extends Component {
     } catch {
       /* invalid yaml */
     }
-    const content = createDiv();
-    await renderMarkdownInto(this.view.app, body, content, this.view.file?.path ?? "", this.renderComp, { embedDepth: 0, lineOffset, frontmatter, sourceText: text });
-    while (content.firstChild) this.sizerEl.appendChild(content.firstChild);
-    this.sizerEl.createDiv("mod-footer");
-    // Checkboxes toggle the source.
-    this.sizerEl.querySelectorAll<HTMLInputElement>("input.task-list-item-checkbox").forEach((cb) => {
-      cb.addEventListener("click", (e) => {
-        const line = Number(cb.getAttribute("data-line"));
-        if (!Number.isFinite(line) || line < 0) return;
-        e.preventDefault();
-        this.view.toggleTaskAtLine(line);
-      });
-    });
+    this.reading.render(text, body, lineOffset, frontmatter);
     this.previewEl.scrollTop = scroll;
+    this.reading.queueUpdate();
   }
   applyScroll(line: number): void {
-    const els = Array.from(this.sizerEl.querySelectorAll<HTMLElement>("[data-line]"));
-    let best: HTMLElement | null = null;
-    for (const el of els) {
-      const l = Number(el.getAttribute("data-line"));
-      if (l <= line) best = el;
-      else break;
-    }
-    best?.scrollIntoView({ block: "start" });
+    this.reading.scrollToLine(line);
   }
   getScroll(): number {
     return this.previewEl.scrollTop;
+  }
+  topLine(): number {
+    return this.reading.topLine();
   }
 }
 
@@ -185,14 +188,13 @@ export class MarkdownView extends TextFileView {
       }),
       EditorView.domEventHandlers({
         contextmenu: (e) => {
+          if ((e.target as HTMLElement).closest(".cm-table-widget")) return false;
           e.preventDefault();
-          const m = new Menu();
-          m.addItem((i) => i.setTitle("Cut").setIcon("scissors").setSection("clipboard").onClick(() => document.execCommand("cut")));
-          m.addItem((i) => i.setTitle("Copy").setIcon("copy").setSection("clipboard").onClick(() => document.execCommand("copy")));
-          m.addItem((i) => i.setTitle("Paste").setIcon("clipboard-paste").setSection("clipboard").onClick(async () => this.editor.replaceSelection(await navigator.clipboard.readText())));
-          m.addItem((i) => i.setTitle("Select all").setIcon("text-select").setSection("selection").onClick(() => this.editor.exec("selectAll")));
-          this.app.workspace.trigger("editor-menu", m, this.editor, this);
-          m.showAtMouseEvent(e);
+          // Right-click outside the selection moves the cursor there first.
+          const pos = this.cm.posAtCoords({ x: e.clientX, y: e.clientY });
+          const sel = this.cm.state.selection.main;
+          if (pos != null && (pos < sel.from || pos > sel.to)) this.cm.dispatch({ selection: { anchor: pos } });
+          showEditorMenu(this.app, this, this.cm, e);
           return true;
         },
         paste: (e) => this.app.handlePaste?.(e, this) ?? false,
@@ -204,6 +206,76 @@ export class MarkdownView extends TextFileView {
 
   getViewType(): string {
     return "markdown";
+  }
+
+  /** Extensions for the editors inside table cells (inline live preview + this view's info). */
+  tableCellExtensions(): Extension[] {
+    return [editorInfoField.init(() => this), editorLivePreviewField.init(() => !this.sourceMode), markdownSupport(), ...syntaxHighlightExtensions, ...cellLivePreviewExtensions()];
+  }
+
+  openLinkSuggest(): void {
+    openSuggestAt(this);
+  }
+  openTagSuggest(): void {
+    openSuggestAt(this);
+  }
+
+  /** "Insert attachment": pick files, copy them into the attachment folder, link them. */
+  async attachFile(): Promise<void> {
+    const input = createEl("input", { attr: { type: "file", multiple: true } });
+    input.addEventListener("change", async () => {
+      for (const f of Array.from(input.files ?? [])) {
+        const buf = await f.arrayBuffer();
+        const path = await this.app.fileManager.getAvailablePathForAttachment(f.name, this.file?.path ?? "");
+        const created = await this.app.vault.createBinary(path, buf);
+        const link = this.app.fileManager.generateMarkdownLink(created, this.file?.path ?? "");
+        this.editor.replaceSelection(link + "\n");
+      }
+    });
+    input.click();
+  }
+
+  /** Lines of folded headings (shared between reading view and the editor). */
+  headingFolds(): number[] {
+    const out: number[] = [];
+    const st = this.cm.state;
+    foldedRanges(st).between(0, st.doc.length, (a) => {
+      const line = st.doc.lineAt(a);
+      if (/^#{1,6}\s/.test(line.text)) out.push(line.number - 1);
+    });
+    return out;
+  }
+  setHeadingFolds(lines: number[]): void {
+    const st = this.cm.state;
+    const want = new Set(lines);
+    const effects: any[] = [];
+    const current = new Set(this.headingFolds());
+    for (const l of new Set([...want, ...current])) {
+      if (l >= st.doc.lines) continue;
+      const line = st.doc.line(l + 1);
+      const r = foldable(st, line.from, line.to);
+      if (!r) continue;
+      if (want.has(l) && !current.has(l)) effects.push(foldEffect.of(r));
+      if (!want.has(l) && current.has(l)) effects.push(unfoldEffect.of(r));
+    }
+    if (effects.length) this.cm.dispatch({ effects });
+  }
+
+  getFoldInfo(): FoldInfo {
+    return getFoldInfo(this.cm.state);
+  }
+  applyFoldInfo(info: FoldInfo | null): void {
+    const effects = applyFoldInfoEffects(this.cm.state, info);
+    if (effects.length) this.cm.dispatch({ effects });
+  }
+  private restoreFolds(): void {
+    if (!this.file) return;
+    try {
+      const raw = this.app.loadLocalStorage?.(foldStorageKey(this.file.path));
+      if (raw) this.applyFoldInfo(JSON.parse(raw));
+    } catch {
+      /* ignore */
+    }
   }
   getMode(): MarkdownMode {
     return this.mode;
@@ -311,6 +383,7 @@ export class MarkdownView extends TextFileView {
 
   async onLoadFile(file: TFile): Promise<void> {
     await super.onLoadFile(file);
+    this.restoreFolds();
     this.inlineTitleEl.setText(file.basename);
     this.containerEl.setAttr("data-mode", this.mode);
     this.refreshHeader();
@@ -460,12 +533,7 @@ export class MarkdownView extends TextFileView {
 
   private topLine(): number {
     try {
-      if (this.mode === "preview") {
-        const els = Array.from(this.previewMode.sizerEl.querySelectorAll<HTMLElement>("[data-line]"));
-        const top = this.previewMode.previewEl.getBoundingClientRect().top;
-        for (const el of els) if (el.getBoundingClientRect().bottom > top) return Number(el.getAttribute("data-line")) || 0;
-        return 0;
-      }
+      if (this.mode === "preview") return this.previewMode.topLine();
       const block = this.cm.lineBlockAtHeight(this.cm.scrollDOM.scrollTop);
       return this.cm.state.doc.lineAt(block.from).number - 1;
     } catch {
@@ -483,6 +551,16 @@ export class MarkdownView extends TextFileView {
     this.sourceEl.toggleClass("show-line-numbers", !!v.getConfig("showLineNumber"));
     const showProps = v.getConfig("propertiesInDocument") !== "hidden";
     this.sourceEl.toggleClass("show-properties", showProps);
+    const guides = v.getConfig("showIndentGuide") !== false;
+    this.sourceEl.toggleClass("show-indentation-guide", guides);
+    this.previewMode.previewEl.toggleClass("show-indentation-guide", guides);
+    const rtl = !!v.getConfig("rightToLeft");
+    this.sourceEl.toggleClass("is-rtl", rtl);
+    this.previewMode.previewEl.toggleClass("is-rtl", rtl);
+    this.previewMode.previewEl.setAttr("dir", rtl ? "rtl" : "ltr");
+    this.sourceEl.toggleClass("is-folding", v.getConfig("foldHeading") !== false || v.getConfig("foldIndent") !== false);
+    this.previewMode.previewEl.toggleClass("allow-fold-headings", v.getConfig("foldHeading") !== false);
+    this.previewMode.previewEl.toggleClass("allow-fold-lists", v.getConfig("foldIndent") !== false);
   }
 
   updateOptions(): void {
@@ -495,6 +573,8 @@ export class MarkdownView extends TextFileView {
         compartments.tabs.reconfigure(ce.tabs),
         compartments.autopair.reconfigure(ce.autopair),
         compartments.fold.reconfigure(ce.fold),
+        compartments.lists.reconfigure(ce.lists),
+        compartments.direction.reconfigure(ce.direction),
         compartments.plugins.reconfigure(this.app.workspace.editorExtensions.slice()),
         refreshLivePreview.of(null),
       ],
@@ -534,6 +614,14 @@ export class MarkdownView extends TextFileView {
         .setSection("view")
         .onClick(() => this.toggleSource()),
     );
+    if (this.file)
+      menu.addItem((i) =>
+        i
+          .setTitle("Export to PDF")
+          .setIcon("file-output")
+          .setSection("action")
+          .onClick(() => this.app.commands.executeCommandById("workspace:export-pdf")),
+      );
     if (this.file) this.app.workspace.trigger("file-menu", menu, this.file, source, this.leaf);
     super.onPaneMenu(menu, source);
   }

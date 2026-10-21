@@ -80,6 +80,32 @@ export class MarkdownRenderer extends MarkdownRenderChild {
   }
 }
 
+/** Render one line of inline Markdown (a table cell) into `el`, with working links and embeds. */
+export function renderInlineMarkdown(app: any, text: string, el: HTMLElement, sourcePath: string): void {
+  const tpl = document.createElement("template");
+  tpl.innerHTML = getMd(app).renderInline(text, { codeBlockProcessors });
+  sanitize(tpl.content);
+  el.appendChild(tpl.content);
+  el.querySelectorAll<HTMLAnchorElement>("a.internal-link").forEach((a) => {
+    const href = a.getAttribute("data-href") ?? "";
+    const { path } = parseLinktext(href);
+    if (path && !app?.metadataCache?.getFirstLinkpathDest(path, sourcePath)) a.addClass("is-unresolved");
+    a.addEventListener("click", (e) => {
+      e.preventDefault();
+      app?.workspace?.openLinkText(href, sourcePath, Keymap.isModEvent(e));
+    });
+  });
+  el.querySelectorAll<HTMLAnchorElement>("a.external-link").forEach((a) =>
+    a.addEventListener("click", (e) => {
+      e.preventDefault();
+      app?.openExternal?.(a.href);
+    }),
+  );
+  const comp = new Component();
+  comp.load();
+  for (const span of Array.from(el.querySelectorAll<HTMLElement>("span.internal-embed"))) void renderEmbed(app, span, sourcePath, comp, 1);
+}
+
 export interface RenderOptions {
   embedDepth: number;
   lineOffset?: number;
@@ -92,7 +118,7 @@ export interface RenderOptions {
 /** Render `markdown` into `el` as Obsidian-style sections and run post processors. */
 export async function renderMarkdownInto(app: any, markdown: string, el: HTMLElement, sourcePath: string, component: Component, opts: RenderOptions): Promise<void> {
   const md = getMd(app);
-  const html = md.render(markdown, { lineOffset: opts.lineOffset ?? 0, codeBlockProcessors });
+  const html = md.render(markdown, { lineOffset: opts.lineOffset ?? 0, codeBlockProcessors, mermaid: app?.vault?.getConfig?.("mermaid") === true });
   const tpl = document.createElement("template");
   tpl.innerHTML = html;
   const frag = tpl.content;
@@ -130,7 +156,7 @@ export async function renderMarkdownInto(app: any, markdown: string, el: HTMLEle
   await postProcess(app, el, sourcePath, component, opts, ctx);
 }
 
-export async function postProcess(app: any, el: HTMLElement, sourcePath: string, component: Component, opts: RenderOptions, ctx: MarkdownPostProcessorContext): Promise<void> {
+export async function postProcess(app: any, el: HTMLElement, sourcePath: string, component: Component, opts: RenderOptions, ctx: MarkdownPostProcessorContext, sections?: HTMLElement[]): Promise<void> {
   // Internal links
   el.querySelectorAll<HTMLAnchorElement>("a.internal-link").forEach((a) => {
     const href = a.getAttribute("data-href") ?? "";
@@ -169,11 +195,18 @@ export async function postProcess(app: any, el: HTMLElement, sourcePath: string,
     const pre = code.parentElement!;
     const lang = (code.className.match(/language-([\w+#-]+)/) ?? [])[1];
     if (lang) highlightCodeInto(code, code.textContent ?? "", lang);
-    const btn = pre.createEl("button", { cls: "copy-code-button", text: "Copy" });
+    const btn = pre.createEl("button", { cls: "copy-code-button", attr: { "aria-label": "Copy" } });
+    setIcon(btn, "copy");
     btn.addEventListener("click", () => {
       navigator.clipboard.writeText(code.textContent ?? "");
-      btn.setText("Copied!");
-      setTimeout(() => btn.setText("Copy"), 1200);
+      btn.empty();
+      setIcon(btn, "check");
+      btn.addClass("mod-copied");
+      setTimeout(() => {
+        btn.empty();
+        setIcon(btn, "copy");
+        btn.removeClass("mod-copied");
+      }, 1200);
     });
   });
   // Plugin code block processors
@@ -196,7 +229,7 @@ export async function postProcess(app: any, el: HTMLElement, sourcePath: string,
   }
   // Plugin post processors
   const sorted = postProcessors.slice().sort((a, b) => (a.sortOrder ?? 0) - (b.sortOrder ?? 0));
-  for (const sec of Array.from(el.children) as HTMLElement[]) {
+  for (const sec of sections ?? (Array.from(el.children) as HTMLElement[])) {
     for (const pp of sorted) {
       try {
         await pp(sec, ctx);
@@ -308,37 +341,58 @@ export async function renderEmbed(app: any, span: HTMLElement, sourcePath: strin
   const file: TFile | null = app?.metadataCache?.getFirstLinkpathDest(path, sourcePath) ?? null;
   span.empty();
   if (!file) {
-    span.addClass("file-embed", "mod-empty");
-    span.createDiv({ cls: "file-embed-title", text: `"${path || src}" could not be found.` });
-    if (path) {
-      span.addEventListener("click", () => app.workspace.openLinkText(src, sourcePath));
-    }
+    span.addClass("is-loaded", "file-embed", "mod-empty");
+    span.setText(`“${path || src}” is not created yet. Click to create.`);
+    if (path) span.addEventListener("click", () => app.workspace.openLinkText(src, sourcePath));
     return;
   }
   const ext = file.extension;
+  const generic = () => {
+    span.addClass("file-embed", "mod-generic", "is-loaded");
+    const t = span.createDiv("file-embed-title");
+    setIcon(t.createSpan("file-embed-icon"), "file");
+    t.appendText(" " + file.name);
+    span.addEventListener("click", () => app.workspace.getLeaf(false).openFile(file));
+  };
+  // Past the nesting limit every embed becomes a plain file link (also stops self-embeds).
+  if (depth >= MAX_EMBED_DEPTH) return generic();
+  // "|300", "|100x50", "alt|300": size goes on the embed and the image, the rest is the alt text.
   const sizeM = alt.match(/(?:^|\|)(\d+)(?:x(\d+))?$/);
+  const altText = sizeM ? alt.slice(0, sizeM.index).replace(/\|$/, "") : alt;
   if (IMAGE_EXTS.includes(ext)) {
     span.addClass("media-embed", "image-embed", "is-loaded");
-    const img = span.createEl("img", { attr: { src: app.vault.getResourcePath(file), alt: sizeM ? alt.replace(/\|?\d+(x\d+)?$/, "") || file.name : alt || file.name } });
+    const shownAlt = !altText || altText === src || altText === path ? file.name : altText;
+    span.setAttr("alt", shownAlt);
+    const img = span.createEl("img", { attr: { alt: shownAlt } });
     if (sizeM) {
+      span.setAttr("width", sizeM[1]);
       img.setAttr("width", sizeM[1]);
-      if (sizeM[2]) img.setAttr("height", sizeM[2]);
+      if (sizeM[2]) {
+        span.setAttr("height", sizeM[2]);
+        img.setAttr("height", sizeM[2]);
+      }
     }
+    img.setAttr("src", app.vault.getResourcePath(file));
     return;
   }
   if (AUDIO_EXTS.includes(ext)) {
-    span.addClass("media-embed", "is-loaded");
-    span.createEl("audio", { attr: { controls: true, src: app.vault.getResourcePath(file) } });
+    span.addClass("media-embed", "audio-embed", "is-loaded");
+    span.createEl("audio", { attr: { controls: true, controlslist: "nodownload", src: app.vault.getResourcePath(file) } });
     return;
   }
   if (VIDEO_EXTS.includes(ext)) {
-    span.addClass("media-embed", "is-loaded");
-    span.createEl("video", { attr: { controls: true, src: app.vault.getResourcePath(file) } });
+    span.addClass("media-embed", "video-embed", "is-loaded");
+    span.createEl("video", { attr: { controls: true, controlslist: "nodownload", src: app.vault.getResourcePath(file) } });
     return;
   }
   if (ext === "pdf") {
     span.addClass("pdf-embed", "is-loaded");
-    span.createEl("iframe", { attr: { src: app.vault.getResourcePath(file).split("?")[0] + (subpath ? subpath.replace(/^#/, "#") : ""), style: "width:100%;height:600px;border:0" } });
+    // ![[doc.pdf#page=3]], ![[doc.pdf#height=400]] (both: #page=3&height=400).
+    const params = new URLSearchParams((subpath ?? "").replace(/^#/, ""));
+    const page = Number(params.get("page"));
+    const height = Number(params.get("height"));
+    const pdfSrc = app.vault.getResourcePath(file).split("?")[0] + (page > 0 ? `#page=${page}` : "");
+    span.createEl("iframe", { attr: { src: pdfSrc, style: `width:100%;height:${height > 0 ? height : 600}px;border:0` } });
     return;
   }
   const custom = embedRenderers[ext];
@@ -346,35 +400,28 @@ export async function renderEmbed(app: any, span: HTMLElement, sourcePath: strin
     await custom(app, span, file, subpath, component);
     return;
   }
-  if (ext !== "md") {
-    span.addClass("file-embed", "is-loaded");
-    const t = span.createDiv("file-embed-title");
-    setIcon(t.createSpan("file-embed-icon"), "file");
-    t.appendText(" " + file.name);
-    span.addEventListener("click", () => app.workspace.getLeaf(false).openFile(file));
-    return;
-  }
+  if (ext !== "md") return generic();
   // Note embed (whole note, heading section or block).
   span.addClass("markdown-embed", "inline-embed", "is-loaded");
-  if (depth >= MAX_EMBED_DEPTH) {
-    span.createDiv({ cls: "markdown-embed-content", text: "(embed depth limit reached)" });
-    return;
-  }
+  const title = span.createDiv({ cls: "embed-title markdown-embed-title", text: subpath ? "" : file.basename });
+  void title;
+  const content = span.createDiv("markdown-embed-content");
+  const preview = content.createDiv("markdown-preview-view markdown-rendered");
   const link = span.createDiv({ cls: "markdown-embed-link", attr: { "aria-label": "Open link" } });
   setIcon(link, "link");
   link.addEventListener("click", (e) => {
     e.stopPropagation();
     app.workspace.openLinkText(src, sourcePath, Keymap.isModEvent(e));
   });
-  const content = span.createDiv("markdown-embed-content");
-  const preview = content.createDiv("markdown-preview-view markdown-rendered");
   let text: string = await app.vault.cachedRead(file);
   const cache = app.metadataCache.getFileCache(file);
   let lineOffset = 0;
   if (subpath && cache) {
     const r = resolveSubpath(cache, subpath);
     if (!r) {
-      preview.createDiv({ cls: "markdown-embed-empty", text: `Unable to find section ${subpath} in ${file.basename}` });
+      const what = subpath.replace(/^#\^?/, "");
+      const inner = preview.createDiv("markdown-preview-sizer markdown-preview-section");
+      await renderMarkdownInto(app, `##### Unable to find “${what}” in ${file.basename}`, inner, file.path, component, { embedDepth: depth + 1 });
       return;
     }
     const start = r.type === "block" ? (r.list ? r.list.position.start.offset : r.block.position.start.offset) : r.start.offset;
@@ -388,12 +435,6 @@ export async function renderEmbed(app: any, span: HTMLElement, sourcePath: strin
       lineOffset = text.slice(0, fm.contentStart).split("\n").length - 1;
       text = text.slice(fm.contentStart);
     }
-    preview.createDiv({ cls: "embed-title markdown-embed-title", text: "" });
-  }
-  // Guard against an embed including itself.
-  if (file.path === sourcePath && !subpath) {
-    preview.createDiv({ text: "(a note can't embed itself)" });
-    return;
   }
   const inner = preview.createDiv("markdown-preview-sizer markdown-preview-section");
   await renderMarkdownInto(app, text, inner, file.path, component, { embedDepth: depth + 1, lineOffset, sourceText: text });

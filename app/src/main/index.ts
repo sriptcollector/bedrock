@@ -17,6 +17,7 @@ import { installCrashHandling, log } from "./log";
 import { startAgents, stopAgents } from "./agents/host";
 import { installWebviewer } from "./webviewer";
 import { spawn } from "node:child_process";
+import { registerEditorIpc } from "./editor-ipc";
 
 // ---- identity & app data (before anything touches userData) ----
 app.setName(BRAND.displayName);
@@ -177,6 +178,7 @@ function startApp(): void {
   registerIpc({ openOtherVault });
   registerSettingsIpc();
   installWebviewer();
+  registerEditorIpc();
 
   app.whenReady().then(() => {
     if (process.platform !== "darwin") Menu.setApplicationMenu(null);

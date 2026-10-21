@@ -75,10 +75,19 @@ try {
         checkboxes: root.querySelectorAll("input.task-list-item-checkbox").length,
         callouts: root.querySelectorAll(".callout").length,
         tables: root.querySelectorAll(".cm-table-widget table").length,
-        math: root.querySelectorAll(".math .katex").length,
+        math: 0,
         properties: root.querySelectorAll(".metadata-property").length,
         inlineTitle: root.querySelector(".inline-title")?.textContent,
       };
+    });
+    // Math sits further down the note: scroll there (the editor only draws what is near the viewport).
+    lp.math = await win.evaluate(async () => {
+      const v = window.app.workspace.activeLeaf.view;
+      v.cm.scrollDOM.scrollTop = v.cm.scrollDOM.scrollHeight;
+      await new Promise((r) => setTimeout(r, 400));
+      const n = document.querySelectorAll(".workspace-leaf.mod-active .markdown-source-view .math .katex").length;
+      v.cm.scrollDOM.scrollTop = 0;
+      return n;
     });
     check("live preview renders links/checkboxes/callouts/tables/math/properties", lp.livePreview && lp.links >= 3 && lp.checkboxes >= 2 && lp.callouts >= 1 && lp.tables >= 1 && lp.math >= 1 && lp.properties >= 4, JSON.stringify(lp));
   }
@@ -90,6 +99,8 @@ try {
   await shot("02-source-mode");
   await run("editor:toggle-source");
 
+  // "Show Mermaid diagrams in notes" is off by default (like the original); turn it on for the check.
+  await win.evaluate(() => window.app.vault.setConfig("mermaid", true));
   await run("markdown:toggle-preview");
   await win.waitForSelector(".workspace-leaf.mod-active .markdown-reading-view .el-h1, .workspace-leaf.mod-active .markdown-reading-view .el-p", { timeout: 10000 });
   if (!argVault) await win.waitForFunction(() => document.querySelector(".workspace-leaf.mod-active .markdown-reading-view .mermaid svg"), null, { timeout: 8000 }).catch(() => {});

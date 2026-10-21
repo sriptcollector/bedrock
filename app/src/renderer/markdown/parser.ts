@@ -320,7 +320,7 @@ export function createMarkdownIt(opts: ParserOptions = {}): MarkdownIt {
   };
   r.obsidian_embed = (tokens, idx) => {
     const { link, alias } = tokens[idx].meta;
-    return `<span alt="${escapeHtml(alias ?? link)}" src="${escapeHtml(link)}" class="internal-embed" tabindex="-1"></span>`;
+    return `<span alt="${escapeHtml(alias ?? link.replace("#", " > "))}" src="${escapeHtml(link)}" class="internal-embed" tabindex="-1"></span>`;
   };
   r.obsidian_tag = (tokens, idx) => {
     const tag = tokens[idx].content;
@@ -359,7 +359,7 @@ export function createMarkdownIt(opts: ParserOptions = {}): MarkdownIt {
     const t = tokens[idx];
     const lang = (t.info || "").trim().split(/\s+/)[0];
     const line = t.attrGet("data-line") ?? "";
-    if (lang === "mermaid") return `<div class="mermaid-pending" data-line="${line}" data-source="${escapeHtml(t.content)}"></div>\n`;
+    if (lang === "mermaid" && (e as any)?.mermaid !== false) return `<div class="mermaid-pending" data-line="${line}" data-source="${escapeHtml(t.content)}"></div>\n`;
     const procs: Record<string, any> = (e as any)?.codeBlockProcessors ?? {};
     if (lang && procs[lang]) return `<div class="block-language-${escapeHtml(lang)}" data-line="${line}" data-codeblock-lang="${escapeHtml(lang)}" data-source="${escapeHtml(t.content)}"></div>\n`;
     const html = defaultFence(tokens, idx, o, e, self);
