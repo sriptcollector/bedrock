@@ -5,7 +5,7 @@
 import { app } from "electron";
 import fs from "node:fs";
 import path from "node:path";
-import { BRAND } from "../shared/brand";
+import { BRAND, INSPIRED_BY } from "../shared/brand";
 
 interface VaultRegistry {
   main: string;
@@ -48,7 +48,7 @@ A few things to try:
 - Open the command palette with **Ctrl/Cmd + P** to find every action.
 
 When you're signed in to Toolbay, this vault syncs to your other computers automatically.
-`;
+${INSPIRED_BY ? `\n---\n\n<small>Inspired by ${INSPIRED_BY.name}. ${INSPIRED_BY.notAffiliated}</small>\n` : ""}`;
 
 /** Make sure the main vault exists. Returns its path. */
 export function ensureMainVault(): string {

@@ -94,7 +94,8 @@ export function createVaultWindow(opts: { vaultPath: string; isMain: boolean; sh
       contextIsolation: false,
       sandbox: false,
       spellcheck: true,
-      webviewTag: false,
+      // Web viewer core plugin: <webview> pages are locked down in main/webviewer.ts.
+      webviewTag: true,
       preload: path.join(__dirname, "preload.js"),
       additionalArguments: opts.smokeTest ? ["--bedrock-smoke"] : [],
     },

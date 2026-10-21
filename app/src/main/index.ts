@@ -15,6 +15,7 @@ import { applyEarlyAppSettings, registerSettingsIpc } from "./settings-host";
 import { startSync, stopSync } from "./sync";
 import { installCrashHandling, log } from "./log";
 import { startAgents, stopAgents } from "./agents/host";
+import { installWebviewer } from "./webviewer";
 import { spawn } from "node:child_process";
 
 // ---- identity & app data (before anything touches userData) ----
@@ -175,6 +176,7 @@ function startApp(): void {
 
   registerIpc({ openOtherVault });
   registerSettingsIpc();
+  installWebviewer();
 
   app.whenReady().then(() => {
     if (process.platform !== "darwin") Menu.setApplicationMenu(null);

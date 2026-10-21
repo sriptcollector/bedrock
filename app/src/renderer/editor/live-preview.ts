@@ -548,7 +548,10 @@ export const inlineLivePreview = ViewPlugin.fromClass(
         if ((lp && isWidget) || Keymap.isModifier(e, "Mod")) {
           e.preventDefault();
           const href = linkEl.getAttribute("data-href")!;
-          if (/^[a-z][a-z0-9+.-]*:/i.test(href)) owner.app.openExternal(href);
+          if (/^[a-z][a-z0-9+.-]*:/i.test(href)) {
+            // Web viewer (when on) opens web links in a tab.
+            if (!owner.app.openWebLink?.(href)) owner.app.openExternal(href);
+          }
           else owner.app.workspace.openLinkText(href, owner.file?.path ?? "", Keymap.isModEvent(e) || false);
           return true;
         }

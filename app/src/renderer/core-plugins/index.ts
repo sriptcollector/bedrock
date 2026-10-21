@@ -6,6 +6,8 @@ import { zkPrefixerPlugin } from "./zk-prefixer";
 import { noteComposerPlugin } from "./note-composer";
 import { fileRecoveryPlugin } from "./file-recovery";
 import { basesPlugin } from "./bases";
+import { webviewerPlugin } from "./webviewer";
+import { slidesPlugin } from "./slides";
 import {
   randomNotePlugin,
   workspacesPlugin,
@@ -38,6 +40,8 @@ export function registerCorePlugins(app: any): void {
     footnotesPlugin,
     switcherPlugin,
     commandPalettePlugin,
+    webviewerPlugin,
+    slidesPlugin,
   ])
     ip.register(impl);
   void publishPlugin;

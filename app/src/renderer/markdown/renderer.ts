@@ -151,7 +151,8 @@ export async function postProcess(app: any, el: HTMLElement, sourcePath: string,
   el.querySelectorAll<HTMLAnchorElement>("a.external-link").forEach((a) => {
     a.addEventListener("click", (e) => {
       e.preventDefault();
-      app?.openExternal?.(a.href);
+      // Web viewer (when on) opens web links in a tab.
+      if (!app?.openWebLink?.(a.href)) app?.openExternal?.(a.href);
     });
   });
   el.querySelectorAll<HTMLAnchorElement>("a.tag").forEach((a) => {
