@@ -30,6 +30,8 @@ export interface CanvasHost {
   saveOptions(): void;
   requestSave(): void;
   onReadonlyChange?(ro: boolean): void;
+  /** shown inside a note: the page scrolls normally unless Ctrl is held */
+  embedded?: boolean;
 }
 
 const ZOOM_MIN = -4;
@@ -937,6 +939,7 @@ export class Canvas {
     this.on(w, "dragover", (e: DragEvent) => {
       if (this.readonly) return;
       e.preventDefault();
+      e.stopPropagation();
       if (e.dataTransfer) e.dataTransfer.dropEffect = "copy";
     });
     this.on(w, "drop", (e: DragEvent) => this.onDrop(e));
@@ -982,6 +985,7 @@ export class Canvas {
   private onWheel(e: WheelEvent): void {
     if (this.isDragging) return;
     const mod = e.ctrlKey || e.metaKey;
+    if (this.host.embedded && !mod) return;
     let zoom = mod || this.isHoldingSpace;
     if (this.options.defaultWheelBehavior === "zoom") zoom = !zoom;
     if (!mod && this.isScrollableInside(e)) return;
@@ -1792,6 +1796,7 @@ export class Canvas {
     const dt = e.dataTransfer;
     if (!dt) return;
     e.preventDefault();
+    e.stopPropagation(); // don't let the tab area open the dropped file instead
     const p = this.posFromEvt(e);
     const vaultPath = dt.getData("application/x-bedrock-file");
     if (vaultPath) {

@@ -62,6 +62,16 @@ src/renderer/
                        post processors, embeds, callouts, mermaid), highlight.ts (Lezer -> Prism classes)
   views/               file-explorer.ts, simple-views.ts (empty/image/audio/video/pdf),
                        switcher.ts (quick switcher, command palette), placeholder.ts (unbuilt/unknown views)
+  views/graph/         graph + local graph: data.ts (filters, groups, local depth, orphans; pure), options.ts
+                       (graph.json shape/defaults), query.ts (filter/group queries), sim.ts (force layout,
+                       Barnes-Hut, runs in a blob Web Worker), renderer.ts (WebGL2 instanced nodes/links/arrows
+                       + 2D label overlay, canvas2D fallback), controls.ts (settings panel), view.ts (views,
+                       commands graph:open / open-local / animate), styles.ts (injected CSS)
+  views/canvas/        format.ts (JSON Canvas parse/serialise, Obsidian-identical output), geometry.ts (edge
+                       curves, sides, snapping), nodes.ts (text/file/link/group cards, edges), canvas.ts
+                       (controller: viewport, selection, drag/resize/connect, menus, history, clipboard),
+                       view.ts (CanvasView, canvas.json, commands, Settings > Canvas, ![[x.canvas]] embeds),
+                       links.ts (canvas links into resolvedLinks for graph/backlinks), export.ts (PNG)
   commands/            commands.ts (registry + HotkeyManager, hotkeys.json), keymap.ts (Scope, Keymap,
                        Platform, Mod mapping), builtin.ts (built-in commands with Obsidian's ids)
   settings/modal.ts    settings modal with vertical tabs; built-in tabs are SettingTab subclasses
@@ -112,7 +122,7 @@ per batch) and fires `resolved` when done.
 
 ## Known gaps
 
-See the final report in the PR / commit history; the short list: graph, canvas, search, backlinks,
+See the final report in the PR / commit history; the short list: search, backlinks,
 outline, bookmarks, daily notes, templates, page preview are placeholders; popout windows open as
 tabs; reading view renders the whole note (no virtualised sections yet); the table and callout
 widgets in live preview are read-only renders (click "</>" or move the cursor in to edit the source);

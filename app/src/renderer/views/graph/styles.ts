@@ -13,6 +13,8 @@ body.theme-light {
   --graph-node-tag: #08b94e;
   --graph-node-unresolved: #ababab;
   --graph-text: #222222;
+  --slider-track-background: #dadada;
+  --slider-thumb-border-color: #dadada;
 }
 body.theme-dark {
   --graph-line: #3f3f3f;
@@ -22,6 +24,8 @@ body.theme-dark {
   --graph-node-tag: #44cf6e;
   --graph-node-unresolved: #666666;
   --graph-text: #dadada;
+  --slider-track-background: #3f3f3f;
+  --slider-thumb-border-color: #3f3f3f;
 }
 .graph-view.color-fill { color: var(--graph-node); }
 .graph-view.color-fill-focused { color: var(--graph-node-focused); }
@@ -75,12 +79,14 @@ body.theme-dark {
   box-shadow: var(--shadow-s);
   z-index: 2;
 }
-.graph-controls:not(.is-close) { min-height: 34px; }
 .graph-controls.is-close {
   width: auto;
   min-width: 0;
-  padding: 0;
+  padding: 6px;
   overflow: visible;
+  background-color: var(--background-primary);
+  border-color: transparent;
+  box-shadow: none;
 }
 .graph-controls-button {
   display: flex;
@@ -185,6 +191,10 @@ body.theme-dark {
 .graph-controls .setting-item.mod-slider .setting-item-control { width: 100%; padding-top: 12px; }
 .graph-controls .slider-value { font-size: var(--slider-value-font-size, 13px); line-height: 1.3; color: var(--text-normal); font-variant-numeric: tabular-nums; }
 .graph-controls .setting-item:not(.mod-slider):not(.mod-toggle):not(.mod-search-setting) .setting-item-info { display: none; }
+.graph-controls .setting-item:not(.mod-slider):not(.mod-toggle):not(.mod-search-setting) .setting-item-control { flex: 1 1 auto; }
+.graph-controls::-webkit-scrollbar { width: 8px; background: transparent; }
+.graph-controls::-webkit-scrollbar-thumb { background: transparent; border-radius: 8px; }
+.graph-controls:hover::-webkit-scrollbar-thumb { background: var(--scrollbar-thumb-bg, rgba(0, 0, 0, 0.1)); }
 
 .graph-controls .search-input-container { position: relative; }
 .graph-controls .search-input-container::before {

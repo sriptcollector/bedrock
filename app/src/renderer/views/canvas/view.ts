@@ -12,6 +12,8 @@ import { parseCanvas, serializeCanvas, type CanvasData } from "./format";
 import { CanvasLinkIndexer } from "./links";
 import { TextNode } from "./nodes";
 import { installCanvasStyles } from "./styles";
+import { embedRenderers } from "../../markdown/renderer";
+import { setIcon } from "../../dom/icons";
 
 const DEFAULT_OPTIONS: CanvasOptions = { snapToObjects: true, snapToGrid: true };
 
@@ -443,6 +445,7 @@ export function registerCanvas(app: any): CanvasPluginState {
     }
   });
   if (app.setting?.addSettingTab) app.setting.addSettingTab(new CanvasSettingTab(app), "core");
+  embedRenderers.canvas = (a, el, file, _subpath, component) => renderCanvasEmbed(a, el, file, component);
   return pluginState;
 }
 
@@ -463,4 +466,45 @@ async function exportAsImage(view: CanvasView): Promise<void> {
   } catch (e: any) {
     new Notice(`Couldn't export the canvas: ${e?.message ?? e}`);
   }
+}
+
+/** `![[board.canvas]]` in a note: a read-only, zoomed-to-fit view of the canvas. */
+async function renderCanvasEmbed(app: any, el: HTMLElement, file: any, component: any): Promise<void> {
+  el.addClass("canvas-embed", "inline-embed", "is-loaded");
+  el.empty();
+  const box = el.createDiv("canvas-embed-content");
+  let data: CanvasData;
+  try {
+    data = parseCanvas(await app.vault.cachedRead(file));
+  } catch {
+    box.createDiv({ cls: "file-embed-title", text: `"${file.name}" can't be read.` });
+    return;
+  }
+  const c = new Canvas(
+    {
+      app,
+      file,
+      get options() {
+        return pluginState?.options ?? { snapToGrid: true, snapToObjects: true };
+      },
+      saveOptions: () => {},
+      requestSave: () => {},
+      embedded: true,
+    },
+    box,
+  );
+  c.setReadonly(true);
+  c.setData(data, false);
+  c.zoomToFitQueued = true;
+  requestAnimationFrame(() => {
+    c.onResize();
+    c.zoomToFit(true);
+  });
+  const open = el.createDiv({ cls: "markdown-embed-link", attr: { "aria-label": "Open link" } });
+  setIcon(open, "maximize-2");
+  open.addEventListener("click", (e) => {
+    e.stopPropagation();
+    void app.workspace.getLeaf(e.ctrlKey || e.metaKey ? "tab" : false).openFile(file);
+  });
+  component?.register?.(() => c.destroy());
 }

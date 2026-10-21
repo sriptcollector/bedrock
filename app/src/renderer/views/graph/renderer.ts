@@ -858,8 +858,11 @@ export class GraphRenderer {
     if (this.idleFrames < 60) this.frame = requestAnimationFrame(() => this.render());
   }
 
+  private nbCache: { i: number; graph: FlatGraph | null; set: Set<number> } = { i: -2, graph: null, set: new Set() };
   private neighbourSet(i: number): Set<number> {
+    if (this.nbCache.i === i && this.nbCache.graph === this.graph) return this.nbCache.set;
     const s = new Set<number>();
+    this.nbCache = { i, graph: this.graph, set: s };
     if (i < 0) return s;
     const g = this.graph;
     for (let k = 0; k < g.src.length; k++) {

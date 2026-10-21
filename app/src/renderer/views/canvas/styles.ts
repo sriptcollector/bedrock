@@ -19,6 +19,7 @@ body.theme-light {
   --canvas-color-5: #00bfbc;
   --canvas-color-6: #7852ee;
   --canvas-dot-pattern: #e4e4e4;
+  --input-shadow: inset 0 0 0 1px rgba(0, 0, 0, 0.12), 0 1px 2px 0 rgba(0, 0, 0, 0.065), 0 0 0 0 transparent;
 }
 body.theme-dark {
   --canvas-background: var(--background-primary, #1c1c1c);
@@ -31,6 +32,7 @@ body.theme-dark {
   --canvas-color-5: #53dfdd;
   --canvas-color-6: #a882ff;
   --canvas-dot-pattern: #333333;
+  --input-shadow: inset 0 0.5px 0.5px 0.5px rgba(255, 255, 255, 0.09), 0 2px 4px 0 rgba(0, 0, 0, 0.15), 0 1px 1.5px 0 rgba(0, 0, 0, 0.1), 0 1px 2px 0 rgba(0, 0, 0, 0.2), 0 0 0 0 transparent;
 }
 .mod-canvas-color-1 { --canvas-color: var(--canvas-color-1); }
 .mod-canvas-color-2 { --canvas-color: var(--canvas-color-2); }
@@ -350,6 +352,7 @@ body.theme-dark {
   box-shadow: var(--input-shadow, inset 0 0 0 1px rgba(0, 0, 0, 0.12), 0 1px 2px 0 rgba(0, 0, 0, 0.065));
   z-index: 3;
 }
+.theme-dark .canvas-card-menu { background-color: var(--background-secondary); }
 .canvas-wrapper.is-readonly .canvas-card-menu { display: none; }
 .canvas-card-menu-button {
   display: flex;
@@ -459,6 +462,12 @@ body.theme-dark {
 .canvas-color-picker-custom input { position: absolute; inset: 0; opacity: 0; width: 100%; height: 100%; cursor: var(--cursor, default); }
 .canvas-help .canvas-help-row { display: flex; justify-content: space-between; gap: 24px; padding: 6px 0; border-bottom: 1px solid var(--background-modifier-border); font-size: var(--font-ui-small, 13px); }
 .canvas-help .canvas-help-row kbd { font-family: var(--font-interface); font-size: var(--font-ui-smaller, 12px); padding: 1px 6px; border-radius: 4px; background: var(--background-modifier-hover); }
+body { --embed-canvas-max-height: 400px; }
+.canvas-embed { position: relative; display: block; border: 1px solid var(--background-modifier-border); border-radius: var(--radius-m, 8px); overflow: hidden; }
+.canvas-embed-content { position: relative; height: var(--embed-canvas-max-height); }
+.canvas-embed .canvas-controls, .canvas-embed .canvas-card-menu, .canvas-embed .canvas-menu-container { display: none; }
+.canvas-embed .markdown-embed-link { position: absolute; top: 6px; right: 6px; z-index: 5; padding: 4px; color: var(--icon-color, var(--text-muted)); opacity: 0; cursor: var(--cursor, default); }
+.canvas-embed:hover .markdown-embed-link { opacity: 1; }
 `;
 
 export function installCanvasStyles(): void {

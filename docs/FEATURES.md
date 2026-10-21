@@ -189,32 +189,32 @@ Legend: **[later]** = not needed for the first release. **[ours]** = Bedrock doe
 
 ## 7. Graph view
 
-- [ ] Global graph in a tab; local graph for the current note (opens linked, in a split)
-- [ ] WebGL drawing with a worker-driven force layout; smooth zoom and pan; drag nodes; hover highlights neighbors in the accent color; click opens
-- [ ] Node size grows with link count; unresolved notes faded; optional tag and attachment nodes; labels fade by zoom (text fade threshold)
-- [ ] Settings panel with four collapsible sections and a reset button:
-  - [ ] Filters: file search, tags (off), attachments (off), existing files only (off), orphans (on)
-  - [ ] Groups: color groups from search queries, add/remove/reorder, color picker
-  - [ ] Display: arrows (off), text fade threshold (0), node size (1), link thickness (1), animate (time-lapse by creation date)
-  - [ ] Forces: center, repel (default 10), link force (1), link distance (250)
-- [ ] Local graph extras: depth (1), incoming links (on), outgoing links (on), neighbor links (off)
-- [ ] Colors from CSS variables so themes apply
+- [x] Global graph in a tab; local graph for the current note (opens linked, in a split)
+- [x] WebGL drawing with a worker-driven force layout; smooth zoom and pan; drag nodes; hover highlights neighbors in the accent color; click opens
+- [x] Node size grows with link count; unresolved notes faded; optional tag and attachment nodes; labels fade by zoom (text fade threshold)
+- [x] Settings panel with four collapsible sections and a reset button:
+  - [x] Filters: file search, tags (off), attachments (off), existing files only (off), orphans (on)
+  - [x] Groups: color groups from search queries, add/remove/reorder, color picker
+  - [x] Display: arrows (off), text fade threshold (0), node size (1), link thickness (1), animate (time-lapse by creation date)
+  - [x] Forces: center, repel (default 10), link force (1), link distance (250)
+- [x] Local graph extras: depth (1), incoming links (on), outgoing links (on), neighbor links (off)
+- [x] Colors from CSS variables so themes apply
 - [ ] Settings saved in `graph.json`; bookmark a graph
 
 ## 8. Canvas
 
-- [ ] Open, edit and save `.canvas` files in JSON Canvas 1.0 format (keep unknown fields)
-- [ ] Node types: text (Markdown, editable in place), file (note, image, PDF, any file, with heading/block subpath), link (web page), group (label, background)
-- [ ] Node colors: six presets and custom hex
-- [ ] Edges: from/to sides, arrow ends, color, label; draw by dragging from side handles
-- [ ] Infinite dotted background; zoom and pan; selection box; multi-select; move and resize with snapping (grid and objects, settings)
-- [ ] Right-side controls: canvas settings, zoom in, reset zoom, zoom to fit, zoom out, undo, redo, help
-- [ ] Bottom card menu: add text card, add note from vault, add media; drag files in from the explorer
-- [ ] Node toolbar when selected: delete, color, zoom to selection, edit
-- [ ] Card names shown always (setting: always, on hover, never)
-- [ ] Wheel behaviour (pan default, zoom option); Ctrl+drag behaviour (menu default)
-- [ ] Hide card content when zoomed out past a threshold (setting)
-- [ ] Commands: new canvas, export as image, jump to group, convert card to file
+- [x] Open, edit and save `.canvas` files in JSON Canvas 1.0 format (keep unknown fields)
+- [x] Node types: text (Markdown, editable in place), file (note, image, PDF, any file, with heading/block subpath), link (web page), group (label, background)
+- [x] Node colors: six presets and custom hex
+- [x] Edges: from/to sides, arrow ends, color, label; draw by dragging from side handles
+- [x] Infinite dotted background; zoom and pan; selection box; multi-select; move and resize with snapping (grid and objects, settings)
+- [x] Right-side controls: canvas settings, zoom in, reset zoom, zoom to fit, zoom out, undo, redo, help
+- [x] Bottom card menu: add text card, add note from vault, add media; drag files in from the explorer
+- [x] Node toolbar when selected: delete, color, zoom to selection, edit
+- [x] Card names shown always (setting: always, on hover, never)
+- [x] Wheel behaviour (pan default, zoom option); Ctrl+drag behaviour (menu default)
+- [x] Hide card content when zoomed out past a threshold (setting)
+- [x] Commands: new canvas, export as image, jump to group, convert card to file
 - [ ] Canvas embeds in notes; canvas files in search and graph
 
 ## 9. Daily notes, templates and note tools
@@ -367,13 +367,13 @@ Legend: **[later]** = not needed for the first release. **[ours]** = Bedrock doe
 
 ### Settings > Canvas
 
-- [ ] "Default location for new canvas files": dropdown, Vault folder (options: Vault folder, Same folder as current file, In the folder specified below)
-- [ ] "Folder to create new canvas files in": text, empty (placeholder "Example: folder 1/folder 2")
-- [ ] "Default mouse wheel behavior": dropdown, Pan (options: Pan, Zoom)
-- [ ] "Default Ctrl + Drag behavior": dropdown, Show menu (options: Show menu, Add card, Add note from vault, Add media from vault, Add web page, Create group)
-- [ ] "Show card names": dropdown, Always (options: Always, On hover, Never)
-- [ ] "Snap to grid": toggle, on
-- [ ] "Snap to objects": toggle, on
+- [x] "Default location for new canvas files": dropdown, Vault folder (options: Vault folder, Same folder as current file, In the folder specified below)
+- [x] "Folder to create new canvas files in": text, empty (placeholder "Example: folder 1/folder 2")
+- [x] "Default mouse wheel behavior": dropdown, Pan (options: Pan, Zoom)
+- [x] "Default Ctrl + Drag behavior": dropdown, Show menu (options: Show menu, Add card, Add note from vault, Add media from vault, Add web page, Create group)
+- [x] "Show card names": dropdown, Always (options: Always, On hover, Never)
+- [x] "Snap to grid": toggle, on
+- [x] "Snap to objects": toggle, on
 - [ ] "Zoom threshold for hiding card content": slider, 0; restore-default button
 
 ### Settings > Page preview
@@ -452,9 +452,9 @@ Legend: **[later]** = not needed for the first release. **[ours]** = Bedrock doe
 - [ ] `file-explorer` Files (on)
 - [ ] `global-search` Search (on)
 - [ ] `switcher` Quick switcher (on)
-- [ ] `graph` Graph view (on)
+- [x] `graph` Graph view (on)
 - [ ] `backlink` Backlinks (on)
-- [ ] `canvas` Canvas (on)
+- [x] `canvas` Canvas (on)
 - [ ] `outgoing-link` Outgoing links (on)
 - [ ] `tag-pane` Tags view (on)
 - [ ] `footnotes` Footnotes view (off) [later]
@@ -551,10 +551,10 @@ Every command id below must exist with the same id so `hotkeys.json`, plugins an
 
 #### `canvas` (4)
 
-- [ ] `canvas:convert-to-file` Canvas: Convert to file...
-- [ ] `canvas:export-as-image` Canvas: Export as image
-- [ ] `canvas:jump-to-group` Canvas: Jump to group
-- [ ] `canvas:new-file` Canvas: Create new canvas
+- [x] `canvas:convert-to-file` Canvas: Convert to file...
+- [x] `canvas:export-as-image` Canvas: Export as image
+- [x] `canvas:jump-to-group` Canvas: Jump to group
+- [x] `canvas:new-file` Canvas: Create new canvas
 
 #### `command-palette` (1)
 
@@ -679,9 +679,9 @@ Every command id below must exist with the same id so `hotkeys.json`, plugins an
 
 #### `graph` (3)
 
-- [ ] `graph:animate` Graph view: Start graph timelapse animation
-- [ ] `graph:open` Graph view: Open graph view (Ctrl + G)
-- [ ] `graph:open-local` Graph view: Open local graph
+- [x] `graph:animate` Graph view: Start graph timelapse animation
+- [x] `graph:open` Graph view: Open graph view (Ctrl + G)
+- [x] `graph:open-local` Graph view: Open local graph
 
 #### `insert-current-date` (1)
 
@@ -859,7 +859,7 @@ Every command id below must exist with the same id so `hotkeys.json`, plugins an
 - [ ] Ctrl + N / Cmd + N: `file-explorer:new-file`
 - [ ] Ctrl + Shift + N / Cmd + Shift + N: `file-explorer:new-file-in-new-pane`
 - [ ] Ctrl + Shift + F / Cmd + Shift + F: `global-search:open`
-- [ ] Ctrl + G / Cmd + G: `graph:open`
+- [x] Ctrl + G / Cmd + G: `graph:open`
 - [ ] Ctrl + ; / Cmd + ;: `markdown:add-metadata-property`
 - [ ] Ctrl + E / Cmd + E: `markdown:toggle-preview`
 - [ ] Ctrl + O / Cmd + O: `switcher:open`

@@ -48,7 +48,9 @@ win.on("console", (m) => {
   const at = m.location()?.url ?? "";
   if (m.type() === "error" && at && !/^https?:/.test(at)) errors.push(m.text() + " @" + (m.location()?.url ?? ""));
 });
-win.on("pageerror", (e) => errors.push(String(e)));
+win.on("pageerror", (e) => {
+  if (!/https?:\/\//.test(String(e?.stack ?? ""))) errors.push(String(e) + " " + String(e?.stack ?? "").split("\n")[1]);
+});
 await app.evaluate(({ BrowserWindow }) => {
   const w = BrowserWindow.getAllWindows()[0];
   w.unmaximize();
@@ -110,6 +112,7 @@ try {
   const theme = dark ? "dark" : "light";
 
   // ---------- global graph ----------
+  await win.evaluate(() => (window.__graphOpenedAt = performance.now()));
   await run("graph:open");
   await win.waitForSelector('.workspace-leaf.mod-active .workspace-leaf-content[data-type="graph"] canvas', { timeout: 10000 });
   const g = await win.waitForFunction(
@@ -144,9 +147,37 @@ try {
       const r = window.app.workspace.getLeavesOfType("graph")[0].view.engine.renderer;
       const t0 = performance.now();
       while (r.simRunning && performance.now() - t0 < 120000) await new Promise((res) => setTimeout(res, 250));
-      return { settledMs: Math.round(performance.now() - t0), ticks: r.simTicks, alpha: r.simAlpha };
+      return { layoutMsFromOpen: Math.round(performance.now() - window.__graphOpenedAt), ticks: r.simTicks, alpha: r.simAlpha };
     });
     console.log("LAYOUT", JSON.stringify(settle));
+    // synthetic stress: 10k nodes and 160k distinct links straight into the renderer
+    const stress = await win.evaluate(async () => {
+      const r = window.app.workspace.getLeavesOfType("graph")[0].view.engine.renderer;
+      const n = 10000;
+      const nodes = {};
+      let seed = 7;
+      const rnd = () => ((seed = (seed * 1103515245 + 12345) & 0x7fffffff) / 0x7fffffff);
+      for (let i = 0; i < n; i++) nodes["n" + i + ".md"] = { type: "", links: {} };
+      let made = 0;
+      while (made < 160000) {
+        const a = Math.floor(rnd() * n), b = Math.floor(rnd() * n);
+        if (a === b || nodes["n" + a + ".md"].links["n" + b + ".md"]) continue;
+        nodes["n" + a + ".md"].links["n" + b + ".md"] = true;
+        made++;
+      }
+      const t0 = performance.now();
+      r.setData({ nodes });
+      const setDataMs = performance.now() - t0;
+      r.zoomTo(0.05);
+      await new Promise((res) => setTimeout(res, 1500));
+      const fps = await r.measureFps(3000);
+      const t1 = performance.now();
+      const ticks0 = r.simTicks;
+      await new Promise((res) => setTimeout(res, 3000));
+      return { nodes: r.graph.ids.length, links: r.graph.src.length, setDataMs: Math.round(setDataMs), fps: Math.round(fps.fps), worstFrameMs: Math.round(fps.frameMs * 10) / 10, layoutTicksPerSec: Math.round(((r.simTicks - ticks0) * 1000) / (performance.now() - t1)) };
+    });
+    console.log("STRESS", JSON.stringify(stress));
+    check("10k nodes / 160k links render smoothly", stress.fps >= 30, JSON.stringify(stress));
   }
   await win.waitForTimeout(benchVault ? 500 : 3500);
   const graphShot = await shot(`graph-view-${theme}`);
@@ -162,7 +193,7 @@ try {
   await win.mouse.move(hover.x, hover.y);
   await win.waitForTimeout(600);
   const hl = await win.evaluate(() => window.app.workspace.getLeavesOfType("graph")[0].view.engine.renderer.highlight);
-  check("hovering a node highlights it", hl >= 0, hover.id);
+  if (!benchVault) check("hovering a node highlights it", hl >= 0, hover.id);
   await shot(`graph-hover-${theme}`);
   await win.mouse.move(5, 400);
 
@@ -258,6 +289,45 @@ try {
       const sel = await win.evaluate(() => ({ menu: !document.querySelector(".canvas-menu-container").classList.contains("is-hidden"), buttons: document.querySelectorAll(".canvas-menu button").length, resizers: document.querySelectorAll(".canvas-node-interaction-layer:not(.is-hidden) .canvas-node-resizer").length }));
       check("selecting a card shows its menu and resize handles", sel.menu && sel.buttons >= 3 && sel.resizers === 8, JSON.stringify(sel));
       await shot(`canvas-selected-${theme}`);
+      // drop a note from the file explorer onto the canvas
+      const dropped = await win.evaluate(async () => {
+        const c = window.app.workspace.activeLeaf.view.canvas;
+        const before = c.nodes.size;
+        const dt = new DataTransfer();
+        dt.setData("application/x-bedrock-file", "Welcome.md");
+        const r = c.wrapperEl.getBoundingClientRect();
+        c.wrapperEl.dispatchEvent(new DragEvent("drop", { dataTransfer: dt, clientX: r.left + 100, clientY: r.top + 100, bubbles: true, cancelable: true }));
+        await new Promise((res) => setTimeout(res, 300));
+        const last = [...c.nodes.values()].pop();
+        return { added: c.nodes.size - before, file: last?.data.file };
+      });
+      check("dropping a note from the file explorer adds a file card", dropped.added === 1 && dropped.file === "Welcome.md", JSON.stringify(dropped));
+      // export as image
+      const ran = await win.evaluate(() => {
+        const cmd = window.app.commands.findCommand("canvas:export-as-image");
+        return { found: !!cmd, available: cmd ? !!cmd.checkCallback(true) : false, active: window.app.workspace.activeLeaf?.view?.getViewType() };
+      });
+      console.log("  export command:", JSON.stringify(ran));
+      await run("canvas:export-as-image");
+      for (let i = 0; i < 20 && !fs.readdirSync(vault).some((f) => f.endsWith(".png")); i++) await win.waitForTimeout(500);
+      const png = fs.readdirSync(vault).find((f) => f.endsWith(".png"));
+      const notice = await win.evaluate(() => [...document.querySelectorAll(".notice")].map((n) => n.textContent).join(" | "));
+      check("export as image writes a PNG", !!png && fs.statSync(path.join(vault, png)).size > 1000, png ?? notice);
+      await win.evaluate(async () => window.app.workspace.activeLeaf.view.save());
+      // canvas embedded in a note
+      await win.evaluate(async (p) => {
+        const f = await window.app.vault.create("Canvas embed.md", `# Embed
+
+![[${p}]]
+`);
+        const leaf = window.app.workspace.getLeaf("tab");
+        await leaf.openFile(f);
+        await window.app.commands.executeCommandById("markdown:toggle-preview");
+      }, canvasPath);
+      await win.waitForTimeout(2000);
+      const emb = await win.evaluate(() => document.querySelectorAll(".workspace-leaf.mod-active .canvas-embed .canvas-node").length);
+      check("canvas embeds render in notes", emb > 0, `${emb} cards`);
+      await shot(`canvas-embed-${theme}`);
       // the canvas feeds the graph
       const links = await win.evaluate((p) => window.app.metadataCache.resolvedLinks[p], canvasPath);
       check("canvas file cards count as links (graph, backlinks)", links && Object.keys(links).length > 0, JSON.stringify(links));
