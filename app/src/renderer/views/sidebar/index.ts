@@ -111,11 +111,13 @@ export function registerSidebar(app: any): void {
   const setBacklinksInDocument = async (on: boolean) => {
     backlinkOpts.backlinkInDocument = on;
     embedded.setEnabled(on);
+    const bp = app.internalPlugins?.plugins?.backlink;
+    if (bp?.impl) return bp.setOption("backlinkInDocument", on);
     await app.vault.adapter.write(backlinkCfg, JSON.stringify(backlinkOpts, null, 2));
   };
   (embedded as any).setOption = setBacklinksInDocument;
   const refreshAll = () => {
-    if (embedded.enabled) embedded.refresh();
+    embedded.refresh();
     syncHeaderBookmarkButtons(app);
   };
   ws.on("layout-change", refreshAll);
@@ -165,8 +167,15 @@ export function registerSidebar(app: any): void {
     id: "backlink:toggle-backlinks-in-document",
     name: "Backlinks: Toggle backlinks in document",
     icon: "links-coming-in",
-    callback: () => setBacklinksInDocument(!embedded.enabled),
+    // Per tab, like the "Backlinks in document" item of the tab's More options menu.
+    checkCallback: (checking: boolean) => {
+      const leaf = ws.activeLeaf;
+      if (leaf?.view?.getViewType?.() !== "markdown" || !(leaf.view as any).file) return false;
+      if (!checking) embedded.toggleFor(leaf);
+      return true;
+    },
   });
+  void setBacklinksInDocument;
   add({ id: "outgoing-links:open", name: "Outgoing links: Show outgoing links", icon: "links-going-out", callback: () => ws.ensureSideLeaf(OUTGOING_VIEW, "right", { reveal: true }).then(() => ws.rightSplit.expand()) });
   add({
     id: "outgoing-links:open-for-current",

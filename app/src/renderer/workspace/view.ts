@@ -59,7 +59,9 @@ export abstract class View extends Component {
   }
   onResize(): void {}
   abstract getDisplayText(): string;
-  onPaneMenu(menu: Menu, _source: string): void {
+  onPaneMenu(menu: Menu, source: string): void {
+    // The tab header menu has its own Close items; file views list file actions instead.
+    if (source === "tab-header" || (this as any).file) return;
     menu.addItem((i) =>
       i
         .setTitle("Close")
@@ -93,6 +95,20 @@ export abstract class ItemView extends View {
     setIcon(this.forwardButtonEl, "arrow-right");
     this.backButtonEl.addEventListener("click", () => this.leaf.history.back());
     this.forwardButtonEl.addEventListener("click", () => this.leaf.history.forward());
+    // Right-click (or long press) lists that direction's history, nearest first.
+    const historyMenu = (e: MouseEvent, dir: -1 | 1) => {
+      e.preventDefault();
+      const list = dir < 0 ? this.leaf.history.backHistory : this.leaf.history.forwardHistory;
+      if (!list.length) return;
+      const m = new Menu();
+      list
+        .slice()
+        .reverse()
+        .forEach((h, i) => m.addItem((it) => it.setTitle(h.title).setIcon(h.icon).onClick(() => this.leaf.history.go(dir * (i + 1)))));
+      m.showAtMouseEvent(e);
+    };
+    this.backButtonEl.addEventListener("contextmenu", (e) => historyMenu(e, -1));
+    this.forwardButtonEl.addEventListener("contextmenu", (e) => historyMenu(e, 1));
     this.titleContainerEl = this.headerEl.createDiv("view-header-title-container mod-at-start");
     this.titleParentEl = this.titleContainerEl.createDiv("view-header-title-parent");
     this.titleEl = this.titleContainerEl.createDiv("view-header-title");
@@ -101,7 +117,8 @@ export abstract class ItemView extends View {
     setIcon(this.moreOptionsButtonEl, "more-vertical");
     this.moreOptionsButtonEl.addEventListener("click", (e) => {
       const m = new Menu();
-      this.onPaneMenu(m, "more-options");
+      if (this.app.shell?.fillMoreOptionsMenu) this.app.shell.fillMoreOptionsMenu(m, this.leaf);
+      else this.onPaneMenu(m, "more-options");
       this.app.workspace.trigger("leaf-menu", m, this.leaf);
       const r = this.moreOptionsButtonEl.getBoundingClientRect();
       m.showAtPosition({ x: r.left, y: r.bottom + 4 });

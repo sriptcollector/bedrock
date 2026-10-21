@@ -18,6 +18,7 @@ export interface AppSettings {
   disableGpu?: boolean;
   frame?: "hidden" | "custom" | "native";
   language?: string;
+  earlyAccess?: boolean;
 }
 
 function appSettingsFile(): string {
@@ -39,6 +40,7 @@ function writeAppSettings(s: AppSettings): void {
   if (s.disableGpu) out.disableGpu = true;
   if (s.frame && s.frame !== "hidden") out.frame = s.frame;
   if (s.language && s.language !== "en") out.language = s.language;
+  if (s.earlyAccess) out.earlyAccess = true;
   try {
     if (Object.keys(out).length) fs.writeFileSync(appSettingsFile(), JSON.stringify(out, null, 2));
     else fs.rmSync(appSettingsFile(), { force: true });

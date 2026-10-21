@@ -3,12 +3,18 @@ import { BRAND } from "../../../shared/brand";
 import { Notice } from "../../ui/notice";
 import { BuiltinTab, appSettings, descWithLink } from "./base";
 import { renderCredit } from "../credit";
+import { IPC } from "../../../shared/ipc";
+import { ipcRenderer } from "electron";
+import { getUpdateState, onUpdateState, relaunchToUpdate } from "../../shell/updates";
+import { openHelpWindow } from "../../shell/help";
 
 export class GeneralTab extends BuiltinTab {
   private app_: Record<string, any> = {};
   private updateMsg = "";
   private gpuChanged = false;
   private account: any = undefined;
+  private cli: boolean | undefined = undefined;
+  private offUpdate: (() => void) | null = null;
 
   constructor(app: any) {
     super(app, "about", "General", "circle-user");
@@ -16,10 +22,13 @@ export class GeneralTab extends BuiltinTab {
 
   display(): void {
     // App-level settings and account come from the main process.
-    Promise.all([appSettings.get(), this.app.native.getAccount().catch(() => null)]).then(([s, a]) => {
-      const changed = JSON.stringify(s) !== JSON.stringify(this.app_) || a?.handle !== this.account?.handle || this.account === undefined;
+    this.offUpdate ??= onUpdateState(() => this.containerEl.isConnected && this.rerenderOnce());
+    const cli = ipcRenderer.invoke(IPC.agentCall, "state").then((r: any) => !!(r?.value ?? r)?.enabled, () => false);
+    Promise.all([appSettings.get(), this.app.native.getAccount().catch(() => null), cli]).then(([s, a, c]) => {
+      const changed = JSON.stringify(s) !== JSON.stringify(this.app_) || a?.handle !== this.account?.handle || this.account === undefined || c !== this.cli;
       this.app_ = s ?? {};
       this.account = a ?? null;
+      this.cli = c;
       if (changed && this.containerEl.isConnected) this.rerenderOnce();
     });
     super.display();
@@ -40,6 +49,8 @@ export class GeneralTab extends BuiltinTab {
     if (key === "autoUpdate") return !this.app_.updateDisabled;
     if (key === "hardwareAcceleration") return !this.app_.disableGpu;
     if (key === "startupNotify") return this.app.loadLocalStorage("startup-notify") === "true";
+    if (key === "earlyAccess") return !!this.app_.earlyAccess;
+    if (key === "cli") return !!this.cli;
     return super.getControlValue(key);
   }
   async setControlValue(key: string, value: unknown): Promise<void> {
@@ -47,6 +58,12 @@ export class GeneralTab extends BuiltinTab {
     else if (key === "hardwareAcceleration") {
       this.app_ = await appSettings.set({ disableGpu: !value });
     } else if (key === "startupNotify") this.app.saveLocalStorage("startup-notify", value ? "true" : null);
+    else if (key === "earlyAccess") this.app_ = await appSettings.set({ earlyAccess: !!value });
+    else if (key === "cli") {
+      // The `bedrock` command talks to the running app through agent access (Settings › Connect an AI agent).
+      const r = await ipcRenderer.invoke(IPC.agentCall, "setEnabled", !!value);
+      this.cli = !!(r?.value ?? r)?.enabled;
+    }
     else return super.setControlValue(key, value);
   }
 
@@ -68,32 +85,68 @@ export class GeneralTab extends BuiltinTab {
             }),
           ),
       },
+      {
+        name: "Update available",
+        desc: (() => {
+          const u = getUpdateState();
+          return u.status === "downloaded" ? `Version ${u.version ?? ""} has been downloaded. Relaunch to finish updating; otherwise it installs the next time you quit.` : `Version ${u.version ?? ""} is being downloaded in the background.`;
+        })(),
+        visible: () => ["available", "downloaded"].includes(getUpdateState().status),
+        render: (s: any) =>
+          s.addButton((b: any) => {
+            const ready = getUpdateState().status === "downloaded";
+            b.setButtonText(ready ? "Relaunch" : "Download")
+              .setCta()
+              .onClick(() => (ready ? relaunchToUpdate() : app.openExternal(releases)));
+          }),
+      },
       { name: "Automatic updates", desc: "Download new versions in the background and install them when you quit. Turn this off to check by hand.", control: { type: "toggle", key: "autoUpdate" } },
+      {
+        name: "Receive early access versions",
+        desc: "Also update to test versions before they're released to everyone. They have the newest features but may have more bugs.",
+        control: { type: "toggle", key: "earlyAccess" },
+      },
       {
         name: "Language",
         desc: "The language the app is shown in. More languages will be added; for now everything is in English.",
-        render: (s: any) => s.addDropdown((d: any) => d.addOption("en", "English").setValue("en").setDisabled(true)),
+        render: (s: any) => {
+          s.addDropdown((d: any) => d.addOption("en", "English").setValue("en").setDisabled(true));
+          const relaunch = s.controlEl.createEl("button", { cls: "mod-cta", text: "Relaunch" });
+          relaunch.hide();
+        },
       },
       {
         name: "Help",
         desc: "Read how the app works, ask questions and report problems.",
-        render: (s: any) => s.addButton((b: any) => b.setButtonText("Open").onClick(() => app.openExternal(`https://github.com/${BRAND.repo}#readme`))),
+        render: (s: any) => s.addButton((b: any) => b.setButtonText("Open").onClick(() => openHelpWindow(app))),
       },
       {
         type: "group",
         heading: "Account",
         items: [
           {
-            name: "Toolbay account",
+            name: "Your account",
             desc:
               acct === undefined
                 ? "Checking..."
                 : acct
-                  ? `Signed in as ${acct.name || acct.handle || acct.email}. This vault syncs with your other computers.`
-                  : "You're not signed in. Signing in is only needed to sync this vault between your computers; everything else works without it. Sign in from the Toolbay app.",
+                  ? `Signed in to Toolbay as ${acct.name || acct.handle || acct.email}. This vault syncs with your other computers.`
+                  : "You're not signed in. A Toolbay account is only needed to sync this vault between your computers; everything else works without it.",
             render: (s: any) => {
-              if (acct === null) s.addButton((b: any) => b.setButtonText("Get Toolbay").onClick(() => app.openExternal("https://toolbay.ai")));
+              if (acct === null) {
+                s.addButton((b: any) => b.setButtonText("Log in").setCta().onClick(() => app.openExternal("https://toolbay.ai/login")));
+                s.addButton((b: any) => b.setButtonText("Sign up").onClick(() => app.openExternal("https://toolbay.ai/signup")));
+              }
             },
+          },
+          {
+            name: "License",
+            desc: "Every feature of this app is free for everyone, including sync and early access versions. There's nothing to buy.",
+            visible: () => !!acct,
+          },
+          {
+            name: "Commercial use",
+            desc: "Free for work and business too. No license or activation is needed.",
           },
         ],
       },
@@ -119,8 +172,8 @@ export class GeneralTab extends BuiltinTab {
           },
           {
             name: "Command line interface",
-            desc: "Control the app from a terminal. This isn't available yet.",
-            render: (s: any) => s.addToggle((t: any) => t.setValue(false).setDisabled(true)),
+            desc: `Let the ${BRAND.exeName} command (and AI agents you connect) work with this app from a terminal. Off by default.`,
+            control: { type: "toggle", key: "cli" },
           },
           {
             name: "Hardware acceleration",

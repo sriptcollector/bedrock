@@ -167,8 +167,11 @@ export class InternalPlugins {
     (this.listeners[name] ??= []).push(cb);
     return { name, cb };
   }
+  off(name: string, cb: (...a: any[]) => any): void {
+    this.listeners[name] = (this.listeners[name] ?? []).filter((x) => x !== cb);
+  }
   trigger(name: string, ...a: any[]): void {
-    for (const cb of this.listeners[name] ?? []) cb(...a);
+    for (const cb of (this.listeners[name] ?? []).slice()) cb(...a);
   }
 
   /** Attach behaviour to a core plugin id (call any time; enables it if its state is on). */

@@ -33,12 +33,12 @@ const EXPECT = {
   "app:open-another-vault": (b, a) => a.prompt || "no picker",
   "app:switch-vault": (b, a) => a.prompt || "no picker",
   "app:open-file": (b, a, x) => x.pickFile >= 1 || "no file dialog",
-  "app:open-help": (b, a, x) => x.external.some((u) => /github\.com/.test(u)) || x.external.join(","),
+  "app:open-help": (b, a) => a.helpOpen || "help window not open",
   "app:open-sandbox-vault": (b, a, x) => x.sandbox >= 1 || "sandbox not requested",
   "app:open-settings": (b, a) => a.settings || "settings not open",
   "app:open-vault": (b, a) => a.vaultManager || "vault manager not open",
   "app:show-debug-info": (b, a) => a.modal === "debug" || `modal ${a.modal}`,
-  "app:show-release-notes": (b, a, x) => x.external.some((u) => /releases/.test(u)) || x.external.join(","),
+  "app:show-release-notes": (b, a) => a.activeType === "release-notes" || a.activeType,
   "app:toggle-default-new-pane-mode": (b, a) => a.defaultViewMode !== b.defaultViewMode || "unchanged",
   "app:toggle-left-sidebar": (b, a) => a.leftCollapsed !== b.leftCollapsed || "unchanged",
   "app:toggle-right-sidebar": (b, a) => a.rightCollapsed !== b.rightCollapsed || "unchanged",
@@ -64,7 +64,7 @@ const EXPECT = {
   "window:reset-zoom": (b, a) => a.zoom === 0 || `zoom ${a.zoom}`,
   "window:zoom-in": (b, a) => a.zoom > b.zoom || `${b.zoom} -> ${a.zoom}`,
   "window:zoom-out": (b, a) => a.zoom < b.zoom || `${b.zoom} -> ${a.zoom}`,
-  "window:toggle-always-on-top": (b, a, x) => x.alwaysOnTop !== undefined || "no state",
+  "window:toggle-always-on-top": (b, a) => a.popoutOnTop !== b.popoutOnTop || "unchanged",
   "workspace:close": (b, a) => a.rootLeaves === b.rootLeaves - 1 || `${b.rootLeaves} -> ${a.rootLeaves}`,
   "workspace:close-others": (b, a) => a.rootLeaves === 1 || `${a.rootLeaves}`,
   "workspace:close-others-tab-group": (b, a) => a.groupTabs === 1 || `${a.groupTabs}`,
@@ -82,7 +82,7 @@ const EXPECT = {
   "workspace:next-tab": (b, a) => a.tabIndex === (b.tabIndex + 1) % b.groupTabs || `${b.tabIndex} -> ${a.tabIndex}`,
   "workspace:open-in-new-window": (b, a) => a.floating === b.floating + 1 || `${b.floating} -> ${a.floating}`,
   "workspace:previous-tab": (b, a) => a.tabIndex === (b.tabIndex - 1 + b.groupTabs) % b.groupTabs || `${b.tabIndex} -> ${a.tabIndex}`,
-  "workspace:show-trash": (b, a, x) => x.trash >= 1 || x.showInFolder >= 1 || "not shown",
+  "workspace:show-trash": (b, a, x) => x.showInFolder >= 1 || "not shown",
   "workspace:split-horizontal": (b, a) => a.tabGroups === b.tabGroups + 1 || `${b.tabGroups} -> ${a.tabGroups}`,
   "workspace:split-vertical": (b, a) => a.tabGroups === b.tabGroups + 1 || `${b.tabGroups} -> ${a.tabGroups}`,
   "workspace:toggle-pin": (b, a) => a.pinned !== b.pinned || "unchanged",
@@ -203,6 +203,8 @@ const PAGE_HELPERS = () => {
         const n = c?.nodes.get("t1");
         if (n) c.selectOnly(n);
       }
+      if (variant === "localtrash") app.vault.setConfig("trashOption", "local");
+      else if (app.vault.getConfig("trashOption") === "local") app.vault.setConfig("trashOption", undefined);
       if (variant === "recording") {
         app.commands.executeCommandById("audio-recorder:start");
         await sleep(800);
@@ -271,6 +273,8 @@ const PAGE_HELPERS = () => {
         explorerActive: explorer?.view?.containerEl?.querySelector(".tree-item-self.is-active")?.getAttribute("data-path") ?? null,
         searchVisible: visible(search),
         recording: !!document.querySelector(".side-dock-ribbon-action.is-recording"),
+        helpOpen: !!app.shell.isHelpOpen?.(),
+        popoutOnTop: !!ws.floatingSplit.children[0]?.doc?.body.classList.contains("is-always-on-top"),
       };
     },
   };
@@ -297,6 +301,8 @@ const VARIANT = {
   "app:go-forward": "history-forward",
   "workspace:undo-close-pane": "closed",
   "workspace:close-window": "popout",
+  "window:toggle-always-on-top": "popout",
+  "workspace:show-trash": "localtrash",
   "audio-recorder:stop": "recording",
 };
 

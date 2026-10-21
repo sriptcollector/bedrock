@@ -7,6 +7,7 @@ export const SHELL_IPC = {
   createVault: "bedrock:shell-create-vault", // (name, parentDir) -> {path} | {error}
   renameVault: "bedrock:shell-rename-vault", // (path, newName) -> {path} | {error}
   removeVault: "bedrock:shell-remove-vault", // (path) -> void
+  moveVault: "bedrock:shell-move-vault", // (path, newParent) -> {path} | {error}
   openSandbox: "bedrock:shell-open-sandbox", // () -> path
   pickFile: "bedrock:shell-pick-file", // (title, filters?) -> path | null
   pickFolder: "bedrock:shell-pick-folder", // (title) -> path | null
@@ -15,6 +16,8 @@ export const SHELL_IPC = {
   debugInfo: "bedrock:shell-debug-info", // () -> {...}
   documentsDir: "bedrock:shell-documents", // () -> default parent folder for new vaults
   clipboard: "bedrock:shell-clipboard", // ("read") -> text | ("write", text)
+  updateState: "bedrock:update-state", // invoke () -> UpdateState; main -> renderer (send) on change
+  installUpdate: "bedrock:install-update", // () -> boolean (relaunch into the downloaded version)
   // main -> renderer (send)
   uri: "bedrock:shell-uri", // ({action, params})
   showStarter: "bedrock:shell-show-starter", // ()

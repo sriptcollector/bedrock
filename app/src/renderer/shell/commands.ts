@@ -16,13 +16,13 @@ import { fileUrl } from "./uri";
 import { exportToPdf } from "./pdf";
 import { showDebugInfo } from "./debug-info";
 import { openVaultPicker } from "./vaults";
+import { openHelpWindow, RELEASE_NOTES_VIEW } from "./help";
 import type { Command, Hotkey } from "../commands/commands";
 import { migrateFrontmatter, needsFrontmatterMigration } from "../../core/frontmatter-migrate";
 
 const hk = (mods: Hotkey["modifiers"], key: string): Hotkey[] => [{ modifiers: mods, key }];
 
-export const HELP_URL = `https://github.com/${BRAND.repo}#readme`;
-export const RELEASES_URL = `https://github.com/${BRAND.repo}/releases`;
+export { HELP_URL } from "./help";
 
 /** The view of the active leaf, if it shows a file. */
 function activeFileView(app: any): any {
@@ -113,16 +113,25 @@ export function registerShellCommands(app: any): void {
       if (!opened) new Notice("Couldn't open that file.");
     },
   });
-  add({ id: "app:open-help", name: "Open help", icon: "help-circle", hotkeys: hk([], "F1"), callback: () => app.openExternal(HELP_URL) });
+  add({ id: "app:open-help", name: "Open help", icon: "help-circle", hotkeys: hk([], "F1"), callback: () => openHelpWindow(app) });
   add({ id: "app:show-debug-info", name: "Show debug info", icon: "bug", callback: () => showDebugInfo(app) });
-  add({ id: "app:show-release-notes", name: "Show release notes", icon: "file-text", callback: () => app.openExternal(`${RELEASES_URL}/tag/v${app.version}`) });
+  add({
+    id: "app:show-release-notes",
+    name: "Show release notes",
+    icon: "book-up",
+    callback: async () => {
+      const existing = ws.getLeavesOfType(RELEASE_NOTES_VIEW)[0];
+      if (existing) return ws.setActiveLeaf(existing, { focus: true });
+      await ws.getLeaf("tab").setViewState({ type: RELEASE_NOTES_VIEW, state: { currentVersion: app.version }, active: true });
+    },
+  });
   add({
     id: "app:toggle-default-new-pane-mode",
     name: "Toggle default mode for new tabs",
     callback: () => {
       const next = app.vault.getConfig("defaultViewMode") === "preview" ? "source" : "preview";
       app.vault.setConfig("defaultViewMode", next);
-      new Notice(next === "preview" ? "New tabs now open in reading view." : "New tabs now open in editing view.");
+      new Notice(next === "preview" ? "New tabs now open in reading view by default." : "New tabs now open in editing view by default.");
     },
   });
   add({
@@ -162,7 +171,7 @@ export function registerShellCommands(app: any): void {
       if (!f) return false;
       if (!checking)
         void makeCopy(app, f).then((c: any) => {
-          if (c instanceof TFile) void ws.getLeaf(false).openFile(c, { active: true, eState: { rename: "all" } });
+          if (c instanceof TFile) void ws.getLeaf("tab").openFile(c, { active: true, state: { mode: "source" }, eState: { rename: "all" } });
         });
       return true;
     },
@@ -292,10 +301,16 @@ export function registerShellCommands(app: any): void {
     id: "window:toggle-always-on-top",
     name: "Toggle window always on top",
     icon: "pin",
-    callback: async () => {
+    // Like the original: offered in popout windows that aren't maximized.
+    checkCallback: (checking) => {
       const c = app.workspace.activeLeaf?.getContainer?.();
-      const s = c instanceof WorkspaceWindow ? await c.popout.control("always-on-top") : await ipcRenderer.invoke(SHELL_IPC.windowAction, "always-on-top");
-      if (s) new Notice(s.alwaysOnTop ? "This window now stays on top." : "This window no longer stays on top.");
+      if (!(c instanceof WorkspaceWindow) || c.doc?.body.hasClass("is-maximized")) return false;
+      if (!checking)
+        void c.popout.control("always-on-top").then((s: any) => {
+          c.doc?.body.toggleClass("is-always-on-top", !!s?.alwaysOnTop);
+          if (s) new Notice(s.alwaysOnTop ? "This window now stays on top." : "This window no longer stays on top.");
+        });
+      return true;
     },
   });
 
@@ -356,7 +371,7 @@ export function registerShellCommands(app: any): void {
         if (!f) return false;
         if (!checking) {
           void writeClipboard(get(f));
-          new Notice("Copied to your clipboard");
+          new Notice(id === "workspace:copy-url" ? "Link copied to your clipboard" : "Path copied to your clipboard");
         }
         return true;
       },
@@ -420,11 +435,15 @@ export function registerShellCommands(app: any): void {
     id: "workspace:show-trash",
     name: "Show trash",
     icon: "trash",
-    callback: async () => {
-      const dir = app.vault.getConfig("trashOption") === "local" ? ".trash" : null;
-      if (dir && (await app.vault.adapter.exists(".trash"))) app.showInFolder(".trash/");
-      else if (dir) new Notice("The vault's .trash folder is empty.");
-      else app.shell.openSystemTrash();
+    // Offered when deleted files go to the vault's .trash folder (Files and links › Deleted files).
+    checkCallback: (checking) => {
+      if (app.vault.getConfig("trashOption") !== "local") return false;
+      if (!checking)
+        void (async () => {
+          if (!(await app.vault.adapter.exists(".trash"))) await app.vault.adapter.mkdir(".trash");
+          app.showInFolder(".trash");
+        })();
+      return true;
     },
   });
 }

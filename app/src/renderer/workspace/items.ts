@@ -375,30 +375,46 @@ export class WorkspaceTabs extends WorkspaceParent {
 
   private showTabList(e: MouseEvent): void {
     const m = new Menu();
+    m.addItem((it) =>
+      it
+        .setTitle(this.isStacked ? "Unstack tabs" : "Stack tabs")
+        .setIcon("layers")
+        .setSection("view")
+        .onClick(() => this.setStacked(!this.isStacked)),
+    );
+    const files = this.children.map((l) => (l.view as any)?.file).filter(Boolean);
+    const bm = this.app.bookmarks;
+    if (bm && files.length)
+      m.addItem((it) =>
+        it
+          .setTitle(`Bookmark ${files.length} ${files.length === 1 ? "tab" : "tabs"}...`)
+          .setIcon("bookmark")
+          .setSection("view")
+          .onClick(async () => {
+            const title = await this.app.ui.prompt({ title: "Bookmark tabs", value: "Tabs", cta: "Save" });
+            if (title === null) return;
+            bm.add({ type: "group", title: title || "Untitled group", items: files.map((f: any, i: number) => ({ type: "file", path: f.path, ctime: Date.now() + i })) });
+          }),
+      );
+    m.addItem((it) =>
+      it
+        .setTitle("Close all")
+        .setIcon("x")
+        .setSection("close")
+        .onClick(() => {
+          for (const l of this.children.slice()) if (!l.pinned) l.detach();
+        }),
+    );
     for (const leaf of this.children) {
       m.addItem((it) =>
         it
           .setTitle(leaf.getDisplayText())
           .setIcon(leaf.getIcon())
+          .setSection("tabs")
           .setChecked(leaf === this.children[this.currentTab])
           .onClick(() => this.workspace.setActiveLeaf(leaf, { focus: true })),
       );
     }
-    m.addSeparator();
-    m.addItem((it) =>
-      it
-        .setTitle(this.isStacked ? "Unstack tabs" : "Stack tabs")
-        .setIcon("layers")
-        .onClick(() => this.setStacked(!this.isStacked)),
-    );
-    m.addItem((it) =>
-      it
-        .setTitle("Close all")
-        .setIcon("x")
-        .onClick(() => {
-          for (const l of this.children.slice()) if (!l.pinned) l.detach();
-        }),
-    );
     const r = (e.currentTarget as HTMLElement).getBoundingClientRect();
     m.showAtPosition({ x: r.left, y: r.bottom + 4 });
   }
@@ -413,6 +429,20 @@ export class WorkspaceTabs extends WorkspaceParent {
 }
 
 // ---------------- Ribbon ----------------
+/** Default order of the core plugins' ribbon buttons (ids as in workspace.json hiddenItems). */
+export const DEFAULT_RIBBON_ORDER = [
+  "switcher:Open quick switcher",
+  "graph:Open graph view",
+  "canvas:Create new canvas",
+  "daily-notes:Open today's daily note",
+  "templates:Insert template",
+  "command-palette:Open command palette",
+  "bases:Create new base",
+  "random-note:Open random note",
+  "zk-prefixer:Create new unique note",
+  "workspaces:Manage workspace layouts",
+  "audio-recorder:Start/stop recording",
+];
 export interface RibbonItem {
   id: string;
   icon: string;
@@ -467,6 +497,7 @@ export class WorkspaceRibbon {
     const item: RibbonItem = { id, icon, title, callback, buttonEl: el, hidden: !!this.hiddenItems[id] };
     if (item.hidden) el.hide();
     this.items.push(item);
+    this.applyOrder();
     return el;
   }
 
@@ -500,11 +531,12 @@ export class WorkspaceRibbon {
 
   /** Order follows the key order of hiddenItems (Settings › Interface › Ribbon menu configuration). */
   applyOrder(): void {
-    const order = Object.keys(this.hiddenItems);
-    if (!order.length) return;
+    // Saved order first, then the core plugins' default order, then everything else as added.
+    const order = [...Object.keys(this.hiddenItems), ...DEFAULT_RIBBON_ORDER.filter((id) => !(id in this.hiddenItems))];
+    const added = this.items.slice();
     const rank = (id: string) => {
       const i = order.indexOf(id);
-      return i < 0 ? order.length : i;
+      return i < 0 ? order.length + added.findIndex((x) => x.id === id) : i;
     };
     this.items.sort((a, b) => rank(a.id) - rank(b.id));
     for (const it of this.items) this.actionsEl.appendChild(it.buttonEl);

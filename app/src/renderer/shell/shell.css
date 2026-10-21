@@ -1,6 +1,12 @@
 /* App shell: vault switcher at the bottom of the left sidebar, debug info, popout workspaces. */
+.workspace-split.mod-left-split > .workspace-sidedock-vault-profile {
+  flex: 0 0 auto;
+  height: 42px;
+  box-sizing: border-box;
+}
 .workspace-sidedock-vault-profile {
   order: 1000;
+  margin-top: auto;
   display: flex;
   align-items: center;
   gap: var(--size-4-1);
@@ -44,14 +50,12 @@
   display: flex;
   gap: var(--size-2-1);
 }
-.mod-debug-info .debug-info-list {
+.mod-debug-info .debug-textarea {
+  width: 100%;
+  min-height: 300px;
   font-family: var(--font-monospace);
   font-size: var(--font-ui-small);
-  user-select: text;
-  line-height: 1.6;
-}
-.mod-debug-info .debug-info-key {
-  color: var(--text-muted);
+  resize: vertical;
 }
 body.is-popout-workspace {
   display: flex;
@@ -62,4 +66,147 @@ body.is-popout-workspace {
 }
 body.is-popout-workspace .app-container {
   height: 100%;
+}
+
+/* Empty new tab: centred column of pill buttons with hotkey chips. */
+.empty-state-title:empty {
+  display: none;
+}
+.empty-state-action-list {
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  gap: var(--size-4-2);
+  min-width: 166px;
+}
+.empty-state-action.text-icon-button.mod-pill {
+  display: flex;
+  align-items: center;
+  gap: var(--size-4-2);
+  padding: var(--size-4-2) var(--size-4-3);
+  border: 1px solid var(--background-modifier-border);
+  border-radius: var(--radius-xl, 20px);
+  color: var(--text-normal);
+  font-size: var(--font-ui-small);
+  text-decoration: none;
+  cursor: var(--cursor);
+  background: transparent;
+}
+.empty-state-action.text-icon-button.mod-pill:hover {
+  background: var(--background-modifier-hover);
+  text-decoration: none;
+}
+.empty-state-action .text-button-icon {
+  display: flex;
+  color: var(--icon-color);
+}
+.empty-state-action .text-button-icon .svg-icon {
+  width: var(--icon-s);
+  height: var(--icon-s);
+}
+.empty-state-action .text-button-label {
+  flex: 1;
+  text-align: left;
+}
+.empty-state-hotkey {
+  font-size: var(--font-ui-smaller);
+  padding: 1px 6px;
+  border-radius: var(--radius-l, 10px);
+  background: var(--background-modifier-hover);
+  color: var(--text-normal);
+  white-space: nowrap;
+}
+
+/* Long menus (the tab menu) scroll instead of running off the window. */
+.menu {
+  max-height: calc(100vh - 8px);
+  overflow-y: auto;
+}
+
+/* Tooltips (ui/tooltip.ts). */
+.tooltip {
+  position: fixed;
+  z-index: 3000;
+  pointer-events: none;
+  max-width: 300px;
+  padding: 5px 8px;
+  border-radius: var(--radius-s);
+  background: var(--background-modifier-message, rgba(10, 10, 10, 0.9));
+  color: #dcddde;
+  font-size: var(--font-ui-smaller);
+  line-height: var(--line-height-tight, 1.3);
+  text-align: center;
+  white-space: pre-wrap;
+  word-break: break-word;
+  animation: bedrock-tooltip-in 120ms ease-out;
+}
+.tooltip .tooltip-arrow {
+  position: absolute;
+  top: -5px;
+  width: 0;
+  height: 0;
+  margin-left: -5px;
+  border-left: 5px solid transparent;
+  border-right: 5px solid transparent;
+  border-bottom: 5px solid var(--background-modifier-message, rgba(10, 10, 10, 0.9));
+}
+.tooltip.mod-top .tooltip-arrow {
+  top: auto;
+  bottom: -5px;
+  border-bottom: none;
+  border-top: 5px solid var(--background-modifier-message, rgba(10, 10, 10, 0.9));
+}
+.tooltip.mod-left .tooltip-arrow,
+.tooltip.mod-right .tooltip-arrow {
+  top: 50%;
+  margin-left: 0;
+  margin-top: -5px;
+  border-top: 5px solid transparent;
+  border-bottom: 5px solid transparent;
+}
+.tooltip.mod-left .tooltip-arrow {
+  left: auto;
+  right: -5px;
+  border-right: none;
+  border-left: 5px solid var(--background-modifier-message, rgba(10, 10, 10, 0.9));
+}
+.tooltip.mod-right .tooltip-arrow {
+  left: -5px;
+  border-left: none;
+  border-right: 5px solid var(--background-modifier-message, rgba(10, 10, 10, 0.9));
+}
+@keyframes bedrock-tooltip-in {
+  from { opacity: 0; transform: translateY(-2px); }
+  to { opacity: 1; transform: none; }
+}
+
+/* Notices: top right, stacked, slide in. */
+.notice-container {
+  top: 22px;
+  right: 0;
+  z-index: 60;
+  padding-right: 12px;
+}
+.notice {
+  padding: 8px 12px;
+  max-width: 300px;
+  border-radius: 8px;
+  font-size: 13px;
+  animation: bedrock-notice-in 200ms ease-out;
+}
+@keyframes bedrock-notice-in {
+  from { transform: translateX(350px); }
+  to { transform: none; }
+}
+
+/* A status bar item whose core plugin is switched off. */
+.status-bar-item.is-plugin-off {
+  display: none !important;
+}
+.status-bar-item.plugin-editor-status .status-bar-item-icon {
+  display: flex;
+}
+.status-bar-item.plugin-editor-status .svg-icon {
+  width: var(--icon-xs);
+  height: var(--icon-xs);
 }

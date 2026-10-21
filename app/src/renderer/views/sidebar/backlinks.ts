@@ -315,12 +315,23 @@ export class EmbeddedBacklinks {
     this.refresh();
   }
 
+  /** Shown for this tab: its own choice (More options › Backlinks in document), else the setting. */
+  isShownFor(leaf: any): boolean {
+    return typeof leaf?.backlinksInDocument === "boolean" ? leaf.backlinksInDocument : this.enabled;
+  }
+
+  toggleFor(leaf: any): void {
+    leaf.backlinksInDocument = !this.isShownFor(leaf);
+    leaf.workspace?.requestSaveLayout?.();
+    this.refresh();
+  }
+
   refresh(): void {
     const seen = new Set<any>();
-    if (this.enabled)
+    if (this.app.internalPlugins?.plugins?.backlink?.enabled !== false)
       this.app.workspace.iterateAllLeaves((leaf: any) => {
         const v = leaf.view;
-        if (v?.getViewType?.() !== "markdown" || !v.file) return;
+        if (v?.getViewType?.() !== "markdown" || !v.file || !this.isShownFor(leaf)) return;
         seen.add(v);
         this.attach(v);
       });

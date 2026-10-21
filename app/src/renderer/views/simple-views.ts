@@ -1,5 +1,6 @@
 // Small built-in views: the empty "New tab" page and viewers for images, audio, video and PDF.
 import { ItemView, FileView } from "../workspace/view";
+import { setIcon } from "../dom/icons";
 import type { WorkspaceLeaf } from "../workspace/leaf";
 import type { TFile } from "../vault/files";
 
@@ -13,20 +14,44 @@ export class EmptyView extends ItemView {
     return "New tab";
   }
   protected async onOpen(): Promise<void> {
-    this.contentEl.addClass("empty-state");
-    const box = this.contentEl.createDiv("empty-state-container");
-    box.createDiv({ cls: "empty-state-title", text: "No file is open" });
+    this.render();
+    // Actions depend on which core plugins are on (Bases, Canvas, Web viewer) and on the hotkeys.
+    const ip = this.app.internalPlugins;
+    const onChange = () => this.render();
+    ip?.on?.("change", onChange);
+    this.register(() => ip?.off?.("change", onChange));
+  }
+
+  /** The empty new tab: pill buttons for New note, New base, New canvas, Go to file, Web viewer. */
+  render(): void {
+    const c = this.contentEl;
+    c.empty();
+    c.addClass("empty-state");
+    const box = c.createDiv("empty-state-container");
+    box.createDiv({ cls: "empty-state-title" });
     const actions = box.createDiv("empty-state-action-list");
-    const action = (text: string, hotkeyCmd: string, cb: () => any) => {
-      const a = actions.createDiv({ cls: "empty-state-action tappable", text });
-      const hk = this.app.hotkeyManager.printHotkeyForCommand(hotkeyCmd);
-      if (hk) a.appendText(` (${hk})`);
-      a.addEventListener("click", cb);
+    const cmds = this.app.commands;
+    const action = (label: string, icon: string, cmdId: string) => {
+      if (!cmds.findCommand(cmdId)) return;
+      const a = actions.createDiv({ cls: "text-icon-button tappable mod-pill empty-state-action", attr: { role: "button", tabindex: "0", "aria-label": label } });
+      setIcon(a.createSpan("text-button-icon"), icon);
+      a.createSpan({ cls: "text-button-label", text: label });
+      const hk = this.app.hotkeyManager.printHotkeyForCommand(cmdId);
+      if (hk) a.createSpan({ cls: "empty-state-hotkey", text: " " + hk });
+      const run = () => cmds.executeCommandById(cmdId);
+      a.addEventListener("click", run);
+      a.addEventListener("keydown", (e: KeyboardEvent) => {
+        if (e.key === "Enter" || e.key === " ") {
+          e.preventDefault();
+          run();
+        }
+      });
     };
-    action("Create new note", "file-explorer:new-file", () => this.app.commands.executeCommandById("file-explorer:new-file"));
-    action("Go to file", "switcher:open", () => this.app.commands.executeCommandById("switcher:open"));
-    action("See recent files", "switcher:open", () => this.app.commands.executeCommandById("switcher:open"));
-    action("Close", "workspace:close", () => this.leaf.detach());
+    action("New note", "square-pen", "file-explorer:new-file");
+    action("New base", "layout-list", "bases:new-file");
+    action("New canvas", "layout-dashboard", "canvas:new-file");
+    if (this.app.vault.getFiles().length) action("Go to file", "search", "switcher:open");
+    action("Open web viewer", "globe-2", "webviewer:open");
   }
 }
 

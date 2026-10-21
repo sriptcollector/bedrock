@@ -79,6 +79,8 @@ export class MenuItem {
 export class Menu extends Component {
   dom: HTMLElement;
   items: (MenuItem | "separator")[] = [];
+  /** Optional fixed order of sections (unknown sections go where "" is, else last). */
+  sectionOrder: string[] | null = null;
   private hideCbs: (() => any)[] = [];
   private useNative = false;
 
@@ -114,6 +116,13 @@ export class Menu extends Component {
     // Group by section (in insertion order), separators between groups.
     const order: string[] = [];
     for (const it of this.items) if (it !== "separator" && !order.includes(it.section)) order.push(it.section);
+    if (this.sectionOrder) {
+      const so = this.sectionOrder;
+      const unknownAt = so.includes("") ? so.indexOf("") : so.length;
+      const rank = (sec: string) => (so.includes(sec) && sec !== "" ? so.indexOf(sec) : unknownAt);
+      const ins = order.slice();
+      order.sort((a, b) => rank(a) - rank(b) || ins.indexOf(a) - ins.indexOf(b));
+    }
     let first = true;
     if (order.length > 1) {
       for (const sec of order) {

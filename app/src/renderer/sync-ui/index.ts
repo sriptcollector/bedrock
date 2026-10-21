@@ -75,7 +75,7 @@ export function mountSyncUi(app: any): SyncStatusItem {
         i
           .setTitle("Open version history")
           .setIcon("history")
-          .setSection("view")
+          .setSection("view.linked")
           .onClick(() => new VersionHistoryModal(app, client, file.path).open()),
       );
     });

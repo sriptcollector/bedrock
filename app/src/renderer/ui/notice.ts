@@ -17,7 +17,15 @@ export class Notice {
     this.messageEl = this.noticeEl.createDiv("notice-message");
     this.setMessage(message);
     this.noticeEl.addEventListener("click", () => this.hide());
-    if (duration !== 0) this.timer = setTimeout(() => this.hide(), duration ?? 5000);
+    // Auto-hides after 4 s; hovering keeps it, and it goes 1 s after the pointer leaves.
+    if (duration !== 0) {
+      this.timer = setTimeout(() => this.hide(), duration ?? 4000);
+      this.noticeEl.addEventListener("mouseenter", () => clearTimeout(this.timer));
+      this.noticeEl.addEventListener("mouseleave", () => {
+        clearTimeout(this.timer);
+        this.timer = setTimeout(() => this.hide(), 1000);
+      });
+    }
   }
 
   setMessage(message: string | DocumentFragment): this {

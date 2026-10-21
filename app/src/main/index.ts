@@ -7,7 +7,7 @@ import { IPC, type BootInfo } from "../shared/ipc";
 import * as account from "./account";
 import * as hub from "./hub";
 import { createTray, refreshTray } from "./tray";
-import { startAutoUpdate, checkNow } from "./updater";
+import { startAutoUpdate, checkNow, registerUpdaterIpc } from "./updater";
 import { ensureMainVault, importIntoMain, isVaultFolder, readRegistry, rememberOther } from "./vaults";
 import { createVaultWindow, vaultWindows } from "./windows";
 import { runSelftest } from "./selftest";
@@ -182,6 +182,7 @@ function startApp(): void {
 
   registerIpc({ openOtherVault });
   registerSettingsIpc();
+  registerUpdaterIpc();
   registerShellIpc({
     showMain: () => {
       show();

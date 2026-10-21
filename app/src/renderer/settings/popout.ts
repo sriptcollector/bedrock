@@ -5,6 +5,7 @@
 import { ipcRenderer } from "electron";
 import { setIcon } from "../dom/icons";
 import { installDomHelpers } from "../dom/augment";
+import { installTooltips } from "../ui/tooltip";
 import { SETTINGS_IPC } from "../../shared/ipc-settings";
 
 export interface PopoutOptions {
@@ -97,6 +98,7 @@ export class PopoutWindow {
     d.close();
     this.doc = d;
     installDomHelpers(w as any);
+    installTooltips(d);
     const base = d.createElement("base");
     base.href = location.href;
     d.head.appendChild(base);

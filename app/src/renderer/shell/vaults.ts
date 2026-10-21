@@ -13,6 +13,7 @@ import { Menu } from "../ui/menu";
 import { Notice } from "../ui/notice";
 import { SuggestModal } from "../ui/modal";
 import { prepareFuzzySearch, renderMatches, type SearchResult } from "../ui/search";
+import { writeClipboard } from "./clipboard";
 
 export function listVaults(): Promise<VaultInfo[]> {
   return ipcRenderer.invoke(SHELL_IPC.vaults);
@@ -146,14 +147,24 @@ export class VaultManager {
         e.preventDefault();
         e.stopPropagation();
         const m = new Menu();
-        m.addItem((i) => i.setTitle("Reveal vault in system explorer").setIcon("folder-open").onClick(() => this.app.native.invoke("bedrock:reveal", v.path)));
+        m.addItem((i) => i.setTitle("Copy vault path").setIcon("copy").setSection("info").onClick(() => writeClipboard(v.path)));
         if (!v.isMain) {
-          m.addItem((i) => i.setTitle("Rename vault...").setIcon("pencil").onClick(() => this.renameVault(v)));
-          m.addItem((i) => i.setTitle("Remove from list").setIcon("x").setWarning(true).onClick(async () => {
-            await ipcRenderer.invoke(SHELL_IPC.removeVault, v.path);
-            await this.renderList();
-          }));
+          m.addItem((i) => i.setTitle("Rename vault...").setIcon("pencil").setSection("edit").onClick(() => this.renameVault(v)));
+          m.addItem((i) => i.setTitle("Move vault...").setIcon("folder-input").setSection("edit").onClick(() => this.moveVault(v)));
         }
+        m.addItem((i) => i.setTitle("Reveal vault in system explorer").setIcon("folder-open").setSection("system").onClick(() => this.app.native.invoke("bedrock:reveal", v.path)));
+        if (!v.isMain)
+          m.addItem((i) =>
+            i
+              .setTitle("Remove from list")
+              .setIcon("x")
+              .setWarning(true)
+              .setSection("danger")
+              .onClick(async () => {
+                await ipcRenderer.invoke(SHELL_IPC.removeVault, v.path);
+                await this.renderList();
+              }),
+          );
         m.showAtMouseEvent(e);
       };
       menuBtn.addEventListener("click", showMenu);
@@ -166,6 +177,14 @@ export class VaultManager {
         if (await openVault(v.path)) this.close();
       });
     }
+  }
+
+  private async moveVault(v: VaultInfo): Promise<void> {
+    const parent = await ipcRenderer.invoke(SHELL_IPC.pickFolder, `Move "${v.name}" to...`);
+    if (!parent) return;
+    const r = await ipcRenderer.invoke(SHELL_IPC.moveVault, v.path, parent);
+    if (r?.error) new Notice(r.error);
+    await this.renderList();
   }
 
   private async renameVault(v: VaultInfo): Promise<void> {
@@ -261,7 +280,13 @@ export class VaultManager {
 export function mountVaultSwitcher(app: any, helpUrl: string): HTMLElement {
   const dock = app.workspace.leftSplit.containerEl as HTMLElement;
   const el = createDiv("workspace-sidedock-vault-profile");
-  const sw = el.createDiv({ cls: "workspace-drawer-vault-switcher", attr: { "aria-label": "Switch vault" } });
+  const sw = el.createDiv({ cls: "workspace-drawer-vault-switcher", attr: { "data-tooltip-position": "top", "data-tooltip-delay": "1000" } });
+  // Tooltip: the vault's folder and how many files and folders it has.
+  sw.addEventListener("mouseenter", () => {
+    const files = app.vault.getFiles().length;
+    const folders = app.vault.getAllFolders(false).length;
+    sw.setAttr("aria-label", `${app.vault.adapter.getBasePath?.() ?? app.vault.getName()}\n\n${files} ${files === 1 ? "file" : "files"}, ${folders} ${folders === 1 ? "folder" : "folders"}`);
+  });
   const icon = sw.createDiv("workspace-drawer-vault-switcher-icon");
   setIcon(icon, "chevrons-up-down");
   sw.createDiv({ cls: "workspace-drawer-vault-name", text: app.vault.getName() });

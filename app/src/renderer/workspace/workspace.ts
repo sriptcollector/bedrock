@@ -342,6 +342,7 @@ export class Workspace extends Events {
 
   onLeafStateChanged(leaf: WorkspaceLeaf): void {
     if (leaf === this.activeLeaf) this.checkFileOpen();
+    this.syncLinkedLeaves(leaf);
     this.trigger("layout-change");
     this.requestSaveLayout();
   }
@@ -548,6 +549,7 @@ export class Workspace extends Events {
         parent.insertChild(parent.children.length, leaf);
         if (typeof data.dimension === "number") leaf.setDimension(data.dimension);
         const st = data.state ?? { type: "empty", state: {} };
+        if (typeof st.state?.backlinks === "boolean") leaf.backlinksInDocument = st.state.backlinks;
         if (data.pinned) leaf.setPinned(true);
         if (data.group) leaf.group = data.group;
         pending.push(leaf.setViewState({ type: st.type ?? "empty", state: st.state ?? {} }).catch((e) => console.error(e)));
@@ -688,6 +690,28 @@ export class Workspace extends Events {
 
   updateOptions(): void {
     this.iterateAllLeaves((l) => (l.view as any)?.editMode?.updateOptions?.() ?? (l.view as any)?.updateOptions?.());
+  }
+
+  /** Linked tabs: views in the same group follow the file shown by a navigating member. */
+  private syncingGroup = false;
+  private syncLinkedLeaves(leaf: WorkspaceLeaf): void {
+    if (!leaf.group || this.syncingGroup) return;
+    const v: any = leaf.view;
+    if (!v?.navigation || !v.file) return; // only file tabs drive their group
+    const path = v.file.path;
+    this.syncingGroup = true;
+    try {
+      for (const other of this.getGroupLeaves(leaf.group)) {
+        if (other === leaf) continue;
+        const ov: any = other.view;
+        if (!ov || ov.navigation) continue; // linked views (outline, backlinks, local graph...) follow
+        const st = ov.getState?.() ?? {};
+        if (st.file === path) continue;
+        void other.setViewState({ type: ov.getViewType(), state: { ...st, file: path, fixed: true } });
+      }
+    } finally {
+      this.syncingGroup = false;
+    }
   }
 
   // ---------- popout windows ----------

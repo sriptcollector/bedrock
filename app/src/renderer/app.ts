@@ -245,14 +245,12 @@ export class App {
 
   private registerRibbon(): void {
     const rb = this.workspace.leftRibbon;
-    rb.addRibbonItemButton("switcher:open", "file-search", "Open quick switcher", () => this.commands.executeCommandById("switcher:open"));
+    // Ids are "<core plugin id>:<title>", the keys workspace.json › left-ribbon › hiddenItems uses.
+    // Help, settings and vaults live in the vault switcher at the bottom of the left sidebar.
+    rb.addRibbonItemButton("switcher:Open quick switcher", "file-search", "Open quick switcher", () => this.commands.executeCommandById("switcher:open"));
     rb.addRibbonItemButton("graph:Open graph view", "git-fork", "Open graph view", () => this.commands.executeCommandById("graph:open"));
     rb.addRibbonItemButton("canvas:Create new canvas", "layout-dashboard", "Create new canvas", () => this.commands.executeCommandById("canvas:new-file"));
-    rb.addRibbonItemButton("command-palette:open", "terminal", "Open command palette", () => this.commands.executeCommandById("command-palette:open"));
-    rb.addRibbonItemButton("file-explorer:new-file", "square-pen", "Create new note", () => this.commands.executeCommandById("file-explorer:new-file"));
-    rb.addSettingsButton("folder-open", "Open another folder as vault", () => this.native.openVaultDialog());
-    rb.addSettingsButton("help-circle", "Help", () => this.openExternal(`https://github.com/${BRAND.repo}#readme`));
-    rb.addSettingsButton("settings", "Settings", () => this.setting.open());
+    rb.addRibbonItemButton("command-palette:Open command palette", "terminal", "Open command palette", () => this.commands.executeCommandById("command-palette:open"));
   }
 
   private onKeyDown(e: KeyboardEvent): void {

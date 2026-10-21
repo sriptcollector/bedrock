@@ -72,8 +72,8 @@ export function openVaultWindow(dir: string, remember = true): BrowserWindow | n
 const SANDBOX_NOTES: Record<string, string> = {
   "Start here.md": `# Sandbox vault
 
-This is a place to try things out. Change, move or delete anything: the sandbox is reset when you
-open it again from the command palette ("Open sandbox vault") after deleting its folder.
+This is a place to try things out. Change, move or delete anything: the sandbox starts fresh every
+time you open it again ("Open sandbox vault" in the command palette or the Help window).
 
 - [[Formatting]] shows the Markdown you can write.
 - [[Links]] shows how notes connect.
@@ -105,11 +105,17 @@ function sandboxPath(): string {
   return path.join(app.getPath("userData"), "Sandbox");
 }
 
+/** Open the sandbox vault: focus it if it's open, otherwise start it fresh from the sample notes. */
 export function openSandbox(): string {
   const dir = sandboxPath();
-  if (!fs.existsSync(dir)) {
+  if (!windowForVault(dir)) {
+    try {
+      fs.rmSync(dir, { recursive: true, force: true });
+    } catch {
+      /* in use: reuse what's there */
+    }
     fs.mkdirSync(path.join(dir, ".obsidian"), { recursive: true });
-    for (const [n, t] of Object.entries(SANDBOX_NOTES)) fs.writeFileSync(path.join(dir, n), t);
+    for (const [n, t] of Object.entries(SANDBOX_NOTES)) if (!fs.existsSync(path.join(dir, n))) fs.writeFileSync(path.join(dir, n), t);
   }
   openVaultWindow(dir, false);
   return dir;
@@ -149,6 +155,30 @@ export function renameVault(dir: string, newName: string): { path?: string; erro
     fs.renameSync(dir, target);
   } catch (e: any) {
     return { error: `Couldn't rename the folder: ${e?.message ?? e}` };
+  }
+  const reg = readRegistry();
+  reg.others = reg.others.map((o) => (path.resolve(o.path) === path.resolve(dir) ? { ...o, path: target } : o));
+  writeRegistry(reg);
+  return { path: target };
+}
+
+export function moveVault(dir: string, parent: string): { path?: string; error?: string } {
+  if (ctx && path.resolve(ctx.mainVaultPath()) === path.resolve(dir)) return { error: "Your synced vault can't be moved here." };
+  if (windowForVault(dir)) return { error: "Close the vault's window first, then move it." };
+  const target = path.join(parent, path.basename(dir));
+  if (path.resolve(target) === path.resolve(dir)) return { path: dir };
+  if (fs.existsSync(target)) return { error: "A folder with that name already exists there." };
+  if (path.resolve(target).toLowerCase().startsWith(path.resolve(dir).toLowerCase() + path.sep)) return { error: "A vault can't be moved into itself." };
+  try {
+    try {
+      fs.renameSync(dir, target);
+    } catch (e: any) {
+      if (e?.code !== "EXDEV") throw e;
+      fs.cpSync(dir, target, { recursive: true });
+      fs.rmSync(dir, { recursive: true, force: true });
+    }
+  } catch (e: any) {
+    return { error: `Couldn't move the vault: ${e?.message ?? e}` };
   }
   const reg = readRegistry();
   reg.others = reg.others.map((o) => (path.resolve(o.path) === path.resolve(dir) ? { ...o, path: target } : o));
@@ -253,6 +283,7 @@ export function registerShellIpc(c: ShellContext): void {
   ipcMain.handle(SHELL_IPC.createVault, (_e, name: string, parent: string) => createVault(name, parent));
   ipcMain.handle(SHELL_IPC.renameVault, (_e, dir: string, name: string) => renameVault(dir, name));
   ipcMain.handle(SHELL_IPC.removeVault, (_e, dir: string) => removeVault(dir));
+  ipcMain.handle(SHELL_IPC.moveVault, (_e, dir: string, parent: string) => moveVault(dir, parent));
   ipcMain.handle(SHELL_IPC.openSandbox, () => openSandbox());
   ipcMain.handle(SHELL_IPC.documentsDir, () => app.getPath("documents"));
   ipcMain.handle(SHELL_IPC.clipboard, (_e, op: string, text?: string) => {
