@@ -349,6 +349,7 @@ export class WorkspaceTabs extends WorkspaceParent {
     this.currentTab = i;
     this.updateTabDisplay();
     const leaf = this.children[i];
+    if ((leaf as any).isDeferred) void (leaf as any).loadIfDeferred();
     if (this.isStacked) leaf.containerEl.scrollIntoView({ block: "nearest", inline: "nearest" });
     leaf.onResize();
     this.workspace.requestSaveLayout();

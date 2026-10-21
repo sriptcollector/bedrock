@@ -161,6 +161,7 @@ export class WorkspaceLeaf extends WorkspaceItem {
   }
 
   getViewState(): ViewState {
+    if (this.deferred) return { ...this.deferred.state, ...(this.pinned ? { pinned: true } : {}) };
     if (!this.view) return { type: "empty", state: {} };
     const st: ViewState = { type: this.view.getViewType(), state: this.view.getState() };
     if (this.pinned) st.pinned = true;
@@ -177,6 +178,7 @@ export class WorkspaceLeaf extends WorkspaceItem {
 
   /** Open a view state. Navigations push history unless `fromHistory`. */
   setViewState(vs: ViewState, eState?: any, fromHistory = false): Promise<void> {
+    this.deferred = null;
     const run = this.pendingState.then(() => this.applyViewState(vs, eState, fromHistory));
     this.pendingState = run.catch((e) => console.error(e));
     return run;
@@ -236,16 +238,29 @@ export class WorkspaceLeaf extends WorkspaceItem {
     await this.setViewState({ type, state: { ...(openState?.state ?? {}), file: file.path }, active: openState?.active ?? true }, openState?.eState);
   }
 
-  async loadIfDeferred(): Promise<void> {}
+  // ----- deferred tabs: state kept, view built when the tab is first shown -----
+  private deferred: { state: ViewState; title?: string; icon?: string } | null = null;
   get isDeferred(): boolean {
-    return false;
+    return !!this.deferred;
+  }
+  setDeferred(state: ViewState, title?: string, icon?: string): void {
+    this.deferred = { state, title, icon };
+    this.updateHeader();
+  }
+  async loadIfDeferred(): Promise<void> {
+    const d = this.deferred;
+    if (!d) return;
+    this.deferred = null;
+    await this.setViewState({ ...d.state });
   }
 
   getDisplayText(): string {
+    if (this.deferred) return this.deferred.title || this.deferred.state.state?.file?.split("/").pop()?.replace(/\.md$/, "") || "New tab";
     return this.view?.getDisplayText() ?? "New tab";
   }
 
   getIcon(): string {
+    if (this.deferred) return (this.deferred.icon ?? "file").replace(/^lucide-/, "");
     return this.view?.getIcon() ?? "file";
   }
 

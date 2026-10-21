@@ -6,6 +6,7 @@
 // Safety: like Obsidian's "Restricted mode", plugins only run after the person turns community
 // plugins on for this vault (Settings > Community plugins). That choice is stored per vault in
 // app data, not in the vault, so a downloaded vault can't switch it on by itself.
+import nodeFs from "node:fs";
 import type { PluginManifest, Plugin } from "./plugin";
 import { Notice } from "../ui/notice";
 
@@ -131,6 +132,12 @@ export class PluginManager {
     if (this.plugins[id]) return this.plugins[id];
     const m = this.manifests[id];
     if (!m) return null;
+    // Like the original: a plugin that needs a newer app version is skipped, with a message.
+    if (m.minAppVersion && compareVersions(m.minAppVersion, APP_COMPAT_VERSION) > 0) {
+      this.loadErrors[id] = `Needs app version ${m.minAppVersion} or newer.`;
+      new Notice(`The plugin "${m.name}" needs a newer version of the app (${m.minAppVersion}), so it wasn't turned on.`);
+      return null;
+    }
     try {
       const code = await this.app.vault.adapter.read(m.dir + "/main.js");
       const module = { exports: {} as any };
@@ -153,6 +160,7 @@ export class PluginManager {
       } catch {
         /* no styles */
       }
+      this.watchData(plugin, m.dir!);
       return plugin;
     } catch (e: any) {
       console.error(`Plugin "${id}" failed to load`, e);
@@ -160,6 +168,44 @@ export class PluginManager {
       new Notice(`The plugin "${m.name}" couldn't start: ${e?.message ?? e}`);
       return null;
     }
+  }
+
+  /** Tell the plugin when its data.json changes on disk (sync, another device, a text editor). */
+  private watchData(plugin: Plugin, dir: string): void {
+    const full = this.app.vault.adapter.getFullPath(dir);
+    let timer: any = null;
+    let watcher: any = null;
+    try {
+      watcher = nodeFs.watch(full, (_ev: string, name: string | null) => {
+        if (name && name !== "data.json") return;
+        clearTimeout(timer);
+        timer = setTimeout(async () => {
+          let text: string | null = null;
+          try {
+            text = await this.app.vault.adapter.read(dir + "/data.json");
+          } catch {
+            return;
+          }
+          if (text === plugin.__lastSavedData) return;
+          plugin.__lastSavedData = text;
+          try {
+            await plugin.onExternalSettingsChange?.();
+          } catch (e) {
+            console.error(e);
+          }
+        }, 200);
+      });
+    } catch {
+      return;
+    }
+    void this.app.vault.adapter
+      .read(dir + "/data.json")
+      .then((t: string) => (plugin.__lastSavedData ??= t))
+      .catch(() => undefined);
+    plugin.register(() => {
+      clearTimeout(timer);
+      watcher?.close();
+    });
   }
 
   async unloadPlugin(id: string): Promise<void> {
@@ -212,4 +258,17 @@ export class PluginManager {
   setEnable(v: boolean): void {
     this.setEnabled(v);
   }
+}
+
+/** The Obsidian version whose API we follow (plugins' minAppVersion is compared with it). */
+export const APP_COMPAT_VERSION = "1.14.4";
+
+export function compareVersions(a: string, b: string): number {
+  const pa = String(a).split(/[.-]/).map((x) => parseInt(x, 10) || 0);
+  const pb = String(b).split(/[.-]/).map((x) => parseInt(x, 10) || 0);
+  for (let i = 0; i < Math.max(pa.length, pb.length); i++) {
+    const d = (pa[i] ?? 0) - (pb[i] ?? 0);
+    if (d) return d > 0 ? 1 : -1;
+  }
+  return 0;
 }

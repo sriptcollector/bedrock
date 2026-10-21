@@ -433,7 +433,9 @@ export class Workspace extends Events {
     }
     const leaf = this.getLeaf(newLeaf);
     const eState = subpath ? { subpath, ...(openViewState?.eState ?? {}) } : openViewState?.eState;
-    await leaf.openFile(file, { ...(openViewState ?? {}), eState, active: openViewState?.active ?? true });
+    // Settings › "Always focus new tabs" decides whether a link opened in a new tab takes focus.
+    const focusNew = newLeaf === "tab" || newLeaf === true ? this.app.vault.getConfig("focusNewTab") !== false : true;
+    await leaf.openFile(file, { ...(openViewState ?? {}), eState, active: openViewState?.active ?? focusNew });
   }
 
   // ---------- layout persistence ----------
@@ -552,7 +554,10 @@ export class Workspace extends Events {
         if (typeof st.state?.backlinks === "boolean") leaf.backlinksInDocument = st.state.backlinks;
         if (data.pinned) leaf.setPinned(true);
         if (data.group) leaf.group = data.group;
-        pending.push(leaf.setViewState({ type: st.type ?? "empty", state: st.state ?? {} }).catch((e) => console.error(e)));
+        // Background tabs in the main area are restored "deferred": they keep their state and
+        // only build their view when first shown (fast start with many tabs open).
+        if (data.__defer && st.type && st.type !== "empty") leaf.setDeferred({ type: st.type, state: st.state ?? {} }, st.title, st.icon);
+        else pending.push(leaf.setViewState({ type: st.type ?? "empty", state: st.state ?? {} }).catch((e) => console.error(e)));
         return;
       }
       if (data.type === "tabs") {
@@ -561,7 +566,11 @@ export class Workspace extends Events {
         if (data.id) tabs.id = data.id;
         parent.insertChild(parent.children.length, tabs);
         if (typeof data.dimension === "number") tabs.setDimension(data.dimension);
-        for (const c of data.children ?? []) if (c.type === "leaf") build(c, tabs);
+        const leafData = (data.children ?? []).filter((c: any) => c?.type === "leaf");
+        const cur = Math.min(data.currentTab ?? 0, Math.max(0, leafData.length - 1));
+        const root = tabs.getRoot();
+        const deferrable = !data.stacked && (root === this.rootSplit || root === this.floatingSplit);
+        leafData.forEach((c: any, i: number) => build(deferrable && i !== cur ? { ...c, __defer: true } : c, tabs));
         if (!tabs.children.length) {
           parent.removeChild(tabs, true);
           return;

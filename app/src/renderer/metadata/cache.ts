@@ -1,6 +1,7 @@
 // MetadataCache (obsidian.d.ts): per-file CachedMetadata, link resolution and the
 // resolvedLinks / unresolvedLinks maps. The initial index runs in a worker_threads pool
 // (core/scan.ts); later changes are parsed in-process (one note takes well under a millisecond).
+import { MetadataStore, statAll, type PersistedEntry } from "./persist";
 import type { CachedMetadata } from "obsidian";
 import { Events } from "../api/events";
 import { TFile, type TAbstractFile, TFolder } from "../vault/files";
@@ -47,7 +48,29 @@ export class MetadataCache extends Events {
     for (const f of files) this.linkIndex.add(f.path);
     const byPath = new Map(files.map((f) => [f.path, f] as const));
     let usedWorkers = false;
-    await indexFiles(this.vault.adapter.basePath, files.map((f) => f.path), {
+    // Notes unchanged since the last run come from the cache kept between runs.
+    let toIndex = files.map((f) => f.path);
+    let reused = 0;
+    if (this.store) {
+      try {
+        const [saved, stats] = await Promise.all([this.store.loadAll(), statAll(this.vault.adapter.basePath, toIndex)]);
+        toIndex = [];
+        for (const f of files) {
+          const st = stats.get(f.path);
+          const e = saved.get(f.path);
+          if (st) f.stat = { ctime: Math.round(st.ctime), mtime: Math.round(st.mtime), size: st.size };
+          if (st && e && Math.round(e.mtime) === Math.round(st.mtime) && e.size === st.size) {
+            if (e.meta) this.caches.set(f.path, e.meta);
+            reused++;
+          } else toIndex.push(f.path);
+        }
+      } catch (e) {
+        console.error("Couldn't read the saved metadata cache", e);
+        toIndex = files.map((f) => f.path);
+      }
+    }
+    this.lastReused = reused;
+    await indexFiles(this.vault.adapter.basePath, toIndex, {
       workerScript,
       onProgress,
       onBatch: (batch) => {
@@ -62,10 +85,44 @@ export class MetadataCache extends Events {
     });
     this.initialized = true;
     for (const f of files) if (f.extension === "md") this.resolveFile(f.path, false);
+    if (this.store) {
+      this.persistSoon(0);
+      for (const ev of ["changed", "deleted"]) this.on(ev, () => this.persistSoon());
+      this.vault.on("rename", () => this.persistSoon());
+    }
     this.resolved = true;
     this.lastIndex = { files: files.length, notes: this.caches.size, ms: Math.round(performance.now() - t0), workers: !!workerScript };
     this.trigger("resolved");
     return this.lastIndex;
+  }
+
+  // ---------- cache kept between runs ----------
+  store: MetadataStore | null = null;
+  lastReused = 0;
+  private persistTimer: any = null;
+  /** Keep the parsed metadata in IndexedDB (call before initialIndex). */
+  usePersistentStore(name: string): void {
+    this.store = new MetadataStore(name);
+  }
+  persistSoon(delay = 5000): void {
+    if (!this.store) return;
+    clearTimeout(this.persistTimer);
+    this.persistTimer = setTimeout(() => void this.persistNow(), delay);
+  }
+  async persistNow(): Promise<void> {
+    if (!this.store) return;
+    const entries: PersistedEntry[] = [];
+    for (const f of this.vault.getFiles()) {
+      const meta = this.caches.get(f.path);
+      if (!meta && f.extension === "md") continue;
+      entries.push({ path: f.path, mtime: f.stat.mtime, size: f.stat.size, ctime: f.stat.ctime, meta: meta ?? null });
+    }
+    await this.store.saveAll(entries);
+  }
+  /** "Rebuild vault cache": forget what was saved (the next start reads every file again). */
+  async clearPersisted(): Promise<void> {
+    clearTimeout(this.persistTimer);
+    await this.store?.clear();
   }
 
   // ---------- public API ----------

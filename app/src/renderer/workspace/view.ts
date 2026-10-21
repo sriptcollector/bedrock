@@ -4,6 +4,7 @@ import { Scope } from "../commands/keymap";
 import { setIcon } from "../dom/icons";
 import { Menu } from "../ui/menu";
 import { TFile } from "../vault/files";
+import { Notice } from "../ui/notice";
 import type { WorkspaceLeaf } from "./leaf";
 
 export interface ViewState {
@@ -171,7 +172,12 @@ export abstract class FileView extends ItemView {
     if (this.file) await this.onUnloadFile(this.file);
     this.file = file;
     this.updateHeader();
-    await this.onLoadFile(file);
+    try {
+      await this.onLoadFile(file);
+    } catch (e: any) {
+      console.error(e);
+      new Notice(`Couldn't open "${file.name}": ${friendlyError(e)}`);
+    }
     this.leaf.updateHeader();
   }
 
@@ -192,10 +198,30 @@ export abstract class FileView extends ItemView {
     const parent = this.file?.parent;
     this.titleParentEl.empty();
     if (parent && !parent.isRoot()) {
-      for (const seg of parent.path.split("/")) {
-        this.titleParentEl.createSpan({ cls: "view-header-breadcrumb", text: seg });
+      const segs = parent.path.split("/");
+      segs.forEach((seg, i) => {
+        const crumb = this.titleParentEl.createSpan({ cls: "view-header-breadcrumb", text: seg });
+        // Clicking a folder in the path reveals it in the file explorer.
+        const folderPath = segs.slice(0, i + 1).join("/");
+        crumb.addEventListener("click", async () => {
+          const folder = this.app.vault.getAbstractFileByPath(folderPath);
+          if (!folder) return;
+          const ws = this.app.workspace;
+          const leaf = ws.getLeavesOfType("file-explorer")[0] ?? (await ws.ensureSideLeaf("file-explorer", "left", { reveal: true }));
+          await ws.revealLeaf(leaf);
+          (leaf.view as any)?.revealInFolder?.(folder);
+        });
         this.titleParentEl.createSpan({ cls: "view-header-breadcrumb-separator", text: "/" });
-      }
+      });
+    }
+    // Clicking the name renames the file.
+    if (!this.titleEl.hasAttribute("data-rename-hooked")) {
+      this.titleEl.setAttribute("data-rename-hooked", "");
+      this.titleEl.addEventListener("click", () => {
+        if (!this.file) return;
+        if (typeof (this as any).focusInlineTitle === "function" && (this as any).getMode?.() !== "preview" && this.app.vault.getConfig("showInlineTitle") !== false) (this as any).focusInlineTitle(true);
+        else void this.app.shell?.renameFilePrompt?.(this.file);
+      });
     }
   }
 }
@@ -238,7 +264,16 @@ export abstract class TextFileView extends EditableFileView {
     if (data === this.lastSavedData) return;
     this.data = data;
     this.lastSavedData = data;
-    await this.app.vault.modify(this.file, data);
+    try {
+      await this.app.vault.modify(this.file, data);
+    } catch (e: any) {
+      // Keep the text in the editor and try again on the next change.
+      this.lastSavedData = null;
+      this.dirty = true;
+      console.error(e);
+      new Notice(`Couldn't save "${this.file.name}": ${friendlyError(e)} Your changes are still in the editor.`, 10000);
+      return;
+    }
     if (clear) this.clear();
   }
 
@@ -260,4 +295,14 @@ export abstract class TextFileView extends EditableFileView {
   abstract getViewData(): string;
   abstract setViewData(data: string, clear: boolean): void;
   abstract clear(): void;
+}
+
+/** A plain-language reason for a file system error. */
+export function friendlyError(e: any): string {
+  const code = e?.code;
+  if (code === "EACCES" || code === "EPERM") return "the app isn't allowed to write there (the file may be read-only or open in another program).";
+  if (code === "ENOSPC") return "the disk is full.";
+  if (code === "ENOENT") return "the file no longer exists.";
+  if (code === "EBUSY") return "another program is using the file.";
+  return String(e?.message ?? e);
 }

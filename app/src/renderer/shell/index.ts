@@ -10,6 +10,8 @@ import { ReleaseNotesView, RELEASE_NOTES_VIEW, isHelpOpen } from "./help";
 import { fillTabMenu, fillMoreOptionsMenu, installPaneMenus } from "./pane-menu";
 import { mountUpdates } from "./updates";
 import { installTooltips } from "../ui/tooltip";
+import { mountIndexingStatus, mountRightSidebarToggle, applyFrameStyle } from "./chrome-extras";
+import { watchConfigFolder } from "./config-watch";
 import nodePath from "node:path";
 import { Notice } from "../ui/notice";
 import { TFile, TFolder, type TAbstractFile } from "../vault/files";
@@ -40,6 +42,10 @@ export function mountShell(app: any): void {
   installPaneMenus(app);
   mountUpdates();
   installTooltips(document);
+  mountIndexingStatus(app);
+  mountRightSidebarToggle(app);
+  void applyFrameStyle(app);
+  app.workspace.onLayoutReady(() => watchConfigFolder(app));
   // Settings › General › "Notify if startup takes longer than expected".
   const notifyStartup = () => {
     const st = app.indexStats;

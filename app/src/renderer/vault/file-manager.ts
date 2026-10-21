@@ -50,8 +50,41 @@ export class FileManager {
       });
       if (!ok) return false;
     }
+    const orphans = file instanceof TFile && file.extension === "md" ? this.attachmentsOnlyUsedBy(file) : [];
     await this.trashFile(file);
+    if (orphans.length) await this.handleOrphanAttachments(orphans);
     return true;
+  }
+
+  /** Non-note files that only `note` links to or embeds. */
+  attachmentsOnlyUsedBy(note: TFile): TFile[] {
+    const rl: Record<string, Record<string, number>> = this.app.metadataCache.resolvedLinks;
+    const targets = Object.keys(rl[note.path] ?? {});
+    const out: TFile[] = [];
+    for (const t of targets) {
+      const f = this.vault.getFileByPath(t);
+      if (!f || f.extension === "md" || f.extension === "canvas" || f.extension === "base") continue;
+      const others = Object.entries(rl).some(([src, links]) => src !== note.path && links[t]);
+      if (!others) out.push(f);
+    }
+    return out;
+  }
+
+  /** Settings › Files and links › "Delete unused attachments with note": ask (default), always, never. */
+  private async handleOrphanAttachments(files: TFile[]): Promise<void> {
+    const mode = this.vault.getConfig("deleteUnlinkedAttachments") ?? "ask";
+    if (mode === "never") return;
+    if (mode === "ask") {
+      const names = files.map((f) => f.name).join(", ");
+      const ok = await this.app.ui.confirm({
+        title: "Delete attachments",
+        body: `The deleted note was the only one using ${files.length === 1 ? "this attachment" : `these ${files.length} attachments`}: ${names}. Delete ${files.length === 1 ? "it" : "them"} too?`,
+        cta: "Delete",
+        danger: true,
+      });
+      if (!ok) return;
+    }
+    for (const f of files) await this.trashFile(f).catch((e) => console.error(e));
   }
 
   async trashFile(file: TAbstractFile): Promise<void> {

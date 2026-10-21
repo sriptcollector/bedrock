@@ -152,7 +152,9 @@ export class App {
     this.vault.buildTree(entries);
     const tScan = performance.now();
     const workerScript = nodePath.join(this.distDir(), "index-worker.js").replace(/app\.asar([\\/])/, "app.asar.unpacked$1");
-    const indexing = this.metadataCache.initialIndex(workerScript);
+    // Parsed metadata is kept between runs (per vault, in the app's IndexedDB, outside the vault).
+    if (!(this.boot as any).selftest) this.metadataCache.usePersistentStore(`bedrock-metadata-${this.appId}`);
+    const indexing = this.metadataCache.initialIndex(workerScript, (done, total) => (this as any).onIndexProgress?.(done, total));
 
     this.buildDom();
     await Promise.all([this.customCss.load(), this.propertyTypes.load()]);

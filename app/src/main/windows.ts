@@ -7,7 +7,6 @@ import path from "node:path";
 import { IPC } from "../shared/ipc";
 import { BRAND } from "../shared/brand";
 import { popoutWindowOptions, registerPopout, readAppSettings } from "./settings-host";
-import { popoutWindowOptions as tabPopoutOptions } from "./editor-ipc";
 
 export interface VaultWindow {
   win: BrowserWindow;
@@ -71,6 +70,8 @@ export function createVaultWindow(opts: { vaultPath: string; isMain: boolean; sh
   const key = opts.isMain ? "main" : opts.vaultPath;
   const b = loadBounds(key);
   const nativeFrame = readAppSettings().frame === "native";
+  // "App frame": our own title bar strip (30 px) above the workspace, caption buttons in it.
+  const customFrame = readAppSettings().frame === "custom";
   const win = new BrowserWindow({
     x: b.x,
     y: b.y,
@@ -87,7 +88,7 @@ export function createVaultWindow(opts: { vaultPath: string; isMain: boolean; sh
     // hover, and double-click/drag on our -webkit-app-region: drag areas.
     // Settings › Interface › Window frame style "Native frame" uses the OS frame (after relaunch).
     titleBarStyle: isMac ? "hiddenInset" : nativeFrame ? "default" : "hidden",
-    titleBarOverlay: isMac || nativeFrame ? undefined : { color: "#00000000", symbolColor: "#b3b3b3", height: 39 },
+    titleBarOverlay: isMac || nativeFrame ? undefined : { color: "#00000000", symbolColor: "#b3b3b3", height: customFrame ? 30 : 39 },
     trafficLightPosition: isMac ? { x: 12, y: 12 } : undefined,
     webPreferences: {
       // Like Obsidian: community plugins expect require('fs'), require('electron'), require('obsidian').
@@ -118,8 +119,6 @@ export function createVaultWindow(opts: { vaultPath: string; isMain: boolean; sh
 
   // Links open in the browser, never inside the app window.
   win.webContents.setWindowOpenHandler(({ url, frameName, features }) => {
-    // Popout windows for workspace tabs (same renderer, shared app state).
-    if (url === "about:blank" && frameName.startsWith("bedrock-popout")) return { action: "allow", overrideBrowserWindowOptions: tabPopoutOptions(win, features) };
     // Settings / plugin browser popouts: same-process about:blank windows driven by this renderer.
     const popout = url === "about:blank" ? popoutWindowOptions(frameName, features) : null;
     if (popout) return { action: "allow", overrideBrowserWindowOptions: popout };

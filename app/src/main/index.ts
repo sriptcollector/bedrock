@@ -11,7 +11,7 @@ import { startAutoUpdate, checkNow, registerUpdaterIpc } from "./updater";
 import { ensureMainVault, importIntoMain, isVaultFolder, readRegistry, rememberOther } from "./vaults";
 import { createVaultWindow, vaultWindows } from "./windows";
 import { runSelftest } from "./selftest";
-import { applyEarlyAppSettings, registerSettingsIpc } from "./settings-host";
+import { applyEarlyAppSettings, registerSettingsIpc, readAppSettings } from "./settings-host";
 import { startSync, stopSync } from "./sync";
 import { installCrashHandling, log } from "./log";
 import { startAgents, stopAgents } from "./agents/host";
@@ -261,7 +261,7 @@ function registerIpc(ctx: { openOtherVault: (dir: string) => void }): void {
     const w = winOf(e);
     if (!w || process.platform === "darwin") return;
     try {
-      w.setTitleBarOverlay({ color: o.color, symbolColor: o.symbolColor, height: 39 });
+      w.setTitleBarOverlay({ color: o.color, symbolColor: o.symbolColor, height: readAppSettings().frame === "custom" ? 30 : 39 });
     } catch {
       /* window without an overlay */
     }

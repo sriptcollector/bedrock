@@ -54,6 +54,7 @@ export async function runSearch(app: any, index: SearchIndex, query: string, opt
   for (let i = 0; i < docs.length; i++) {
     const d = docs[i];
     if (opts.limitToPaths && !opts.limitToPaths.has(d.path)) continue;
+    if (app.metadataCache.isUserIgnored?.(d.path)) continue; // Settings › Files and links › Excluded files
     if (needle && !d.lower.includes(needle) && !d.name.toLowerCase().includes(needle)) continue;
     if (d.extension === "md" && !d.meta) d.meta = app.metadataCache.getCache(d.path);
     const r = matchDoc(node, d, opts.matchCase);

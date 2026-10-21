@@ -201,7 +201,9 @@ export class FilesTab extends BuiltinTab {
               s.addButton((b) =>
                 b.setButtonText("Rebuild").onClick(async () => {
                   const ok = await app.ui.confirm({ title: "Rebuild vault cache", body: "The window will reload and index your vault again. This can take a moment for large vaults.", cta: "Rebuild" });
-                  if (ok) app.native.windowControl("reload");
+                  if (!ok) return;
+                  await app.metadataCache.clearPersisted?.();
+                  app.native.windowControl("reload");
                 }),
               ),
           },
