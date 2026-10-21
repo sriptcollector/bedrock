@@ -117,8 +117,13 @@ export abstract class Plugin extends Component {
     }
   }
 
+  /** What we last wrote to data.json (so our own saves don't count as outside changes). */
+  __lastSavedData: string | null = null;
+
   async saveData(data: any): Promise<void> {
-    await this.app.vault.adapter.write(`${this.manifest.dir}/data.json`, JSON.stringify(data, null, 2));
+    const text = JSON.stringify(data, null, 2);
+    this.__lastSavedData = text;
+    await this.app.vault.adapter.write(`${this.manifest.dir}/data.json`, text);
   }
 
   onExternalSettingsChange?(): any;

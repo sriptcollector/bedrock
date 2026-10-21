@@ -14,6 +14,13 @@ export interface PopoutOptions {
   height: number;
   minWidth?: number;
   minHeight?: number;
+  /** Screen position (tab popouts restore where they were). */
+  x?: number;
+  y?: number;
+  /** Tab popouts have no title bar: the tab row is the drag area. */
+  noTitleBar?: boolean;
+  /** Height of the native caption buttons (Windows/Linux), default 30. */
+  overlayHeight?: number;
   title: string;
   /** Extra body classes for the popout (e.g. is-popout-modal). */
   bodyClasses?: string[];
@@ -74,7 +81,7 @@ export class PopoutWindow {
     const bg = getComputedStyle(document.body).getPropertyValue("--background-primary").trim();
     const tb = getComputedStyle(document.body).getPropertyValue("--titlebar-background").trim();
     const fg = getComputedStyle(document.body).getPropertyValue("--icon-color").trim() || getComputedStyle(document.body).getPropertyValue("--text-muted").trim();
-    const features = [`popup`, `width=${o.width}`, `height=${o.height}`, `minWidth=${o.minWidth ?? 600}`, `minHeight=${o.minHeight ?? 400}`, toHex(tb || bg) ? `background=${encodeURIComponent(toHex(tb || bg)!)}` : "", toHex(fg) ? `symbol=${encodeURIComponent(toHex(fg)!)}` : ""].filter(Boolean).join(",");
+    const features = [`popup`, `width=${o.width}`, `height=${o.height}`, `minWidth=${o.minWidth ?? 600}`, `minHeight=${o.minHeight ?? 400}`, toHex(tb || bg) ? `background=${encodeURIComponent(toHex(tb || bg)!)}` : "", toHex(fg) ? `symbol=${encodeURIComponent(toHex(fg)!)}` : "", o.x !== undefined ? `left=${Math.round(o.x)}` : "", o.y !== undefined ? `top=${Math.round(o.y)}` : "", o.overlayHeight ? `overlay=${o.overlayHeight}` : ""].filter(Boolean).join(",");
     let w: Window | null = null;
     try {
       w = window.open("about:blank", this.frameName, features);
@@ -91,6 +98,7 @@ export class PopoutWindow {
     d.close();
     this.doc = d;
     installDomHelpers(w as any);
+    installTooltips(d);
     const base = d.createElement("base");
     base.href = location.href;
     d.head.appendChild(base);
@@ -98,7 +106,7 @@ export class PopoutWindow {
     this.mirrorStyles();
     this.mirrorBody();
     this.bodyEl = d.body;
-    this.buildTitleBar();
+    if (!o.noTitleBar) this.buildTitleBar();
     this.recolourOverlay();
     hookMainFocus();
     const setActive = () => {
@@ -132,6 +140,11 @@ export class PopoutWindow {
 
   focus(): void {
     ipcRenderer.invoke(SETTINGS_IPC.popoutControl, this.frameName, "focus");
+  }
+
+  /** "minimize" | "maximize" | "close" | "focus" | "always-on-top" | "devtools". */
+  control(action: string): Promise<any> {
+    return ipcRenderer.invoke(SETTINGS_IPC.popoutControl, this.frameName, action);
   }
 
   close(): void {
@@ -190,14 +203,14 @@ export class PopoutWindow {
   /** Match the native caption buttons to the theme (Windows/Linux). */
   private recolourOverlay(): void {
     if (process.platform === "darwin" || !this.doc) return;
-    const bar = this.doc.querySelector(".titlebar") as HTMLElement | null;
+    const bar = (this.doc.querySelector(".titlebar") ?? this.doc.querySelector(".workspace-tab-header-container")) as HTMLElement | null;
     const w = this.doc.defaultView!;
     const bg = toHex(bar ? w.getComputedStyle(bar).backgroundColor : "") ?? "#00000000";
     const fg = toHex(w.getComputedStyle(this.doc.body).getPropertyValue("--icon-color") || w.getComputedStyle(this.doc.body).color) ?? "#888888";
     const key = bg + "|" + fg;
     if (key === this.lastOverlay) return;
     this.lastOverlay = key;
-    void ipcRenderer.invoke(SETTINGS_IPC.popoutControl, this.frameName, "overlay:" + key);
+    void ipcRenderer.invoke(SETTINGS_IPC.popoutControl, this.frameName, "overlay:" + key + (this.opts.overlayHeight ? "|" + this.opts.overlayHeight : ""));
   }
 
   private setState(s: { maximized: boolean; focused: boolean; fullscreen?: boolean }): void {

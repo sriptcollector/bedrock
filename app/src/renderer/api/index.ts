@@ -301,14 +301,15 @@ export async function request(req: RequestUrlParam | string): Promise<string> {
   return (await requestUrl(req)).text;
 }
 
-export function setTooltip(el: HTMLElement, tooltip: string, o?: { placement?: string; delay?: number }): void {
-  if (tooltip) el.setAttribute("aria-label", tooltip);
-  else el.removeAttribute("aria-label");
+export function setTooltip(el: HTMLElement, tooltip: string, o?: { placement?: string; delay?: number; classes?: string[]; gap?: number }): void {
+  el.setAttribute("aria-label", tooltip);
   if (o?.placement) el.setAttribute("data-tooltip-position", o.placement);
   if (o?.delay !== undefined) el.setAttribute("data-tooltip-delay", String(o.delay));
+  if (o?.classes?.length) el.setAttribute("data-tooltip-classes", o.classes.join(" "));
+  if (o?.gap !== undefined) el.setAttribute("data-tooltip-gap", String(o.gap));
 }
-export function displayTooltip(el: HTMLElement, content: string | DocumentFragment, o?: { placement?: any }): void {
-  showTooltip(el, content, o?.placement);
+export function displayTooltip(el: HTMLElement, content: string | DocumentFragment, o?: { placement?: string; classes?: string[]; gap?: number }): void {
+  showTooltip(el, content, o);
 }
 
 export function iterateRefs(refs: any[], cb: (ref: any) => boolean | void): boolean {

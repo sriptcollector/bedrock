@@ -233,6 +233,7 @@ export function computeUnlinked(app: any, file: TFile, link: (path: string, r: R
   const out: ResultEntry[] = [];
   for (const d of idx.all()) {
     if (d.extension !== "md" || d.path === file.path) continue;
+    if (app.metadataCache.isUserIgnored?.(d.path)) continue; // Excluded files never count as mentions
     if (!lowerNames.some((n) => d.lower.includes(n))) continue;
     const meta = d.meta ?? app.metadataCache.getCache(d.path);
     const ranges = findUnlinkedMentions(d.content, meta, names);
@@ -318,12 +319,23 @@ export class EmbeddedBacklinks {
     this.refresh();
   }
 
+  /** Shown for this tab: its own choice (More options › Backlinks in document), else the setting. */
+  isShownFor(leaf: any): boolean {
+    return typeof leaf?.backlinksInDocument === "boolean" ? leaf.backlinksInDocument : this.enabled;
+  }
+
+  toggleFor(leaf: any): void {
+    leaf.backlinksInDocument = !this.isShownFor(leaf);
+    leaf.workspace?.requestSaveLayout?.();
+    this.refresh();
+  }
+
   refresh(): void {
     const seen = new Set<any>();
-    if (this.enabled)
+    if (this.app.internalPlugins?.plugins?.backlink?.enabled !== false)
       this.app.workspace.iterateAllLeaves((leaf: any) => {
         const v = leaf.view;
-        if (v?.getViewType?.() !== "markdown" || !v.file) return;
+        if (v?.getViewType?.() !== "markdown" || !v.file || !this.isShownFor(leaf)) return;
         seen.add(v);
         this.attach(v);
       });

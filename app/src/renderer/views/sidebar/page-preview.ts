@@ -12,6 +12,7 @@ import { parseLinktext, getLinkpath } from "../../../core/links";
 import { getFrontMatterInfo, parseYaml } from "../../../core/parse";
 import { PropertiesEditor } from "../../editor/properties";
 import { IMAGE_EXTS } from "../simple-views";
+import { EmbeddableMarkdownEditor } from "../../api/compat";
 
 /** Hover sources and whether they need Ctrl by default (setting "Require Ctrl ..."). */
 export const HOVER_SOURCES: Record<string, { display: string; defaultMod: boolean }> = {
@@ -50,6 +51,7 @@ export class PagePreview extends Component {
   private pending: HoverInfo | null = null;
   private currentTarget: HTMLElement | null = null;
   private lastMouse: MouseEvent | null = null;
+  private saveEdit: (() => Promise<void>) | null = null;
 
   constructor(private app: any) {
     super();
@@ -69,6 +71,11 @@ export class PagePreview extends Component {
       if ((e.key === "Control" || e.key === "Meta") && this.pending) this.schedule(this.pending, true);
     });
     this.registerDomEvent(document, "mousemove", (e: MouseEvent) => (this.lastMouse = e));
+    // A click (or right-click) outside the popover closes it.
+    const outside = (e: MouseEvent) => {
+      if (this.popover && !this.popover.contains(e.target as Node)) this.hide(true);
+    };
+    this.registerDomEvent(document, "mousedown", outside, true);
     // Internal links in the editor (live preview / source) have no hover event of their own.
     this.registerDomEvent(document, "mouseover", (e: MouseEvent) => {
       const t = e.target as HTMLElement;
@@ -85,20 +92,27 @@ export class PagePreview extends Component {
     this.register(() => this.hide(true));
   }
 
+  private get plugin(): any {
+    return this.app.internalPlugins?.plugins?.["page-preview"];
+  }
+
   requiresMod(source: string): boolean {
     const key = ALIAS[source] ?? source;
-    if (typeof this.settings[key] === "boolean") return this.settings[key];
+    const opts = this.plugin?.impl ? this.plugin.options : this.settings;
+    if (typeof opts?.[key] === "boolean") return opts[key];
     const info = this.app.workspace.hoverLinkSources?.[key] ?? HOVER_SOURCES[key];
     return info ? !!info.defaultMod : true;
   }
 
   async setRequiresMod(source: string, v: boolean): Promise<void> {
     this.settings[source] = v;
+    if (this.plugin?.impl) return this.plugin.setOption(source, v);
     await this.app.vault.adapter.write(this.app.vault.configDir + "/page-preview.json", JSON.stringify(this.settings, null, 2));
   }
 
   private onHover(info: HoverInfo): void {
     if (!info?.linktext || !info.event) return;
+    if (this.plugin && this.plugin.enabled === false && this.plugin.impl) return; // Page preview switched off
     if (this.popover && info.targetEl && info.targetEl === this.currentTarget) {
       clearTimeout(this.hideTimer);
       return;
@@ -128,6 +142,7 @@ export class PagePreview extends Component {
     clearTimeout(this.hideTimer);
     this.hideTimer = setTimeout(() => {
       if (this.popover?.matches(":hover")) return this.scheduleHide();
+      if (this.popover?.contains(this.popover.ownerDocument.activeElement)) return this.scheduleHide(); // being edited
       if (this.currentTarget?.matches(":hover")) return this.scheduleHide();
       this.hide();
     }, HIDE_DELAY);
@@ -136,6 +151,8 @@ export class PagePreview extends Component {
   hide(now = false): void {
     clearTimeout(this.showTimer);
     clearTimeout(this.hideTimer);
+    void this.saveEdit?.();
+    this.saveEdit = null;
     if (this.popComp) {
       this.popComp.unload();
       this.popComp = null;
@@ -160,6 +177,7 @@ export class PagePreview extends Component {
     this.popComp = comp;
     const embed = pop.createDiv("markdown-embed");
     const content = embed.createDiv("markdown-embed-content node-insert-event");
+    const editHost = embed.createDiv({ cls: "markdown-embed-content", attr: { style: "display: none" } });
     const linkBtn = embed.createDiv({ cls: "markdown-embed-link", attr: { "aria-label": "Open link" } });
     setIcon(linkBtn, "maximize-2");
     linkBtn.addEventListener("click", (e) => {
@@ -168,6 +186,7 @@ export class PagePreview extends Component {
     });
     pop.addEventListener("mouseleave", () => this.scheduleHide());
     pop.addEventListener("mouseenter", () => clearTimeout(this.hideTimer));
+    pop.animate?.([{ opacity: 0 }, { opacity: 1 }], { duration: 80, easing: "ease-out" });
     this.position(pop, info);
     if (IMAGE_EXTS.includes(file.extension)) {
       content.createEl("img", { cls: "popover-image", attr: { src: this.app.vault.getResourcePath(file) } });
@@ -221,6 +240,44 @@ export class PagePreview extends Component {
     if (this.popover !== pop) return;
     embed.addClass("is-loaded");
     this.position(pop, info);
+    // Editable: a click in the preview turns it into a live preview editor for the note.
+    (embed as any).editable = true;
+    content.addEventListener("click", (e) => {
+      if ((e.target as HTMLElement).closest("a, .internal-link, .external-link, input, .metadata-container")) return;
+      void this.startEditing(file, content, editHost, comp, lineOffset);
+    });
+  }
+
+  private async startEditing(file: TFile, content: HTMLElement, host: HTMLElement, comp: Component, line: number): Promise<void> {
+    if (host.childElementCount) return;
+    const text: string = await this.app.vault.read(file);
+    let last = text;
+    const ed = new EmbeddableMarkdownEditor(this.app, host, { app: this.app, file, getFile: () => file });
+    comp.addChild(ed);
+    ed.set(text);
+    content.style.display = "none";
+    host.style.display = "";
+    let timer: any = null;
+    const save = async () => {
+      clearTimeout(timer);
+      const now = ed.get();
+      if (now === last) return;
+      last = now;
+      await this.app.vault.modify(file, now);
+    };
+    this.saveEdit = save;
+    ed.onUpdate = (_u: any, changed: boolean) => {
+      if (!changed) return;
+      clearTimeout(timer);
+      timer = setTimeout(save, 1000);
+    };
+    try {
+      const pos = ed.cm.state.doc.line(Math.min(ed.cm.state.doc.lines, line + 1)).from;
+      ed.cm.dispatch({ selection: { anchor: pos }, scrollIntoView: true });
+    } catch {
+      /* empty note */
+    }
+    ed.focus();
   }
 
   private position(pop: HTMLElement, info: HoverInfo): void {

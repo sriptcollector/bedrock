@@ -7,6 +7,8 @@ import { fileRecoveryPlugin } from "./file-recovery";
 import { basesPlugin } from "./bases";
 import { webviewerPlugin } from "./webviewer";
 import { slidesPlugin } from "./slides";
+import { backlinkPlugin, pagePreviewPlugin } from "./link-tabs";
+import { installCorePluginGates } from "./gates";
 import {
   randomNotePlugin,
   workspacesPlugin,
@@ -40,7 +42,10 @@ export function registerCorePlugins(app: any): void {
     commandPalettePlugin,
     webviewerPlugin,
     slidesPlugin,
+    backlinkPlugin,
+    pagePreviewPlugin,
   ])
     ip.register(impl);
   void publishPlugin;
+  installCorePluginGates(app);
 }

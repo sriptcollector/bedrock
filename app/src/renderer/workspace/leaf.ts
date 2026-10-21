@@ -33,6 +33,19 @@ export class LeafHistory {
     await this.leaf.setViewState({ ...e.state, active: true }, e.eState, true);
   }
 
+  /** Jump n steps (negative = back); skipped entries move to the other stack. */
+  async go(n: number): Promise<void> {
+    if (!n) return;
+    const from = n < 0 ? this.backHistory : this.forwardHistory;
+    const to = n < 0 ? this.forwardHistory : this.backHistory;
+    const steps = Math.min(Math.abs(n), from.length);
+    if (!steps) return;
+    to.push(this.leaf.historyEntry());
+    for (let i = 1; i < steps; i++) to.push(from.pop()!);
+    const e = from.pop()!;
+    await this.leaf.setViewState({ ...e.state, active: true }, e.eState, true);
+  }
+
   serialize(): any {
     return { backHistory: this.backHistory.slice(-50), forwardHistory: this.forwardHistory.slice(-50) };
   }
@@ -52,12 +65,14 @@ export class WorkspaceLeaf extends WorkspaceItem {
   tabHeaderStatusContainerEl: HTMLElement;
   tabHeaderCloseEl: HTMLElement;
   activeTime = 0;
+  /** Per-tab "Backlinks in document" (undefined = follow Settings › Backlinks). */
+  backlinksInDocument: boolean | undefined = undefined;
   private pendingState: Promise<void> = Promise.resolve();
 
   constructor(workspace: Workspace) {
     super(workspace);
     this.containerEl = createDiv("workspace-leaf");
-    this.tabHeaderEl = createDiv({ cls: "workspace-tab-header tappable", attr: { draggable: "true", "aria-label": "" } });
+    this.tabHeaderEl = createDiv({ cls: "workspace-tab-header tappable", attr: { draggable: "true", "aria-label": "", "data-tooltip-delay": "300" } });
     const inner = this.tabHeaderEl.createDiv("workspace-tab-header-inner");
     this.tabHeaderInnerIconEl = inner.createDiv("workspace-tab-header-inner-icon");
     this.tabHeaderInnerTitleEl = inner.createDiv("workspace-tab-header-inner-title");
@@ -89,6 +104,8 @@ export class WorkspaceLeaf extends WorkspaceItem {
   }
 
   populateTabMenu(m: Menu): void {
+    // The app shell builds the full menu (shell/pane-menu.ts); this is the fallback.
+    if (this.app.shell?.fillTabMenu) return this.app.shell.fillTabMenu(m, this);
     m.addItem((i) => i.setTitle("Close").setIcon("x").setSection("close").onClick(() => this.detach()));
     m.addItem((i) =>
       i
@@ -130,7 +147,9 @@ export class WorkspaceLeaf extends WorkspaceItem {
 
   serialize(): any {
     const vs = this.getViewState();
-    const o: any = { id: this.id, type: "leaf", state: { type: vs.type, state: vs.state ?? {}, icon: this.view ? "lucide-" + this.getIcon().replace(/^lucide-/, "") : undefined, title: this.getDisplayText() } };
+    const st: any = { ...(vs.state ?? {}) };
+    if (typeof this.backlinksInDocument === "boolean" && vs.type === "markdown") st.backlinks = this.backlinksInDocument;
+    const o: any = { id: this.id, type: "leaf", state: { type: vs.type, state: st, icon: this.view ? "lucide-" + this.getIcon().replace(/^lucide-/, "") : undefined, title: this.getDisplayText() } };
     if (this.pinned) o.pinned = true;
     if (this.group) o.group = this.group;
     if (this.dimension !== null) o.dimension = this.dimension;
@@ -142,6 +161,7 @@ export class WorkspaceLeaf extends WorkspaceItem {
   }
 
   getViewState(): ViewState {
+    if (this.deferred) return { ...this.deferred.state, ...(this.pinned ? { pinned: true } : {}) };
     if (!this.view) return { type: "empty", state: {} };
     const st: ViewState = { type: this.view.getViewType(), state: this.view.getState() };
     if (this.pinned) st.pinned = true;
@@ -158,6 +178,7 @@ export class WorkspaceLeaf extends WorkspaceItem {
 
   /** Open a view state. Navigations push history unless `fromHistory`. */
   setViewState(vs: ViewState, eState?: any, fromHistory = false): Promise<void> {
+    this.deferred = null;
     const run = this.pendingState.then(() => this.applyViewState(vs, eState, fromHistory));
     this.pendingState = run.catch((e) => console.error(e));
     return run;
@@ -170,7 +191,11 @@ export class WorkspaceLeaf extends WorkspaceItem {
     const cur = this.view;
     const sameType = cur && cur.getViewType() === vs.type;
     const prevEntry = cur && cur.navigation ? this.historyEntry() : null;
-    const changing = !cur || !sameType || JSON.stringify(cur.getState()) !== JSON.stringify(vs.state ?? {});
+    // A new history entry when the tab shows something else (another file or view), not when only
+    // its mode or options change.
+    const curState = cur?.getState?.() ?? {};
+    const nextState = vs.state ?? {};
+    const changing = !cur || !sameType || ("file" in curState || "file" in nextState ? curState.file !== nextState.file : JSON.stringify(curState) !== JSON.stringify(nextState));
     if (!fromHistory && prevEntry && changing && prevEntry.state.type !== "empty") {
       this.history.backHistory.push(prevEntry);
       if (this.history.backHistory.length > 50) this.history.backHistory.shift();
@@ -188,6 +213,7 @@ export class WorkspaceLeaf extends WorkspaceItem {
       await view.setState(vs.state ?? {}, { history: !fromHistory });
     }
     if (eState) this.view.setEphemeralState(eState);
+    (this.getContainer() as any).adoptEditors?.(); // popout window: editors measure in its document
     this.updateHeader();
     if (vs.active) ws.setActiveLeaf(this, { focus: true });
     ws.onLeafStateChanged(this);
@@ -216,16 +242,29 @@ export class WorkspaceLeaf extends WorkspaceItem {
     await this.setViewState({ type, state: { ...(openState?.state ?? {}), file: file.path }, active: openState?.active ?? true }, openState?.eState);
   }
 
-  async loadIfDeferred(): Promise<void> {}
+  // ----- deferred tabs: state kept, view built when the tab is first shown -----
+  private deferred: { state: ViewState; title?: string; icon?: string } | null = null;
   get isDeferred(): boolean {
-    return false;
+    return !!this.deferred;
+  }
+  setDeferred(state: ViewState, title?: string, icon?: string): void {
+    this.deferred = { state, title, icon };
+    this.updateHeader();
+  }
+  async loadIfDeferred(): Promise<void> {
+    const d = this.deferred;
+    if (!d) return;
+    this.deferred = null;
+    await this.setViewState({ ...d.state });
   }
 
   getDisplayText(): string {
+    if (this.deferred) return this.deferred.title || this.deferred.state.state?.file?.split("/").pop()?.replace(/\.md$/, "") || "New tab";
     return this.view?.getDisplayText() ?? "New tab";
   }
 
   getIcon(): string {
+    if (this.deferred) return (this.deferred.icon ?? "file").replace(/^lucide-/, "");
     return this.view?.getIcon() ?? "file";
   }
 
@@ -242,8 +281,21 @@ export class WorkspaceLeaf extends WorkspaceItem {
   setPinned(p: boolean): void {
     this.pinned = p;
     this.tabHeaderEl.toggleClass("is-pinned", p);
+    this.renderStatusIcons();
+    this.trigger("pinned-change", p);
+    this.workspace.requestSaveLayout();
+  }
+
+  /** Pin and link (chain) icons in the tab header. */
+  private renderStatusIcons(): void {
     this.tabHeaderStatusContainerEl.empty();
-    if (p) {
+    if (this.group) {
+      const link = this.tabHeaderStatusContainerEl.createDiv({ cls: "workspace-tab-header-status-icon mod-linked", attr: { "aria-label": "Linked tab" } });
+      setIcon(link, "link");
+      link.addEventListener("mouseenter", () => this.workspace.getGroupLeaves(this.group!).forEach((l) => l.tabHeaderEl.addClass("is-highlighted")));
+      link.addEventListener("mouseleave", () => this.workspace.getGroupLeaves(this.group!).forEach((l) => l.tabHeaderEl.removeClass("is-highlighted")));
+    }
+    if (this.pinned) {
       const pin = this.tabHeaderStatusContainerEl.createDiv({ cls: "workspace-tab-header-status-icon mod-pinned", attr: { "aria-label": "Unpin" } });
       setIcon(pin, "pin");
       pin.addEventListener("click", (e) => {
@@ -251,8 +303,6 @@ export class WorkspaceLeaf extends WorkspaceItem {
         this.setPinned(false);
       });
     }
-    this.trigger("pinned-change", p);
-    this.workspace.requestSaveLayout();
   }
 
   togglePinned(): void {
@@ -260,7 +310,14 @@ export class WorkspaceLeaf extends WorkspaceItem {
   }
 
   setGroup(group: string | null): void {
+    const old = this.group;
     this.group = group;
+    this.renderStatusIcons();
+    // A group of one is no group: unlink the last other member too.
+    if (old && !group) {
+      const rest = this.workspace.getGroupLeaves(old);
+      if (rest.length === 1) rest[0].setGroup(null);
+    }
     this.trigger("group-change", group);
     this.workspace.requestSaveLayout();
   }

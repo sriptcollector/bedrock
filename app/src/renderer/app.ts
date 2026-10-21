@@ -35,6 +35,7 @@ import { mountSyncUi } from "./sync-ui";
 import { InternalPlugins } from "./core-plugins/manager";
 import { applyConfigDirOverride, startSettingsFeatures, afterLayoutSettingsFeatures } from "./settings/bootstrap";
 import { mountAgentsUi } from "./settings/agents-tab";
+import { mountShell } from "./shell";
 import { scanVault } from "../core/scan";
 import type { WorkspaceLeaf } from "./workspace/leaf";
 import type { ViewState } from "./workspace/view";
@@ -155,12 +156,15 @@ export class App {
     this.vault.buildTree(entries);
     const tScan = performance.now();
     const workerScript = nodePath.join(this.distDir(), "index-worker.js").replace(/app\.asar([\\/])/, "app.asar.unpacked$1");
-    const indexing = this.metadataCache.initialIndex(workerScript);
+    // Parsed metadata is kept between runs (per vault, in the app's IndexedDB, outside the vault).
+    if (!(this.boot as any).selftest) this.metadataCache.usePersistentStore(`bedrock-metadata-${this.appId}`);
+    const indexing = this.metadataCache.initialIndex(workerScript, (done, total) => (this as any).onIndexProgress?.(done, total));
 
     this.buildDom();
     await Promise.all([this.customCss.load(), this.propertyTypes.load()]);
     this.registerCoreViews();
     registerBuiltinCommands(this);
+    mountShell(this); // app shell: commands, URIs, vaults (shell/)
     await this.hotkeyManager.load();
     this.registerRibbon();
     await startSettingsFeatures(this); // keychain, core plugins, zoom (settings/bootstrap.ts)
@@ -252,36 +256,12 @@ export class App {
 
   private registerRibbon(): void {
     const rb = this.workspace.leftRibbon;
+    // Ids are "<core plugin id>:<title>", the keys workspace.json › left-ribbon › hiddenItems uses.
+    // Help, settings and vaults live in the vault switcher at the bottom of the left sidebar.
     rb.addRibbonItemButton("switcher:Open quick switcher", "file-search", "Open quick switcher", () => this.commands.executeCommandById("switcher:open"));
     rb.addRibbonItemButton("graph:Open graph view", "git-fork", "Open graph view", () => this.commands.executeCommandById("graph:open"));
     rb.addRibbonItemButton("canvas:Create new canvas", "layout-dashboard", "Create new canvas", () => this.commands.executeCommandById("canvas:new-file"));
     rb.addRibbonItemButton("command-palette:Open command palette", "terminal", "Open command palette", () => this.commands.executeCommandById("command-palette:open"));
-    this.buildVaultProfile();
-  }
-
-  /** Bottom of the left sidebar: vault switcher (name + menu), help and settings. */
-  private buildVaultProfile(): void {
-    const el = this.workspace.leftSplit.containerEl.createDiv("workspace-sidedock-vault-profile");
-    const sw = el.createDiv({ cls: "workspace-drawer-vault-switcher", attr: { "aria-label": "Switch vault" } });
-    setIcon(sw.createDiv("workspace-drawer-vault-switcher-icon"), "chevrons-up-down");
-    sw.createDiv({ cls: "workspace-drawer-vault-name", text: this.vault.getName() });
-    sw.addEventListener("click", () => {
-      const m = new Menu();
-      m.addItem((i) => i.setTitle(this.vault.getName()).setChecked(true));
-      m.addSeparator();
-      m.addItem((i) => i.setTitle("Open another folder as vault").setIcon("folder-open").onClick(() => this.native.openVaultDialog()));
-      const r = sw.getBoundingClientRect();
-      m.showAtPosition({ x: r.left, y: r.top - 4 });
-      // Open upwards from the switcher, like the original.
-      m.dom.style.top = Math.max(8, r.top - 4 - m.dom.offsetHeight) + "px";
-    });
-    const actions = el.createDiv("workspace-drawer-vault-actions");
-    const help = actions.createSpan({ cls: "clickable-icon", attr: { "aria-label": "Help" } });
-    setIcon(help, "help-circle");
-    help.addEventListener("click", () => this.openExternal(`https://github.com/${BRAND.repo}#readme`));
-    const gear = actions.createSpan({ cls: "clickable-icon", attr: { "aria-label": "Settings" } });
-    setIcon(gear, "settings");
-    gear.addEventListener("click", () => this.setting.open());
   }
 
   private onKeyDown(e: KeyboardEvent): void {
@@ -358,11 +338,15 @@ export class App {
   }
 
   // ---------- attachments: paste & drop ----------
-  async handlePaste(e: ClipboardEvent, view: MarkdownView): Promise<boolean> {
+  // Synchronous on purpose: CodeMirror treats any truthy return (a Promise too) as "handled" and
+  // would swallow every ordinary text paste.
+  handlePaste(e: ClipboardEvent, view: MarkdownView): boolean {
     const files = Array.from(e.clipboardData?.files ?? []);
     if (!files.length) return false;
     e.preventDefault();
-    for (const f of files) await this.saveAttachment(f, view);
+    void (async () => {
+      for (const f of files) await this.saveAttachment(f, view);
+    })();
     return true;
   }
 

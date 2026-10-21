@@ -122,14 +122,18 @@ export class InternalPlugin extends Component {
     } catch (e) {
       console.error(`Core plugin "${this.id}" failed to start`, e);
     }
-    if (this.impl?.settingTab && this.app.setting) {
-      this.tab = this.impl.settingTab(this);
-      this.tab.id = this.tab.id || this.id;
-      this.tab.name = this.tab.name || this.info.name;
-      if (!this.tab.icon || this.tab.icon === "settings") this.tab.icon = this.info.icon ?? "settings";
-      this.app.setting.addSettingTab(this.tab, "core");
-    }
+    this.ensureSettingTab();
     this.manager.trigger("change", this.id, true);
+  }
+
+  /** Options tab in Settings › Core plugins while the plugin is on. */
+  ensureSettingTab(): void {
+    if (this.tab || !this.enabled || !this.impl?.settingTab || !this.app.setting) return;
+    this.tab = this.impl.settingTab(this);
+    this.tab.id = this.tab.id || this.id;
+    this.tab.name = this.tab.name || this.info.name;
+    if (!this.tab.icon || this.tab.icon === "settings") this.tab.icon = this.info.icon ?? "settings";
+    this.app.setting.addSettingTab(this.tab, "core");
   }
 
   disable(): void {
@@ -167,8 +171,11 @@ export class InternalPlugins {
     (this.listeners[name] ??= []).push(cb);
     return { name, cb };
   }
+  off(name: string, cb: (...a: any[]) => any): void {
+    this.listeners[name] = (this.listeners[name] ?? []).filter((x) => x !== cb);
+  }
   trigger(name: string, ...a: any[]): void {
-    for (const cb of this.listeners[name] ?? []) cb(...a);
+    for (const cb of (this.listeners[name] ?? []).slice()) cb(...a);
   }
 
   /** Attach behaviour to a core plugin id (call any time; enables it if its state is on). */
@@ -214,6 +221,7 @@ export class InternalPlugins {
         await p.enable();
       }
     }
+    for (const p of Object.values(this.plugins)) p.ensureSettingTab();
   }
 
   private async save(): Promise<void> {

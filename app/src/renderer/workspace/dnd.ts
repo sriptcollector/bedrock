@@ -33,11 +33,16 @@ export class TabDnd {
       document.body.addClass("is-dragging-tab");
       h.addClass("is-being-dragged");
     });
-    h.addEventListener("dragend", () => {
+    h.addEventListener("dragend", (e) => {
       this.dragLeaf = null;
       document.body.removeClass("is-dragging-tab");
       h.removeClass("is-being-dragged");
       this.hide();
+      // Dropped outside the window (nothing took the drop): the tab moves to a new window there.
+      const win = h.ownerDocument.defaultView ?? window;
+      const outside = e.screenX < win.screenX || e.screenY < win.screenY || e.screenX > win.screenX + win.outerWidth || e.screenY > win.screenY + win.outerHeight;
+      if (e.dataTransfer?.dropEffect === "none" && outside && (e.screenX || e.screenY) && this.ws.isRootLeaf(leaf))
+        this.ws.moveLeafToPopout(leaf, { x: e.screenX - 40, y: e.screenY - 20 });
     });
   }
 

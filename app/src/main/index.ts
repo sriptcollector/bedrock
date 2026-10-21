@@ -7,16 +7,17 @@ import { IPC, type BootInfo } from "../shared/ipc";
 import * as account from "./account";
 import * as hub from "./hub";
 import { createTray, refreshTray } from "./tray";
-import { startAutoUpdate, checkNow } from "./updater";
+import { startAutoUpdate, checkNow, registerUpdaterIpc } from "./updater";
 import { ensureMainVault, importIntoMain, isVaultFolder, readRegistry, rememberOther } from "./vaults";
 import { createVaultWindow, iconPath, vaultWindows } from "./windows";
 import { runSelftest } from "./selftest";
-import { applyEarlyAppSettings, registerSettingsIpc } from "./settings-host";
+import { applyEarlyAppSettings, registerSettingsIpc, readAppSettings } from "./settings-host";
 import { startSync, stopSync } from "./sync";
 import { installCrashHandling, log } from "./log";
 import { startAgents, stopAgents } from "./agents/host";
 import { installWebviewer } from "./webviewer";
 import { installUiExtras } from "./ui-extras";
+import { registerShellIpc, handleUri, uriArg, registerProtocols } from "./shell-host";
 import { spawn } from "node:child_process";
 import { registerEditorIpc } from "./editor-ipc";
 
@@ -148,6 +149,12 @@ function startApp(): void {
       case "show":
         return show();
       default: {
+        // A bedrock:// (or obsidian://) URI goes to the vault it names.
+        const uri = uriArg(argv);
+        if (uri) {
+          handleUri(uri, BrowserWindow.getFocusedWindow());
+          return;
+        }
         // Plain relaunch (or hub "open"): show. A .md path opens that note.
         show();
         const p = hub.pathArg(argv);
@@ -180,6 +187,19 @@ function startApp(): void {
   registerSettingsIpc();
   installWebviewer();
   installUiExtras(iconPath);
+  registerUpdaterIpc();
+  registerShellIpc({
+    showMain: () => {
+      show();
+      return mainWin;
+    },
+    mainVaultPath: () => (devVault ? path.resolve(devVault) : ensureMainVault()),
+  });
+  // macOS delivers URIs as an event instead of arguments.
+  app.on("open-url", (e, url) => {
+    e.preventDefault();
+    void app.whenReady().then(() => handleUri(url, BrowserWindow.getFocusedWindow()));
+  });
   registerEditorIpc();
 
   app.whenReady().then(() => {
@@ -189,6 +209,9 @@ function startApp(): void {
     const startHidden = process.argv.includes("--hide");
     mainWin = openMain(!startHidden);
     hub.writeState(mainWin);
+    if (!smokeTest) registerProtocols();
+    const firstUri = uriArg(process.argv);
+    if (firstUri) handleUri(firstUri, mainWin);
     // Sync runs in the main process for the one vault, whether or not the window is visible.
     startSync({ vaultPath: devVault ? path.resolve(devVault) : ensureMainVault(), smokeTest });
     // Agent access (MCP over HTTP + REST on 127.0.0.1, token-protected) for the same vault.
@@ -242,7 +265,7 @@ function registerIpc(ctx: { openOtherVault: (dir: string) => void }): void {
     const w = winOf(e);
     if (!w || process.platform === "darwin") return;
     try {
-      w.setTitleBarOverlay({ color: o.color, symbolColor: o.symbolColor, height: 39 });
+      w.setTitleBarOverlay({ color: o.color, symbolColor: o.symbolColor, height: readAppSettings().frame === "custom" ? 30 : 39 });
     } catch {
       /* window without an overlay */
     }
