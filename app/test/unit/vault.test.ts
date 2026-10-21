@@ -153,3 +153,14 @@ describe("indexing speed", () => {
     fs.rmSync(big, { recursive: true, force: true });
   });
 });
+
+describe("file manager: links in properties and body", () => {
+  it("rename updates body links even when the note also links from its properties", async () => {
+    await app.vault.create("Both.md", "---\nrelated: \"[[Target]]\"\n---\nSee [[Target]] and [[Target#Goals]].\n");
+    await app.vault.create("Target.md", "# Target\n## Goals\n");
+    await settle();
+    await app.fileManager.renameFile(app.vault.getFileByPath("Target.md"), "Renamed Target.md");
+    await settle();
+    expect(read("Both.md")).toBe("---\nrelated: \"[[Renamed Target]]\"\n---\nSee [[Renamed Target]] and [[Renamed Target#Goals]].\n");
+  });
+});

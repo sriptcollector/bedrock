@@ -156,22 +156,27 @@ export class FileManager {
       if (!srcFile) continue;
       await this.vault.process(srcFile, (text) => {
         const edits: PendingEdit[] = [];
-        let fmText: string | null = null;
+        const fmEdits: { from: string; to: string }[] = [];
         for (const h of list) {
           const targetFile = this.vault.getFileByPath(mapPath(h.target));
           if (!targetFile) continue;
           const replacement = this.rewriteRef(h.ref, targetFile, src);
           if (replacement === h.ref.original) continue;
           if (h.ref.position) edits.push({ from: h.ref.position.start.offset, to: h.ref.position.end.offset, text: replacement, orig: h.ref.original });
-          else {
-            // frontmatter link: replace inside the YAML block
-            fmText ??= text;
-            fmText = fmText.replace(h.ref.original, replacement);
-          }
+          else fmEdits.push({ from: h.ref.original, to: replacement });
         }
-        if (fmText !== null) text = fmText;
+        // Body links first (their offsets refer to the unchanged text), then property links,
+        // which only touch the frontmatter block at the top.
         edits.sort((a, b) => b.from - a.from);
         for (const e of edits) if (text.slice(e.from, e.to) === e.orig) text = text.slice(0, e.from) + e.text + text.slice(e.to);
+        if (fmEdits.length) {
+          const m = text.match(/^---\r?\n[\s\S]*?\r?\n---(?=\r?\n|$)/);
+          if (m) {
+            let fm = m[0];
+            for (const f of fmEdits) fm = fm.replace(f.from, f.to);
+            text = fm + text.slice(m[0].length);
+          }
+        }
         return text;
       });
     }
