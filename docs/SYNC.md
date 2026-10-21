@@ -333,14 +333,37 @@ synced. Two server instances cannot share one SQLite volume.
 
 ## 8. Tests and measured numbers
 
-Run in each package: `npx vitest run` (fast set, about 45 s for `packages/sync`, 1 s for
+Run in each package: `npx vitest run` (fast set, about 40 s for `packages/sync`, 1 s for
 `server`). `npm run test:long -w packages/sync` (= `vitest run --mode long`) adds the 10k-note
 vault, the 300 MB file and 30-round storms. Environment knobs: `BEDROCK_SCALE_NOTES`,
 `BEDROCK_STORM_SEED`.
 
 Measured on Orion's Windows 11 PC (Node 24.14, temp folders, server in the same process):
 
-RESULTS_PLACEHOLDER
+| Test | Result |
+|---|---|
+| Unit: crypto, chunking, diff3 (clean, overlapping, adds at end, CRLF vs LF, unicode/BOM, empty base, 5000-line file), paths/case, ignore list, state | all pass |
+| Default suite `packages/sync` | 77 tests pass in 39 s |
+| Default suite `server` (auth cache, 409, paging, quota, rate limit, websocket, retention + GC, presigned URLs) | 12 tests pass in 1.2 s |
+| Long suite (`--mode long`) | 78 tests pass (the two that first failed were fixed: see below) |
+| **10,000 notes** (14.4 MB, 100 folders) | initial upload **9.3 s** (62 HTTP requests); second computer initial download **8.3 s** (21 requests); no-op sync with a full rescan **413 ms / 216 ms** (1 request); one edited note: push 250 ms, pull 273 ms |
+| 2,000 notes (default run) | upload 1.9 s, download 1.5 s, no-op 101 / 61 ms |
+| **50 MB file** (13 chunks) | upload killed after 4 chunks, a fresh engine resumed with exactly the 9 missing; download 0.5 s; SHA-256 verified |
+| **300 MB file** (75 chunks) | killed after 25 chunks, resumed with exactly the 50 missing; upload total 3.5 s, download 2.2 s; process memory 129 MB; SHA-256 verified |
+| Storm, offline rounds, 8 x 8 ops x 3 devices (seeds 1-6 and 1234) | converged every round; no duplicates; no lost lines; 0-4 conflict copies per run |
+| Storm, interleaved with mid-round syncs, 8 x 8 x 3 (seeds 1-4, 1234) | same, 31-46 mid-round syncs per run |
+| Storm long, offline: 30 rounds x 14 ops x 3 devices (1,260 ops) | converged, 10 conflict copies, 147 s |
+| Storm long, interleaved: 30 x 14 x 3 (1,325 ops, 261 mid-round syncs) | converged, 3 conflict copies, 209 s |
+| Same note edited offline on 3 devices, different lines | merged cleanly, no conflict copy |
+| Same line edited offline on 3 devices | exactly 2 conflict copies (one per losing device), all 3 versions present |
+| Live: watcher + websocket | an edit on A appears on B after 172 ms (debounce set to 100 ms in the test; 1.5 s by default) |
+| Server restart mid-sync, wrong vault key, token expiry (plain message, then recovery), quota full (clear message, then recovery after emptying the bin), delete vs edit both orders, version restore, recycle bin restore, case-only name clash, rename swap, edit typed during a download | all pass |
+
+Bugs the tests found and that are fixed: a scheduling race where a sync request made right as the
+previous cycle ended was dropped; swaps of two files with identical size and timestamp were not
+noticed (now uses the inode); when a big upload failed, chunk uploads still in flight kept running
+after the engine reported the failure; the server wrote batched chunks one at a time (10k-note
+upload went from 36 s to 9 s after parallelizing server and client file work).
 
 ---
 
