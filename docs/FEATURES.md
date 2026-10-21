@@ -481,7 +481,7 @@ Legend: **[later]** = not needed for the first release. **[ours]** = Bedrock doe
 - [ ] `webviewer` Web viewer (off) [later]
 
 ### Community plugins
-- [ ] Restricted mode on by default; "turn on community plugins" flow with a warning; per-vault trust prompt when a vault with plugins is opened the first time; stored outside the vault
+- [x] Restricted mode on by default; "turn on community plugins" flow with a warning; per-vault trust prompt when a vault with plugins is opened the first time; stored outside the vault
 - [ ] Load each enabled id from `community-plugins.json`; read `manifest.json`; skip if `minAppVersion` is too new or the plugin is mobile-only on mobile
 - [x] Run `main.js` as CommonJS with a `require` that gives `obsidian`, the shared `@codemirror/*` and `@lezer/*` packages, and falls through to Node for everything else; map old CodeMirror package names
 - [ ] Inject `styles.css`; `loadData` / `saveData` on `data.json`; notify the plugin when `data.json` changes on disk
