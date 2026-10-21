@@ -14,6 +14,8 @@ import { toggleInline, toggleHighlightColor, clearFormatting, insertMarkdownLink
 import { toggleChecklistStatus, cycleListChecklist, toggleLinePrefix, setHeading, indentLines, outdentLines } from "./lists";
 import { tableCommand, bindTableEditor, type TableOp } from "./table";
 import { editorInfoField } from "./fields";
+import { addSpellingItems } from "./spellcheck";
+import { ExportPdfModal } from "./export-pdf";
 import { splitAlias } from "../../core/links";
 
 const hk = (mods: Hotkey["modifiers"], key: string): Hotkey[] => [{ modifiers: mods, key }];
@@ -272,6 +274,18 @@ export function registerEditorCommands(app: any): void {
   for (const [op, label, icon] of tableOps)
     ed(`editor:table-${op}`, `Table: ${label}`, icon, (_v, cm) => tableCommand(cm, op), undefined, { check: (_v, cm) => tableCommand(cm, op, true) });
 
+  add({
+    id: "workspace:export-pdf",
+    name: "Export to PDF",
+    icon: "file-output",
+    checkCallback: (checking) => {
+      const v = activeMd();
+      if (!v?.file) return false;
+      if (!checking) new ExportPdfModal(app, v.file, v.getViewData()).open();
+      return true;
+    },
+  });
+
   // Download remote images into the vault and point the links at the local copies.
   add({
     id: "editor:download-attachments",
@@ -338,6 +352,17 @@ export function showEditorMenu(app: any, v: any, cm: EditorView, at: { x: number
   const sel = st().selection.main;
   const selected = st().sliceDoc(sel.from, sel.to);
   const link = linkAt(st(), sel.head);
+  // Spelling suggestions for the word under the cursor come first.
+  if (app.vault.getConfig("spellcheck") !== false && sel.empty) {
+    const w = st().wordAt(sel.head);
+    if (w) {
+      const word = st().sliceDoc(w.from, w.to);
+      addSpellingItems(m, word, (s) => {
+        cm.dispatch({ changes: { from: w.from, to: w.to, insert: s }, userEvent: "input" });
+        cm.focus();
+      });
+    }
+  }
   if (link) {
     if (link.external) {
       m.addItem((i) => i.setTitle("Open link in default browser").setIcon("external-link").setSection("open").onClick(() => app.openExternal?.(link.href)));

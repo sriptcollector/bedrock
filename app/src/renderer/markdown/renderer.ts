@@ -153,7 +153,7 @@ export async function renderMarkdownInto(app: any, markdown: string, el: HTMLEle
   await postProcess(app, el, sourcePath, component, opts, ctx);
 }
 
-export async function postProcess(app: any, el: HTMLElement, sourcePath: string, component: Component, opts: RenderOptions, ctx: MarkdownPostProcessorContext): Promise<void> {
+export async function postProcess(app: any, el: HTMLElement, sourcePath: string, component: Component, opts: RenderOptions, ctx: MarkdownPostProcessorContext, sections?: HTMLElement[]): Promise<void> {
   // Internal links
   el.querySelectorAll<HTMLAnchorElement>("a.internal-link").forEach((a) => {
     const href = a.getAttribute("data-href") ?? "";
@@ -218,7 +218,7 @@ export async function postProcess(app: any, el: HTMLElement, sourcePath: string,
   }
   // Plugin post processors
   const sorted = postProcessors.slice().sort((a, b) => (a.sortOrder ?? 0) - (b.sortOrder ?? 0));
-  for (const sec of Array.from(el.children) as HTMLElement[]) {
+  for (const sec of sections ?? (Array.from(el.children) as HTMLElement[])) {
     for (const pp of sorted) {
       try {
         await pp(sec, ctx);

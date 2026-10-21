@@ -11,6 +11,7 @@ import { startAutoUpdate, checkNow } from "./updater";
 import { ensureMainVault, importIntoMain, isVaultFolder, readRegistry, rememberOther } from "./vaults";
 import { createVaultWindow, vaultWindows } from "./windows";
 import { runSelftest } from "./selftest";
+import { registerEditorIpc } from "./editor-ipc";
 
 // ---- identity & app data (before anything touches userData) ----
 app.setName(BRAND.displayName);
@@ -128,6 +129,7 @@ function startApp(): void {
   app.on("activate", () => show());
 
   registerIpc({ openOtherVault });
+  registerEditorIpc();
 
   app.whenReady().then(() => {
     if (process.platform !== "darwin") Menu.setApplicationMenu(null);

@@ -370,6 +370,43 @@
 }
 
 /* ---- reading view extras */
+.markdown-rendered ul.has-list-bullet > li {
+  list-style: none;
+  position: relative;
+}
+.markdown-rendered ul.has-list-bullet > li > .list-bullet {
+  position: absolute;
+  inset-inline-start: -1.2em;
+  top: 0;
+  width: 1.2em;
+  height: var(--line-height-normal, 1.5em);
+}
+.markdown-rendered ul.has-list-bullet > li.task-list-item > .list-bullet {
+  display: none;
+}
+.markdown-rendered li > .list-collapse-indicator {
+  position: absolute;
+  inset-inline-start: -2.4em;
+  top: 0.2em;
+  opacity: 0;
+  color: var(--text-faint);
+  cursor: var(--cursor);
+}
+.markdown-rendered li > .list-collapse-indicator svg {
+  width: 10px;
+  height: 10px;
+  transform: rotate(90deg);
+}
+.markdown-rendered li > .list-collapse-indicator.is-collapsed svg {
+  transform: rotate(0deg);
+}
+.markdown-rendered li:hover > .list-collapse-indicator,
+.markdown-rendered li > .list-collapse-indicator.is-collapsed {
+  opacity: 1;
+}
+.markdown-rendered ol > li {
+  position: relative;
+}
 .markdown-preview-view .heading-collapse-indicator {
   position: absolute;
   margin-inline-start: -22px;

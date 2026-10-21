@@ -6,6 +6,7 @@ import fs from "node:fs";
 import path from "node:path";
 import { IPC } from "../shared/ipc";
 import { BRAND } from "../shared/brand";
+import { popoutWindowOptions } from "./editor-ipc";
 
 export interface VaultWindow {
   win: BrowserWindow;
@@ -110,7 +111,9 @@ export function createVaultWindow(opts: { vaultPath: string; isMain: boolean; sh
   win.on("closed", () => vaultWindows.delete(id));
 
   // Links open in the browser, never inside the app window.
-  win.webContents.setWindowOpenHandler(({ url }) => {
+  win.webContents.setWindowOpenHandler(({ url, frameName, features }) => {
+    // Popout windows for workspace tabs (same renderer, shared app state).
+    if (url === "about:blank" && frameName.startsWith("bedrock-popout")) return { action: "allow", overrideBrowserWindowOptions: popoutWindowOptions(win, features) };
     if (/^https?:|^mailto:/i.test(url)) shell.openExternal(url);
     return { action: "deny" };
   });
