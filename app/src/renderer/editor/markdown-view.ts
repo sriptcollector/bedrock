@@ -8,7 +8,12 @@ import type { TFile } from "../vault/files";
 import { Editor } from "./editor";
 import { buildEditorExtensions, compartments, configExtensions, configFromVault } from "./extensions";
 import { setLivePreview } from "./fields";
-import { refreshLivePreview } from "./live-preview";
+import { refreshLivePreview, cellLivePreviewExtensions } from "./live-preview";
+import { markdownSupport, syntaxHighlightExtensions } from "./syntax";
+import { editorInfoField, editorLivePreviewField } from "./fields";
+import { showEditorMenu } from "./commands";
+import { openSuggestAt } from "./suggest";
+import { applyFoldInfoEffects, foldStorageKey, getFoldInfo, type FoldInfo } from "./folding";
 import { PropertiesEditor } from "./properties";
 import { getFrontMatterInfo, parseYaml, stringifyYaml } from "../../core/parse";
 import { renderMarkdownInto } from "../markdown/renderer";
@@ -185,14 +190,13 @@ export class MarkdownView extends TextFileView {
       }),
       EditorView.domEventHandlers({
         contextmenu: (e) => {
+          if ((e.target as HTMLElement).closest(".cm-table-widget")) return false;
           e.preventDefault();
-          const m = new Menu();
-          m.addItem((i) => i.setTitle("Cut").setIcon("scissors").setSection("clipboard").onClick(() => document.execCommand("cut")));
-          m.addItem((i) => i.setTitle("Copy").setIcon("copy").setSection("clipboard").onClick(() => document.execCommand("copy")));
-          m.addItem((i) => i.setTitle("Paste").setIcon("clipboard-paste").setSection("clipboard").onClick(async () => this.editor.replaceSelection(await navigator.clipboard.readText())));
-          m.addItem((i) => i.setTitle("Select all").setIcon("text-select").setSection("selection").onClick(() => this.editor.exec("selectAll")));
-          this.app.workspace.trigger("editor-menu", m, this.editor, this);
-          m.showAtMouseEvent(e);
+          // Right-click outside the selection moves the cursor there first.
+          const pos = this.cm.posAtCoords({ x: e.clientX, y: e.clientY });
+          const sel = this.cm.state.selection.main;
+          if (pos != null && (pos < sel.from || pos > sel.to)) this.cm.dispatch({ selection: { anchor: pos } });
+          showEditorMenu(this.app, this, this.cm, e, (m) => this.addSpellingItems(m));
           return true;
         },
         paste: (e) => this.app.handlePaste?.(e, this) ?? false,
@@ -204,6 +208,71 @@ export class MarkdownView extends TextFileView {
 
   getViewType(): string {
     return "markdown";
+  }
+
+  /** Spelling suggestions for the word under the last right-click (sent by the main process). */
+  private addSpellingItems(m: Menu): void {
+    const sp = (window as any).bedrockNative?.lastSpelling?.();
+    if (!sp?.word) return;
+    for (const s of (sp.suggestions as string[]).slice(0, 5))
+      m.addItem((i) =>
+        i
+          .setTitle(s)
+          .setSection("spellcheck")
+          .onClick(() => this.cm.dispatch(this.cm.state.replaceSelection(s))),
+      );
+    if (!sp.suggestions.length) m.addItem((i) => i.setTitle("No suggestions").setDisabled(true).setSection("spellcheck"));
+    m.addItem((i) =>
+      i
+        .setTitle("Add to dictionary")
+        .setIcon("book-plus")
+        .setSection("spellcheck")
+        .onClick(() => (window as any).bedrockNative?.addToDictionary?.(sp.word)),
+    );
+  }
+
+  /** Extensions for the editors inside table cells (inline live preview + this view's info). */
+  tableCellExtensions(): Extension[] {
+    return [editorInfoField.init(() => this), editorLivePreviewField.init(() => !this.sourceMode), markdownSupport(), ...syntaxHighlightExtensions, ...cellLivePreviewExtensions()];
+  }
+
+  openLinkSuggest(): void {
+    openSuggestAt(this);
+  }
+  openTagSuggest(): void {
+    openSuggestAt(this);
+  }
+
+  /** "Insert attachment": pick files, copy them into the attachment folder, link them. */
+  async attachFile(): Promise<void> {
+    const input = createEl("input", { attr: { type: "file", multiple: true } });
+    input.addEventListener("change", async () => {
+      for (const f of Array.from(input.files ?? [])) {
+        const buf = await f.arrayBuffer();
+        const path = await this.app.fileManager.getAvailablePathForAttachment(f.name, this.file?.path ?? "");
+        const created = await this.app.vault.createBinary(path, buf);
+        const link = this.app.fileManager.generateMarkdownLink(created, this.file?.path ?? "");
+        this.editor.replaceSelection(link + "\n");
+      }
+    });
+    input.click();
+  }
+
+  getFoldInfo(): FoldInfo {
+    return getFoldInfo(this.cm.state);
+  }
+  applyFoldInfo(info: FoldInfo | null): void {
+    const effects = applyFoldInfoEffects(this.cm.state, info);
+    if (effects.length) this.cm.dispatch({ effects });
+  }
+  private restoreFolds(): void {
+    if (!this.file) return;
+    try {
+      const raw = this.app.loadLocalStorage?.(foldStorageKey(this.file.path));
+      if (raw) this.applyFoldInfo(JSON.parse(raw));
+    } catch {
+      /* ignore */
+    }
   }
   getMode(): MarkdownMode {
     return this.mode;
@@ -311,6 +380,7 @@ export class MarkdownView extends TextFileView {
 
   async onLoadFile(file: TFile): Promise<void> {
     await super.onLoadFile(file);
+    this.restoreFolds();
     this.inlineTitleEl.setText(file.basename);
     this.containerEl.setAttr("data-mode", this.mode);
     this.refreshHeader();

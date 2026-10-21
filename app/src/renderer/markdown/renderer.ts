@@ -80,6 +80,32 @@ export class MarkdownRenderer extends MarkdownRenderChild {
   }
 }
 
+/** Render one line of inline Markdown (a table cell) into `el`, with working links and embeds. */
+export function renderInlineMarkdown(app: any, text: string, el: HTMLElement, sourcePath: string): void {
+  const tpl = document.createElement("template");
+  tpl.innerHTML = getMd(app).renderInline(text, { codeBlockProcessors });
+  sanitize(tpl.content);
+  el.appendChild(tpl.content);
+  el.querySelectorAll<HTMLAnchorElement>("a.internal-link").forEach((a) => {
+    const href = a.getAttribute("data-href") ?? "";
+    const { path } = parseLinktext(href);
+    if (path && !app?.metadataCache?.getFirstLinkpathDest(path, sourcePath)) a.addClass("is-unresolved");
+    a.addEventListener("click", (e) => {
+      e.preventDefault();
+      app?.workspace?.openLinkText(href, sourcePath, Keymap.isModEvent(e));
+    });
+  });
+  el.querySelectorAll<HTMLAnchorElement>("a.external-link").forEach((a) =>
+    a.addEventListener("click", (e) => {
+      e.preventDefault();
+      app?.openExternal?.(a.href);
+    }),
+  );
+  const comp = new Component();
+  comp.load();
+  for (const span of Array.from(el.querySelectorAll<HTMLElement>("span.internal-embed"))) void renderEmbed(app, span, sourcePath, comp, 1);
+}
+
 export interface RenderOptions {
   embedDepth: number;
   lineOffset?: number;
