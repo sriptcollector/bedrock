@@ -1,0 +1,19 @@
+{
+  "name": "bedrock",
+  "displayName": "Bedrock",
+  "productTitle": "Bedrock notes app",
+  "byline": "Bedrock by Toolbay",
+  "appId": "ai.toolbay.bedrock",
+  "exeName": "bedrock",
+  "slug": "bedrock",
+  "repo": "sriptcollector/bedrock",
+  "vaultFolderName": "Bedrock",
+  "protocol": "bedrock",
+  "inspiredBy": {
+    "name": "Obsidian",
+    "company": "Dynalist Inc.",
+    "logoUrl": "assets/inspired-by/obsidian.svg",
+    "website": "https://obsidian.md",
+    "notAffiliated": "Bedrock is an independent open-source project and is not affiliated with or endorsed by Obsidian or Dynalist Inc."
+  }
+}
