@@ -60,6 +60,7 @@ export function watchConfigFolder(app: any): () => void {
   };
   let watcher: fs.FSWatcher | null = null;
   try {
+    fs.mkdirSync(dir, { recursive: true });
     watcher = fs.watch(dir, { persistent: false }, (_e, f) => {
       const name = f?.toString();
       if (!name || !WATCHED.includes(name)) return;

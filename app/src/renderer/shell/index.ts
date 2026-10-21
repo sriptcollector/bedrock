@@ -22,6 +22,7 @@ export function mountShell(app: any): void {
   app.shell = {
     openVaultManager: () => (manager ??= new VaultManager(app)).open(),
     closeVaultManager: () => manager?.close(),
+    vaultManagerDoc: () => (manager?.popout.isOpen ? manager.popout.doc : null),
     /** Rename prompt for views without an inline title. */
     renameFilePrompt: async (f: TAbstractFile) => {
       const cur = f instanceof TFile ? f.basename : f.name;

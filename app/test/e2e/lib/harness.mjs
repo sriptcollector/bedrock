@@ -36,11 +36,14 @@ export class Checks {
 }
 
 /** Launch on a temp copy of `src` (default: the fixture vault). */
-export async function launch({ src = path.join(appDir, "test", "fixtures", "vault"), args = [], env = {}, width = 1400, height = 900 } = {}) {
-  const tmp = fs.mkdtempSync(path.join(os.tmpdir(), "bedrock-e2e-"));
-  const vault = path.join(tmp, "vault");
-  const userData = path.join(tmp, "userdata");
-  fs.cpSync(src, vault, { recursive: true, filter: (p) => !/[\\/](node_modules|\.git)([\\/]|$)/.test(p) });
+export async function launch({ src = path.join(appDir, "test", "fixtures", "vault"), args = [], env = {}, width = 1400, height = 900, reuse = null, beforeLaunch = null } = {}) {
+  // `reuse` ({tmp, vault, userData} from an earlier launch) relaunches on the same vault and app data.
+  const tmp = reuse?.tmp ?? fs.mkdtempSync(path.join(os.tmpdir(), "bedrock-e2e-"));
+  const vault = reuse?.vault ?? path.join(tmp, "vault");
+  const userData = reuse?.userData ?? path.join(tmp, "userdata");
+  if (!reuse) fs.cpSync(src, vault, { recursive: true, filter: (p) => !/[\\/](node_modules|\.git)([\\/]|$)/.test(p) });
+  fs.mkdirSync(userData, { recursive: true });
+  beforeLaunch?.({ tmp, vault, userData });
   const electronPath = (await import("electron")).default;
   const app = await electron.launch({
     executablePath: electronPath,
@@ -60,9 +63,11 @@ export async function launch({ src = path.join(appDir, "test", "fixtures", "vaul
   }, { width, height });
   await win.waitForSelector(".workspace", { timeout: 30000 });
   await win.waitForFunction(() => window.app?.indexStats, null, { timeout: 120000 });
-  const close = async () => {
+  // close({keep: true}) keeps the folders for a relaunch with `reuse`.
+  const close = async (o = {}) => {
+    await win.evaluate(() => window.app?.vault?.flushConfig?.()).catch(() => {});
     await app.close().catch(() => {});
-    if (!process.argv.includes("--keep")) fs.rmSync(tmp, { recursive: true, force: true });
+    if (!o.keep && !process.argv.includes("--keep")) fs.rmSync(tmp, { recursive: true, force: true, maxRetries: 5, retryDelay: 200 });
   };
   return { app, win, vault, userData, tmp, errors, close };
 }
