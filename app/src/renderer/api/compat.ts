@@ -9,6 +9,11 @@ import { TAbstractFile } from "../vault/files";
 import { WorkspaceSplit } from "../workspace/items";
 import { MarkdownRenderChild, MarkdownRenderer, postProcessors, codeBlockProcessors } from "../markdown/renderer";
 import { editorLivePreviewField } from "../editor/fields";
+import { Language as CMLanguage } from "@codemirror/language";
+import { EditorState, type Extension } from "@codemirror/state";
+import { EditorView } from "@codemirror/view";
+import { Editor } from "../editor/editor";
+import { buildEditorExtensions, configFromVault } from "../editor/extensions";
 import { javascript as legacyJs } from "@codemirror/legacy-modes/mode/javascript";
 import { css as legacyCss } from "@codemirror/legacy-modes/mode/css";
 import { yaml as legacyYaml } from "@codemirror/legacy-modes/mode/yaml";
@@ -379,12 +384,66 @@ function installMetadataTypeManager(app: any): void {
   };
 }
 
+/** A small Markdown editor that can live anywhere (Obsidian's internal embeddable editor that some
+ * plugins, e.g. Kanban, get from an embed's `editMode` and subclass): `new X(app, containerEl,
+ * owner)`, `.cm`, `.editor`, `set(text)`, `buildLocalExtensions()`, `onUpdate(update, changed)`. */
+export class EmbeddableMarkdownEditor extends Component {
+  cm!: EditorView;
+  editor!: Editor;
+  editorEl: HTMLElement;
+  constructor(public app: any, public containerEl: HTMLElement, public owner: any) {
+    super();
+    this.editorEl = containerEl.createDiv("markdown-source-view cm-s-obsidian mod-cm6 is-live-preview is-readable-line-width");
+    const cfg = configFromVault(app.vault);
+    const exts: Extension[] = [
+      ...buildEditorExtensions(owner ?? this, cfg, true, app.workspace.editorExtensions?.slice?.() ?? []),
+      ...this.buildLocalExtensions(),
+      EditorView.updateListener.of((u) => this.onUpdate(u, u.docChanged)),
+    ];
+    this.cm = new EditorView({ state: EditorState.create({ doc: "", extensions: exts }), parent: this.editorEl });
+    this.editor = new Editor(this.cm, owner ?? this);
+  }
+  get activeCM(): EditorView {
+    return this.cm;
+  }
+  buildLocalExtensions(): Extension[] {
+    return [];
+  }
+  onUpdate(_update: any, _changed: boolean): void {}
+  updateBottomPadding(): void {}
+  get(): string {
+    return this.cm.state.doc.toString();
+  }
+  set(text: string, _clear?: boolean): void {
+    this.cm.dispatch({ changes: { from: 0, to: this.cm.state.doc.length, insert: text } });
+  }
+  focus(): void {
+    this.cm.focus();
+  }
+  destroy(): void {
+    this.cm.destroy();
+    this.editorEl.remove();
+  }
+  onunload(): void {
+    this.destroy();
+  }
+}
+/** What embed.showEditor() puts in embed.editMode (a subclass, so plugins can reach the base). */
+class EmbedEditMode extends EmbeddableMarkdownEditor {}
+
 /** app.embedRegistry: creators for ![[file.ext]] embeds by extension (Kanban, Excalidraw...). */
 function installEmbedRegistry(app: any): void {
   if (app.embedRegistry) return;
   class MarkdownEmbed extends MarkdownRenderChild {
     file: any = null;
     subpath = "";
+    editable = false;
+    editMode: EmbeddableMarkdownEditor | null = null;
+    showEditor(): void {
+      if (this.editMode) return;
+      this.editMode = new EmbedEditMode(app, this.containerEl, this);
+      this.addChild(this.editMode);
+    }
     constructor(private ctx: any, file: any, subpath = "") {
       super(ctx.containerEl);
       this.file = file;
@@ -448,10 +507,41 @@ function installInternals(app: any): void {
       hm.bake();
     };
   }
+  const ws = app.workspace;
+  if (ws && !ws.registerHoverLinkSource) {
+    ws.hoverLinkSources = ws.hoverLinkSources ?? {};
+    ws.registerHoverLinkSource = (id: string, info: any) => (ws.hoverLinkSources[id] = info);
+    ws.unregisterHoverLinkSource = (id: string) => delete ws.hoverLinkSources[id];
+  }
+  if (ws && !ws.floatingSplit) ws.floatingSplit = { children: [] };
   if (app.workspace && !app.workspace.getActiveFileView) app.workspace.getActiveFileView = () => app.workspace.activeLeaf?.view?.file ? app.workspace.activeLeaf.view : null;
 }
 
+/** Plugin editor extensions that replace the Markdown language (CodeMirror 5 overlay modes such as
+ * Templater's "<% %>" highlighting) only work on Obsidian's stream-based Markdown mode; here they
+ * would switch off Live Preview, so they're left out (logged once). */
+function guardEditorExtensions(app: any): void {
+  const arr: any[] = app.workspace?.editorExtensions;
+  if (!arr || (arr as any).__guarded) return;
+  const warned = new WeakSet<object>();
+  const isLanguage = (e: any): boolean => !!e && typeof e === "object" && (e instanceof CMLanguage || (e.inner && isLanguage(e.inner)) || (e.extension && e.language instanceof CMLanguage));
+  const clean = (e: any): any => {
+    if (Array.isArray(e)) return e.map(clean).filter((x) => x !== null);
+    if (isLanguage(e)) {
+      if (!warned.has(e)) {
+        warned.add(e);
+        console.warn("A plugin tried to replace the Markdown editor language; skipped so Live Preview keeps working.");
+      }
+      return null;
+    }
+    return e;
+  };
+  Object.defineProperty(arr, "slice", { value: (...a: any[]) => clean(Array.prototype.slice.apply(arr, a as any)), configurable: true });
+  Object.defineProperty(arr, "__guarded", { value: true });
+}
+
 export function installPluginCompat(app: any): void {
+  guardEditorExtensions(app);
   installCodeMirror5Shim();
   installMetadataTypeManager(app);
   installEmbedRegistry(app);

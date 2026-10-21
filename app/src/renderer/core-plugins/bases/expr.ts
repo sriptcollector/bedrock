@@ -40,7 +40,8 @@ export function parseBase(text: string): BaseFile {
   }
   const { filters, formulas, properties, views, ...extra } = raw;
   const vs: BaseView[] = Array.isArray(views) ? views.filter((v) => v && typeof v === "object").map((v, i) => ({ ...v, type: String(v.type ?? "table"), name: String(v.name ?? `View ${i + 1}`) })) : [];
-  if (!vs.length) vs.push({ type: "table", name: "Table" });
+  // A new (empty) base shows one unnamed table view, labelled "View" in the toolbar like the original.
+  if (!vs.length) vs.push({ type: "table", name: "View" });
   return {
     filters,
     formulas: formulas && typeof formulas === "object" ? Object.fromEntries(Object.entries(formulas).map(([k, v]) => [k, String(v)])) : {},
@@ -623,6 +624,8 @@ export function runView(base: BaseFile, view: BaseView, files: FileLike[], thisF
     rows.push({ file: f, values });
   }
   const sorts = (view.sort ?? []).filter((s) => s && s.property);
+  // Without a sort, rows are in file name order (case-insensitive, numbers in order).
+  if (!sorts.length) rows.sort((a, b) => a.file.name.localeCompare(b.file.name, undefined, { numeric: true, sensitivity: "base" }));
   if (sorts.length)
     rows.sort((a, b) => {
       for (const s of sorts) {

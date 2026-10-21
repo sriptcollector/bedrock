@@ -54,7 +54,7 @@ extra: 1
   });
   it("gives a default table view for an empty (new) base", () => {
     const b = parseBase("");
-    expect(b.views).toEqual([{ type: "table", name: "Table" }]);
+    expect(b.views).toEqual([{ type: "table", name: "View" }]);
     const r = runView(b, b.views[0], files);
     expect(r.rows.length).toBe(files.length);
     expect(r.columns).toEqual(["file.name"]);

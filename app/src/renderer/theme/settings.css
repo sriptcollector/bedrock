@@ -282,6 +282,9 @@ input[type="range"].slider::-webkit-slider-thumb {
 .search-input-container input:not(:placeholder-shown) ~ .search-input-clear-button {
   display: block;
 }
+.search-input-container input:placeholder-shown ~ .search-input-clear-button {
+  display: none !important;
+}
 .search-input-container.mod-raised input {
   background-color: var(--control-face);
 }
@@ -431,6 +434,24 @@ input[type="range"].slider::-webkit-slider-thumb {
 }
 .setting-item.has-error input {
   border-color: var(--color-red);
+}
+
+/* Imperative tabs (most plugins): plain rows with a divider, like the original shows them. */
+.vertical-tab-content > .setting-item,
+.setting-page-content > .setting-item {
+  max-width: var(--setting-group-max-width);
+  margin: 0 auto;
+  align-items: center;
+}
+.vertical-tab-content > .setting-item:not(.setting-item-heading) + .setting-item:not(.setting-item-heading),
+.setting-page-content > .setting-item:not(.setting-item-heading) + .setting-item:not(.setting-item-heading) {
+  border-top: 1px solid var(--background-modifier-border);
+}
+.vertical-tab-content > .setting-item-heading {
+  padding-top: 24px;
+}
+.vertical-tab-content > .setting-item-heading:first-child {
+  padding-top: 0;
 }
 
 /* Groups (1.11+ look: rows inside rounded cards with a heading above) */
