@@ -209,8 +209,10 @@ describe("graph options and graph.json", () => {
     expect(strengthToSlider(sliderToStrength(0.3))).toBeCloseTo(0.3, 12);
   });
 
-  it("round-trips Obsidian's graph.json byte for byte", () => {
-    const observed = fs.readFileSync("C:/Users/orion/tbv-scratch/data/graph.observed.json", "utf8");
+  // The observed file comes from a local reference capture; skipped where it doesn't exist (CI).
+  const OBSERVED = "C:/Users/orion/tbv-scratch/data/graph.observed.json";
+  it.skipIf(!fs.existsSync(OBSERVED))("round-trips Obsidian's graph.json byte for byte", () => {
+    const observed = fs.readFileSync(OBSERVED, "utf8");
     expect(graphJsonText(mergeOptions(JSON.parse(observed)))).toBe(observed.replace(/\r\n/g, "\n").trimEnd());
   });
 
