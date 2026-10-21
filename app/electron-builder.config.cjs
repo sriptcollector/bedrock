@@ -21,6 +21,17 @@ module.exports = {
     // The `bedrock` command (bin/<exeName>.cmd runs dist/cli.js in Node mode); the installer adds
     // <install dir>\bin to the per-user PATH (build-res/installer.nsh).
     extraFiles: [{ from: "dist/bin", to: "bin", filter: ["*.cmd"] }],
+    // Azure Trusted Signing once its secrets exist (docs/SIGNING.md).
+    ...(process.env.TRUSTED_SIGNING_ACCOUNT
+      ? {
+          azureSignOptions: {
+            publisherName: "Toolbay",
+            endpoint: process.env.TRUSTED_SIGNING_ENDPOINT || "https://eus.codesigning.azure.net",
+            codeSigningAccountName: process.env.TRUSTED_SIGNING_ACCOUNT,
+            certificateProfileName: process.env.TRUSTED_SIGNING_PROFILE,
+          },
+        }
+      : {}),
   },
   nsis: {
     // Per-user, one click, no admin prompt (Toolbay rule 1). The hub runs it with /S.
@@ -42,6 +53,8 @@ module.exports = {
     category: "public.app-category.productivity",
     artifactName: `${brand.displayName}_\${version}_\${arch}.\${ext}`,
     hardenedRuntime: true,
+    // Notarize when the Apple secrets exist (CI sets BEDROCK_NOTARIZE=1); otherwise skip.
+    notarize: !!process.env.BEDROCK_NOTARIZE,
   },
   dmg: { title: `${brand.displayName} \${version}` },
   linux: { target: ["AppImage"], icon: "build-res/icon.png", category: "Office" },
