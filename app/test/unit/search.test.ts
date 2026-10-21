@@ -73,6 +73,9 @@ describe("matching", () => {
   it("quoted phrases match exactly", () => {
     expect(hit('"every other day"')).toBe(true);
     expect(hit('"other every"')).toBe(false);
+    // Quoted terms match whole words only (observed: "water" skips "Watering").
+    expect(hit('"water"', doc("x.md", "Watering and watered"))).toBe(false);
+    expect(hit('"water"', doc("x.md", "Water beds"))).toBe(true);
   });
   it("regular expressions", () => {
     expect(hit("/wat.r/")).toBe(true);

@@ -134,16 +134,16 @@ Legend: **[later]** = not needed for the first release. **[ours]** = Bedrock doe
 ## 5. Navigation and finding things
 
 ### File explorer
-- [ ] Tree of folders and files; folders first; non-Markdown files show an uppercase extension tag; Markdown files hide `.md`
-- [ ] Header buttons: new note, new folder, sort order, auto-reveal current file, collapse/expand all
+- [x] Tree of folders and files; folders first; non-Markdown files show an uppercase extension tag; Markdown files hide `.md`
+- [x] Header buttons: new note, new folder, sort order, auto-reveal current file, collapse/expand all
 - [x] Sort: name A-Z (default), name Z-A, modified new-old, modified old-new, created new-old, created old-new
 - [x] Click opens, Ctrl+click opens in new tab, middle-click new tab
-- [ ] Multi-select with Ctrl and Shift; drag and drop files and folders (move); drop files from the OS (copy in)
+- [x] Multi-select with Ctrl and Shift; drag and drop files and folders (move); drop files from the OS (copy in)
 - [ ] Inline rename (F2); cut, copy, paste of files
 - [ ] File context menu: open in new tab, open to the right, open in new window, make a copy, move, bookmark, merge with, copy path (vault path, full path, obsidian URL), version history, open in default app, show in system explorer, rename, delete
 - [ ] Folder context menu: new note, new folder, new canvas, new base, move, bookmark, copy path, search in folder, show in system explorer, rename, delete
-- [ ] Filter box (show search) for the tree
-- [ ] Active file highlighted; indentation guides
+- [x] Filter box (show search) for the tree
+- [x] Active file highlighted; indentation guides
 
 ### Quick switcher
 - [ ] Fuzzy search over file names, paths and aliases; recent files when empty
@@ -157,18 +157,18 @@ Legend: **[later]** = not needed for the first release. **[ours]** = Bedrock doe
 - [x] Only commands that apply to the current context are listed (editor-only commands need an editor)
 
 ### Search
-- [ ] Search pane with query box, match-case toggle, explain-search toggle, collapse results, show more context, sort order (file name, modified, created; both directions)
-- [ ] Results grouped per file with counts and highlighted matches; click jumps to the match
-- [ ] Operators: AND by space, quotes, OR, minus, parentheses, `/regex/`, `file:`, `path:`, `content:`, `tag:`, `line:`, `block:`, `section:`, `task:`, `task-todo:`, `task-done:`, `match-case:`, `ignore-case:`, `[property]`, `[property:value]`
-- [ ] Explain search: each part of the query described in words
-- [ ] Search inside canvas text cards
-- [ ] "Copy search results"; bookmark a search; open search from a tag click
+- [x] Search pane with query box, match-case toggle, explain-search toggle, collapse results, show more context, sort order (file name, modified, created; both directions)
+- [x] Results grouped per file with counts and highlighted matches; click jumps to the match
+- [x] Operators: AND by space, quotes, OR, minus, parentheses, `/regex/`, `file:`, `path:`, `content:`, `tag:`, `line:`, `block:`, `section:`, `task:`, `task-todo:`, `task-done:`, `match-case:`, `ignore-case:`, `[property]`, `[property:value]`
+- [x] Explain search: each part of the query described in words
+- [x] Search inside canvas text cards
+- [x] "Copy search results"; bookmark a search; open search from a tag click
 - [ ] In-note find (Ctrl+F) and replace (Ctrl+H)
 
 ### Bookmarks
-- [ ] Bookmark files, folders, searches, headings, blocks, graph settings, web addresses; groups of bookmarks; drag to reorder; rename; remove
-- [ ] Bookmark icon in the view header filled when the current note is bookmarked
-- [ ] Stored in `bookmarks.json`
+- [x] Bookmark files, folders, searches, headings, blocks, graph settings, web addresses; groups of bookmarks; drag to reorder; rename; remove
+- [x] Bookmark icon in the view header filled when the current note is bookmarked
+- [x] Stored in `bookmarks.json`
 
 ### Page preview
 - [ ] Hover popover showing the linked note (scrollable, editable, expand button)
@@ -176,13 +176,13 @@ Legend: **[later]** = not needed for the first release. **[ours]** = Bedrock doe
 
 ## 6. Links and knowledge
 
-- [ ] Backlinks pane: linked mentions with context cards; unlinked mentions with a "link" button; counts; collapse results; more context; sort; filter
+- [x] Backlinks pane: linked mentions with context cards; unlinked mentions with a "link" button; counts; collapse results; more context; sort; filter
 - [ ] Backlinks at the bottom of each note (setting in Backlinks options and per note from the menu)
-- [ ] Outgoing links pane: links (resolved and unresolved) and unlinked mentions of other notes
-- [ ] Tags pane: tree of nested tags, counts, sort by name or frequency, click to search
-- [ ] Outline pane: heading tree, click to jump, drag to move sections, filter, follow cursor option
-- [ ] All properties pane: every property key with counts and type icons, sort, filter, rename across vault
-- [ ] File properties pane: properties of the active note in the sidebar
+- [x] Outgoing links pane: links (resolved and unresolved) and unlinked mentions of other notes
+- [x] Tags pane: tree of nested tags, counts, sort by name or frequency, click to search
+- [x] Outline pane: heading tree, click to jump, drag to move sections, filter, follow cursor option
+- [x] All properties pane: every property key with counts and type icons, sort, filter, rename across vault
+- [x] File properties pane: properties of the active note in the sidebar
 - [x] Property types: text, list, number, checkbox, date, date and time, plus aliases and tags; stored in `types.json`; inferred from values; change type from the key's menu
 - [ ] Footnotes pane [later]
 - [ ] Rename heading updates links to it; rename file updates links (per setting)
@@ -526,9 +526,9 @@ Every command id below must exist with the same id so `hotkeys.json`, plugins an
 
 #### `backlink` (3)
 
-- [ ] `backlink:open` Backlinks: Show backlinks
-- [ ] `backlink:open-backlinks` Backlinks: Open backlinks for the current note
-- [ ] `backlink:toggle-backlinks-in-document` Backlinks: Toggle backlinks in document
+- [x] `backlink:open` Backlinks: Show backlinks
+- [x] `backlink:open-backlinks` Backlinks: Open backlinks for the current note
+- [x] `backlink:toggle-backlinks-in-document` Backlinks: Toggle backlinks in document
 
 #### `bases` (6)
 
@@ -541,13 +541,13 @@ Every command id below must exist with the same id so `hotkeys.json`, plugins an
 
 #### `bookmarks` (7)
 
-- [ ] `bookmarks:bookmark-all-tabs` Bookmarks: Bookmark all tabs...
-- [ ] `bookmarks:bookmark-current-heading` Bookmarks: Bookmark heading under cursor... [editor]
-- [ ] `bookmarks:bookmark-current-search` Bookmarks: Bookmark current search...
-- [ ] `bookmarks:bookmark-current-section` Bookmarks: Bookmark block under cursor... [editor]
-- [ ] `bookmarks:bookmark-current-view` Bookmarks: Bookmark...
-- [ ] `bookmarks:open` Bookmarks: Show bookmarks
-- [ ] `bookmarks:unbookmark-current-view` Bookmarks: Remove bookmark for the current file
+- [x] `bookmarks:bookmark-all-tabs` Bookmarks: Bookmark all tabs...
+- [x] `bookmarks:bookmark-current-heading` Bookmarks: Bookmark heading under cursor... [editor]
+- [x] `bookmarks:bookmark-current-search` Bookmarks: Bookmark current search...
+- [x] `bookmarks:bookmark-current-section` Bookmarks: Bookmark block under cursor... [editor]
+- [x] `bookmarks:bookmark-current-view` Bookmarks: Bookmark...
+- [x] `bookmarks:open` Bookmarks: Show bookmarks
+- [x] `bookmarks:unbookmark-current-view` Bookmarks: Remove bookmark for the current file
 
 #### `canvas` (4)
 
@@ -675,7 +675,7 @@ Every command id below must exist with the same id so `hotkeys.json`, plugins an
 
 #### `global-search` (1)
 
-- [ ] `global-search:open` Search: Search in all files (Ctrl + Shift + F)
+- [x] `global-search:open` Search: Search in all files (Ctrl + Shift + F)
 
 #### `graph` (3)
 
@@ -723,18 +723,18 @@ Every command id below must exist with the same id so `hotkeys.json`, plugins an
 
 #### `outgoing-links` (2)
 
-- [ ] `outgoing-links:open` Outgoing links: Show outgoing links
-- [ ] `outgoing-links:open-for-current` Outgoing links: Open outgoing links for the current file
+- [x] `outgoing-links:open` Outgoing links: Show outgoing links
+- [x] `outgoing-links:open-for-current` Outgoing links: Open outgoing links for the current file
 
 #### `outline` (2)
 
-- [ ] `outline:open` Outline: Show outline
-- [ ] `outline:open-for-current` Outline: Open outline of the current file
+- [x] `outline:open` Outline: Show outline
+- [x] `outline:open-for-current` Outline: Open outline of the current file
 
 #### `properties` (2)
 
-- [ ] `properties:open` Properties view: Show all properties
-- [ ] `properties:open-local` Properties view: Show file properties
+- [x] `properties:open` Properties view: Show all properties
+- [x] `properties:open-local` Properties view: Show file properties
 
 #### `publish` (3)
 
@@ -763,7 +763,7 @@ Every command id below must exist with the same id so `hotkeys.json`, plugins an
 
 #### `tag-pane` (1)
 
-- [ ] `tag-pane:open` Tags view: Show tags
+- [x] `tag-pane:open` Tags view: Show tags
 
 #### `theme` (2)
 

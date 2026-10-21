@@ -178,6 +178,73 @@ for (const [name, setup, probe, ok, after] of scenes) {
   }
 }
 
+// Behaviour checks beyond screenshots.
+if (!only) {
+  try {
+    const r = await win.evaluate(async () => {
+      const t = window.__t;
+      const app = window.app;
+      await t.reset();
+      const out = {};
+      // Query block in reading view and live preview.
+      await app.vault.create("Inbox/Query demo.md", "# Query demo\n\n```query\ntag:#garden\n```\n\nEnd.\n");
+      await t.sleep(400);
+      await t.open("Inbox/Query demo.md", "reading");
+      await t.sleep(900);
+      out.queryReading = document.querySelectorAll(".workspace-leaf.mod-active .internal-query .search-result").length;
+      await t.open("Inbox/Query demo.md", "live");
+      app.workspace.activeEditor.editor.setCursor({ line: 7, ch: 0 });
+      await t.sleep(900);
+      out.queryLive = document.querySelectorAll(".workspace-leaf.mod-active .cm-query-block .search-result").length;
+      // Backlinks in document.
+      await t.open("Projects/Garden Planner.md", "live");
+      app.commands.executeCommandById("backlink:toggle-backlinks-in-document");
+      await t.sleep(900);
+      out.embedded = document.querySelectorAll(".workspace-leaf.mod-active .embedded-backlinks .search-result").length;
+      app.commands.executeCommandById("backlink:toggle-backlinks-in-document");
+      await t.sleep(200);
+      out.embeddedOff = document.querySelectorAll(".workspace-leaf.mod-active .embedded-backlinks").length;
+      // Unlinked mention -> Link button.
+      const bl = await t.side("backlink", "right");
+      await bl.view.backlink.update();
+      const btn = document.querySelector(".backlink-pane .search-result-file-match-replace-button");
+      btn?.click();
+      await t.sleep(600);
+      out.linked = (await app.vault.read(app.vault.getFileByPath("Projects/Reading List.md"))).match(/mentions \[\[[^\]]*Garden Planner[^\]]*\]\] without/) !== null;
+      // Outline: move "Code sample" before "Beds".
+      const ol = await t.side("outline", "right");
+      await ol.view.move(3, 1, "before");
+      await t.sleep(400);
+      const gp = app.workspace.getMostRecentLeaf().view.editor.getValue();
+      out.outlineMoved = gp.indexOf("## Code sample") < gp.indexOf("## Beds");
+      out.outlineDebug = JSON.stringify({ file: ol.view.file?.path, n: ol.view.headings?.length, mode: app.workspace.getMostRecentLeaf()?.view?.getViewType() });
+      // Bookmarks: add the active file, header button turns filled.
+      app.bookmarks.add({ type: "file", path: "Projects/Garden Planner.md" });
+      await t.sleep(500);
+      out.headerBookmarked = !!document.querySelector(".workspace-leaf.mod-active .view-action.mod-bookmark.mod-bookmarked");
+      out.bookmarksJson = JSON.parse(await app.vault.adapter.read(".obsidian/bookmarks.json")).items.length;
+      // Status bar.
+      out.status = [...document.querySelectorAll(".status-bar .plugin-backlink, .status-bar .plugin-properties, .status-bar .plugin-word-count")].map((e) => e.textContent);
+      // Search "Copy results" text and bookmark search command.
+      const sv = (await t.side("search", "left")).view;
+      sv.setQuery("compost");
+      await t.sleep(600);
+      out.copyText = sv.results.toText().includes("Order compost");
+      return out;
+    });
+    check("query block renders results (reading view)", r.queryReading >= 2, JSON.stringify(r.queryReading));
+    check("query block renders results (live preview)", r.queryLive >= 2, JSON.stringify(r.queryLive));
+    check("backlinks in document toggle", r.embedded >= 3 && r.embeddedOff === 0, `${r.embedded}/${r.embeddedOff}`);
+    check("unlinked mention Link button rewrites the note", r.linked);
+    check("outline drag moves the section", r.outlineMoved, r.outlineDebug);
+    check("bookmark header button + bookmarks.json", r.headerBookmarked && r.bookmarksJson === 4, JSON.stringify([r.headerBookmarked, r.bookmarksJson]));
+    check("status bar backlinks/properties/word count", /backlinks/.test(r.status[0] ?? "") && /properties/.test(r.status[1] ?? "") && /words/.test(r.status[2] ?? ""), r.status.join(" | "));
+    check("copy search results", r.copyText);
+  } catch (e) {
+    check("behaviour checks", false, String(e?.stack ?? e).slice(0, 400));
+  }
+}
+
 // Search speed on this vault (index already loaded).
 const perf = await win.evaluate(async () => {
   const v = window.app.workspace.getLeavesOfType("search")[0]?.view;

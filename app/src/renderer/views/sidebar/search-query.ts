@@ -309,13 +309,21 @@ function merge(into: MatchResult, r: MatchResult): void {
   into.path.push(...r.path);
 }
 
-function findAll(hay: string, needle: string, offset: number, out: Range[]): boolean {
+const WORD_CHAR = /[\p{L}\p{N}_]/u;
+
+/** All occurrences of `needle`; with `wholeWord`, only where it isn't glued to letters or digits. */
+function findAll(hay: string, needle: string, offset: number, out: Range[], wholeWord = false): boolean {
   if (!needle) return false;
   let from = 0;
   let found = false;
   for (;;) {
     const i = hay.indexOf(needle, from);
     if (i < 0) break;
+    const end = i + needle.length;
+    if (wholeWord && ((i > 0 && WORD_CHAR.test(hay[i - 1]) && WORD_CHAR.test(needle[0])) || (end < hay.length && WORD_CHAR.test(hay[end]) && WORD_CHAR.test(needle[needle.length - 1])))) {
+      from = i + 1;
+      continue;
+    }
     out.push([offset + i, offset + i + needle.length]);
     found = true;
     from = i + needle.length;
@@ -335,11 +343,11 @@ function evalTextual(node: QueryNode & { type: "term" | "regex" }, scope: Scope,
   let hit = false;
   if (node.type === "term") {
     const needle = cs ? node.text : node.text.toLowerCase();
-    hit = findAll(cs ? scope.text : scope.lower, needle, scope.offset, ranges);
+    hit = findAll(cs ? scope.text : scope.lower, needle, scope.offset, ranges, node.exact);
     report(scope, ranges, res);
     if (scope.whole && scope.target === "content") {
       const nr: Range[] = [];
-      if (findAll(cs ? scope.doc.name : scope.doc.name.toLowerCase(), needle, 0, nr)) {
+      if (findAll(cs ? scope.doc.name : scope.doc.name.toLowerCase(), needle, 0, nr, node.exact)) {
         hit = true;
         res.name.push(...nr);
       }

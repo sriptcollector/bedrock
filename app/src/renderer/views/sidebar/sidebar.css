@@ -292,9 +292,7 @@ body.theme-dark {
   user-select: text;
 }
 .search-info-container .search-info-children {
-  padding-left: 12px;
-  margin-left: 8px;
-  border-left: 1px solid var(--nav-indentation-guide-color);
+  padding-left: 20px;
 }
 .search-params {
   display: flex;
@@ -399,7 +397,7 @@ body.theme-dark {
 .search-empty-state {
   color: var(--text-faint);
   font-size: var(--font-ui-small);
-  padding: 8px;
+  padding: 0 6px 8px;
 }
 .search-result-file-title {
   color: var(--text-normal);
@@ -535,8 +533,8 @@ body.theme-dark {
 }
 .backlink-pane .search-empty-state,
 .outgoing-link-pane .search-empty-state {
-  padding: 0 8px 8px;
-  margin-top: -4px;
+  padding: 4px 8px 6px;
+  margin-top: 0;
   font-size: var(--font-ui-small);
   color: var(--text-faint);
 }
