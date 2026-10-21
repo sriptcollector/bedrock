@@ -67,6 +67,12 @@ export function iconPath(): string {
   return path.join(__dirname, process.platform === "win32" ? "icon.ico" : "icon.png");
 }
 
+/** The window icon: the person's own picture (Settings › Appearance › Custom app icon) or ours. */
+function windowIconPath(): string {
+  const custom = path.join(app.getPath("userData"), "custom-icon.png");
+  return fs.existsSync(custom) ? custom : iconPath();
+}
+
 export function createVaultWindow(opts: { vaultPath: string; isMain: boolean; show: boolean; openFile?: string; smokeTest?: boolean }): BrowserWindow {
   const key = opts.isMain ? "main" : opts.vaultPath;
   const b = loadBounds(key);
@@ -80,7 +86,7 @@ export function createVaultWindow(opts: { vaultPath: string; isMain: boolean; sh
     minHeight: 300,
     show: false,
     title: BRAND.displayName,
-    icon: fs.existsSync(iconPath()) ? iconPath() : undefined,
+    icon: fs.existsSync(windowIconPath()) ? windowIconPath() : undefined,
     backgroundColor: "#1e1e1e",
     // Like Obsidian 1.14 on Windows: no native frame, but native caption buttons drawn over our
     // tab bar (titleBarOverlay). That gives working minimize/maximize/close, Windows snap layouts on

@@ -18,6 +18,13 @@ body {
   --font-monospace: var(--font-monospace-override, var(--font-monospace-theme));
   --font-text-size: 16px;
   --text-highlight-bg: var(--highlight-background);
+  --file-header-font: var(--font-interface);
+  --hotkey-font: var(--font-interface);
+  --metadata-input-font: var(--font-interface);
+  --metadata-label-font: var(--font-interface);
+  --font-mermaid: var(--font-text);
+  --font-print: var(--font-print-override, var(--font-text-theme)), Arial;
+  --frame-left-space: 0px;
 }
 .theme-dark {
   color-scheme: dark;

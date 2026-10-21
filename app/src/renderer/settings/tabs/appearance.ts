@@ -1,5 +1,8 @@
 // Settings › Appearance: color scheme, accent, themes, CSS snippets, fonts, font size.
-import { BuiltinTab } from "./base";
+import { ipcRenderer } from "electron";
+import { IPC } from "../../../shared/ipc";
+import { Notice } from "../../ui/notice";
+import { BuiltinTab, appSettings } from "./base";
 import { SettingPage, SettingGroup } from "../render";
 import { Setting } from "../../ui/setting";
 import { DEFAULT_ACCENT } from "../../theme/custom-css";
@@ -136,9 +139,37 @@ export class AppearanceTab extends BuiltinTab {
         items: [
           {
             name: "Custom app icon",
-            desc: "Use your own picture as the app icon. This isn't available yet.",
+            desc: "Use your own picture as the app's window and taskbar icon.",
             render: (s: Setting) => {
-              s.addButton((b) => b.setButtonText("Choose").setDisabled(true));
+              let relaunch: HTMLElement | null = null;
+              const call = (op: "get" | "choose" | "reset") => ipcRenderer.invoke(IPC.appIcon, op) as Promise<boolean>;
+              const sync = (has: boolean) => reset.extraSettingsEl.toggle(has);
+              let reset!: any;
+              s.addExtraButton((b) => {
+                reset = b;
+                b.setIcon("rotate-ccw")
+                  .setTooltip("Restore default")
+                  .onClick(async () => {
+                    sync(await call("reset"));
+                    relaunch?.show();
+                  });
+              });
+              s.addButton((b) =>
+                b.setButtonText("Choose").onClick(async () => {
+                  try {
+                    sync(await call("choose"));
+                    relaunch?.show();
+                  } catch (e) {
+                    new Notice(`Couldn't use that picture: ${(e as Error).message}`);
+                  }
+                }),
+              );
+              s.addButton((b) => {
+                relaunch = b.buttonEl;
+                b.setButtonText("Relaunch").setCta().onClick(() => appSettings.relaunch());
+                b.buttonEl.hide();
+              });
+              void call("get").then(sync);
             },
           },
         ],

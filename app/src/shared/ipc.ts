@@ -19,6 +19,8 @@ export const IPC = {
   syncCall: "bedrock:sync-call", // {op, ...args}: see main/sync/host.ts and shared/sync.ts
   agentCall: "bedrock:agent-call", // Settings › Connect an AI agent (main/agents/host.ts)
   agentBridgeReady: "bedrock:agent-bridge-ready", // renderer -> main (send): the vault bridge is listening
+  nativeMenu: "bedrock:native-menu", // {items, x, y} -> chosen item path | null (Settings › Interface › Native menus)
+  appIcon: "bedrock:app-icon", // "get" | "choose" | "reset" -> has custom icon (Settings › Appearance › Custom app icon)
   webviewerCall: "bedrock:webviewer-call", // (op, arg): web viewer settings shared by all vaults, ad blocker, clear data
   agentResponse: "bedrock:agent-response", // renderer -> main (send): {id, ok, value | error}
   // main -> renderer (send)

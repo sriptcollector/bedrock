@@ -230,7 +230,7 @@ Legend: **[later]** = not needed for the first release. **[ours]** = Bedrock doe
 - [ ] Slides (present a note split by `---`) [later]
 - [ ] Audio recorder (record into the vault) [later]
 - [x] Bases (`.base` table and card views over properties, with sort, group, filter, formulas) [later]
-- [ ] Web viewer (in-app browser, reader mode, save page as Markdown, ad blocking) [later]
+- [x] Web viewer (in-app browser, reader mode, save page as Markdown, ad blocking)
 
 ## 10. Look and feel
 
@@ -238,15 +238,15 @@ Legend: **[later]** = not needed for the first release. **[ours]** = Bedrock doe
 - [x] Base color scheme: light, dark, follow system (default)
 - [x] Accent color picker (default violet `#8a5cf5`) with restore-default; derived accent variables
 - [x] Interface font, text font, monospace font pickers (system fonts); font size slider (default 16) with restore-default; Ctrl+scroll font size (setting, off)
-- [ ] Every public CSS variable name from `docs/reference/css-variables.json` defined with the same default values
+- [x] Every public CSS variable name from `docs/reference/css-variables.json` defined with the same default values
 - [ ] Same DOM class names and nesting for every component (UI-SPEC section 4)
 - [ ] Lucide icons by name; our own drawings for the few custom icons (sidebar toggles, links in/out, fold triangle)
 - [x] Community themes: theme browser (search, sort, light/dark filters, installed only, preview images, detail page, install/use/uninstall, update check); one active theme; `themes/<name>/theme.css` + `manifest.json`
 - [x] CSS snippets: list `.obsidian/snippets/*.css`, toggle each, reload list, open folder
 - [ ] Translucent window (setting) [later]
-- [ ] Native menus option [later]
-- [ ] Custom app icon [later]
-- [ ] Context menus, tooltips, notices (toasts), modals, prompts, suggestion lists matching the measured styles
+- [x] Native menus option
+- [x] Custom app icon
+- [x] Context menus, tooltips, notices (toasts), modals, prompts, suggestion lists matching the measured styles
 
 ## 11. Settings window
 
@@ -282,7 +282,7 @@ Legend: **[later]** = not needed for the first release. **[ours]** = Bedrock doe
 - [x] Font / "Monospace font": subpage (font picker; default: theme font)
 - [x] Font / "Font size": slider, 16; restore-default button
 - [x] Font / "Quick font size adjustment": toggle, off
-- [ ] Advanced / "Custom app icon": button "Choose"; button "Relaunch"; restore-default button
+- [x] Advanced / "Custom app icon": button "Choose"; button "Relaunch"; restore-default button
 
 ### Settings > Interface
 
@@ -290,7 +290,7 @@ Legend: **[later]** = not needed for the first release. **[ours]** = Bedrock doe
 - [x] "Show ribbon": toggle, on
 - [x] "Ribbon menu configuration": subpage (show/hide and reorder ribbon items)
 - [x] Advanced / "Zoom level": slider, 0; restore-default button
-- [ ] Advanced / "Native menus": toggle, off
+- [x] Advanced / "Native menus": toggle, off
 - [x] Advanced / "Window frame style": dropdown, Hidden (default) (options: Hidden (default), Obsidian frame, Native frame); button "Relaunch"
 - [x] Advanced / "Open settings in new window": toggle, on
 
@@ -427,15 +427,15 @@ Legend: **[later]** = not needed for the first release. **[ours]** = Bedrock doe
 
 ### Settings > Web viewer
 
-- [ ] "Open external links": toggle, on
-- [ ] "Homepage": text, empty
-- [ ] "Saved page folder": text, empty (placeholder "Example: folder 1/folder 2")
-- [ ] "Search engine": dropdown, DuckDuckGo (options: DuckDuckGo, Brave, Bing, Google, Custom)
-- [ ] "Custom search engine": text, https://duckduckgo.com/?q=%s (placeholder "https://duckduckgo.com/?q=%s")
-- [ ] "Enable ad blocker": toggle, on
-- [ ] "Ad blocking rules": text area, https://easylist.to/easylist/easylist.txt, https://easylist.to/easylist/easyprivacy.txt
-- [ ] "Ad block update frequency": slider, 4
-- [ ] "Web viewer data": button "Clear web viewer data"
+- [x] "Open external links": toggle, on
+- [x] "Homepage": text, empty
+- [x] "Saved page folder": text, empty (placeholder "Example: folder 1/folder 2")
+- [x] "Search engine": dropdown, DuckDuckGo (options: DuckDuckGo, Brave, Bing, Google, Custom)
+- [x] "Custom search engine": text, https://duckduckgo.com/?q=%s (placeholder "https://duckduckgo.com/?q=%s")
+- [x] "Enable ad blocker": toggle, on
+- [x] "Ad blocking rules": text area, https://easylist.to/easylist/easylist.txt, https://easylist.to/easylist/easyprivacy.txt
+- [x] "Ad block update frequency": slider, 4
+- [x] "Web viewer data": button "Clear web viewer data"
 
 
 ### Settings > Hotkeys
@@ -471,14 +471,14 @@ Legend: **[later]** = not needed for the first release. **[ours]** = Bedrock doe
 - [x] `random-note` Random note (off) [later]
 - [ ] `outline` Outline (on)
 - [ ] `word-count` Word count (on)
-- [ ] `slides` Slides (off) [later]
+- [x] `slides` Slides (off)
 - [ ] `audio-recorder` Audio recorder (off) [later]
 - [x] `workspaces` Workspaces (off) [later]
 - [x] `file-recovery` File recovery (on)
 - [ ] `publish` Publish (off) [ours: not planned]
 - [ ] `sync` Sync (on) [ours: Bedrock sync, always available]
 - [x] `bases` Bases (on) [later]
-- [ ] `webviewer` Web viewer (off) [later]
+- [x] `webviewer` Web viewer (off)
 
 ### Community plugins
 - [x] Restricted mode on by default; "turn on community plugins" flow with a warning; per-vault trust prompt when a vault with plugins is opened the first time; stored outside the vault
@@ -748,7 +748,7 @@ Every command id below must exist with the same id so `hotkeys.json`, plugins an
 
 #### `slides` (1)
 
-- [ ] `slides:start` Slides: Start presentation
+- [x] `slides:start` Slides: Start presentation
 
 #### `switcher` (1)
 
@@ -772,15 +772,15 @@ Every command id below must exist with the same id so `hotkeys.json`, plugins an
 
 #### `webviewer` (9)
 
-- [ ] `webviewer:focus-address-bar` Web viewer: Focus address bar
-- [ ] `webviewer:open` Web viewer: Open web viewer
-- [ ] `webviewer:open-history` Web viewer: Show history
-- [ ] `webviewer:save-to-vault` Web viewer: Save to vault
-- [ ] `webviewer:search` Web viewer: Search the web
-- [ ] `webviewer:toggle-reader-mode` Web viewer: Toggle reader mode
-- [ ] `webviewer:zoom-in` Web viewer: Zoom in
-- [ ] `webviewer:zoom-out` Web viewer: Zoom out
-- [ ] `webviewer:zoom-reset` Web viewer: Reset zoom
+- [x] `webviewer:focus-address-bar` Web viewer: Focus address bar
+- [x] `webviewer:open` Web viewer: Open web viewer
+- [x] `webviewer:open-history` Web viewer: Show history
+- [x] `webviewer:save-to-vault` Web viewer: Save to vault
+- [x] `webviewer:search` Web viewer: Search the web
+- [x] `webviewer:toggle-reader-mode` Web viewer: Toggle reader mode
+- [x] `webviewer:zoom-in` Web viewer: Zoom in
+- [x] `webviewer:zoom-out` Web viewer: Zoom out
+- [x] `webviewer:zoom-reset` Web viewer: Reset zoom
 
 #### `window` (4)
 

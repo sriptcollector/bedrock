@@ -113,8 +113,8 @@ export class Menu extends Component {
     return this;
   }
 
-  private render(): void {
-    this.dom.empty();
+  /** Items in display order, with separators between sections. */
+  orderedEntries(): (MenuItem | "separator")[] {
     // Group by section (in insertion order), separators between groups.
     const order: string[] = [];
     for (const it of this.items) if (it !== "separator" && !order.includes(it.section)) order.push(it.section);
@@ -124,21 +124,42 @@ export class Menu extends Component {
       return i >= 0 ? i : SECTION_ORDER.indexOf("system") - 0.5;
     };
     order.sort((a, b) => rank(a) - rank(b));
-    let first = true;
-    if (order.length > 1) {
-      for (const sec of order) {
-        if (!first) this.dom.createDiv("menu-separator");
-        first = false;
-        for (const it of this.items) if (it !== "separator" && it.section === sec) this.dom.appendChild(it.dom);
-      }
-    } else {
-      for (const it of this.items) {
-        if (it === "separator") this.dom.createDiv("menu-separator");
-        else this.dom.appendChild(it.dom);
-      }
+    if (order.length <= 1) return [...this.items];
+    const out: (MenuItem | "separator")[] = [];
+    for (const sec of order) {
+      if (out.length) out.push("separator");
+      for (const it of this.items) if (it !== "separator" && it.section === sec) out.push(it);
+    }
+    return out;
+  }
+
+  private render(): void {
+    this.dom.empty();
+    for (const it of this.orderedEntries()) {
+      if (it === "separator") this.dom.createDiv("menu-separator");
+      else this.dom.appendChild(it.dom);
     }
   }
 
+  /** Settings › Interface › Native menus: the operating system draws the menu. */
+  private async showNative(pos: { x: number; y: number; left?: boolean }): Promise<void> {
+    const toTemplate = (m: Menu): any[] =>
+      m.orderedEntries().map((it) =>
+        it === "separator" ? { type: "separator" } : { label: it.titleEl.textContent ?? "", checked: it.checked, disabled: it.disabled, submenu: it.submenu ? toTemplate(it.submenu) : undefined },
+      );
+    const { ipcRenderer } = require("electron");
+    const path: number[] | null = await ipcRenderer.invoke("bedrock:native-menu", { items: toTemplate(this), x: pos.x, y: pos.y });
+    let m: Menu = this;
+    let chosen: MenuItem | null = null;
+    for (const i of path ?? []) {
+      const e = m.orderedEntries()[i];
+      if (!e || e === "separator") break;
+      chosen = e;
+      if (e.submenu) m = e.submenu;
+    }
+    for (const cb of this.hideCbs.splice(0)) cb();
+    if (chosen && !chosen.submenu) chosen.callback?.(new MouseEvent("click"));
+  }
   showAtMouseEvent(evt: MouseEvent): this {
     evt.preventDefault?.();
     const doc = ((evt.target as Node | null)?.ownerDocument ?? (evt as any).view?.document) as Document | undefined;
@@ -147,6 +168,11 @@ export class Menu extends Component {
 
   showAtPosition(pos: { x: number; y: number; width?: number; overlap?: boolean; left?: boolean; flipX?: number }, docArg?: Document): this {
     if (!this.parentMenu && openMenu && openMenu !== this) openMenu.hide();
+    const targetDoc: Document = docArg ?? (window as any).activeDocument ?? window.document;
+    if (!this.parentMenu && targetDoc === window.document && (this.useNative || (window as any).app?.vault?.getConfig?.("nativeMenus"))) {
+      void this.showNative(pos);
+      return this;
+    }
     this.render();
     // Popout windows (settings) show menus in their own document.
     const document: Document = docArg ?? (window as any).activeDocument ?? window.document;

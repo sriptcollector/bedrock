@@ -9,13 +9,14 @@ import * as hub from "./hub";
 import { createTray, refreshTray } from "./tray";
 import { startAutoUpdate, checkNow } from "./updater";
 import { ensureMainVault, importIntoMain, isVaultFolder, readRegistry, rememberOther } from "./vaults";
-import { createVaultWindow, vaultWindows } from "./windows";
+import { createVaultWindow, iconPath, vaultWindows } from "./windows";
 import { runSelftest } from "./selftest";
 import { applyEarlyAppSettings, registerSettingsIpc } from "./settings-host";
 import { startSync, stopSync } from "./sync";
 import { installCrashHandling, log } from "./log";
 import { startAgents, stopAgents } from "./agents/host";
 import { installWebviewer } from "./webviewer";
+import { installUiExtras } from "./ui-extras";
 import { spawn } from "node:child_process";
 import { registerEditorIpc } from "./editor-ipc";
 
@@ -178,6 +179,7 @@ function startApp(): void {
   registerIpc({ openOtherVault });
   registerSettingsIpc();
   installWebviewer();
+  installUiExtras(iconPath);
   registerEditorIpc();
 
   app.whenReady().then(() => {

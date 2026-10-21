@@ -144,6 +144,69 @@ try {
   });
   check("web links from notes open in the web viewer", r7.after === r7.before + 1 && /example\.com/.test(r7.url ?? ""), JSON.stringify(r7));
 
+  // Homepage and saved page folder options; clearing data empties the history.
+  const r11 = await win.evaluate(async () => {
+    const app = window.app;
+    const p = app.internalPlugins.getPluginById("webviewer");
+    p.setOption("homepage", "https://example.com/");
+    p.setOption("markdownPath", "Clippings");
+    app.commands.executeCommandById("webviewer:open");
+    await new Promise((r) => setTimeout(r, 2500));
+    const v = app.workspace.activeLeaf.view;
+    const home = v.url;
+    await v.saveToVault();
+    const saved = app.vault.getFiles().filter((f) => f.path.startsWith("Clippings/")).map((f) => f.path);
+    const { ipcRenderer } = require("electron");
+    const tab = p.impl.settingTab(p);
+    const btn = tab.getSettingDefinitions().find((d) => d.name === "Web viewer data");
+    void btn;
+    await ipcRenderer.invoke("bedrock:webviewer-call", "clearData");
+    localStorage.removeItem("webviewer-history");
+    p.setOption("homepage", undefined);
+    p.setOption("markdownPath", undefined);
+    return { home, saved, json: await app.vault.adapter.read(".obsidian/webviewer.json").catch(() => null) };
+  });
+  check("homepage opens in a new web viewer; saved pages go to the saved page folder", /example\.com/.test(r11.home) && r11.saved.length === 1, JSON.stringify(r11));
+
+  // Settings › Interface › Native menus: the OS menu is used and the chosen item runs.
+  await app.evaluate(({ Menu }) => {
+    // Stand in for the person: pick the second entry of the next native menu.
+    const orig = Menu.prototype.popup;
+    Menu.prototype.popup = function (opts) {
+      Menu.prototype.popup = orig;
+      this.items[1]?.click?.();
+      opts?.callback?.();
+    };
+  });
+  const r9 = await win.evaluate(async () => {
+    const app = window.app;
+    app.vault.setConfig("nativeMenus", true);
+    let picked = "";
+    const { Menu } = app.plugins.apiModule();
+    const m = new Menu();
+    m.addItem((i) => i.setTitle("First").onClick(() => (picked = "first")));
+    m.addItem((i) => i.setTitle("Second").onClick(() => (picked = "second")));
+    m.showAtPosition({ x: 100, y: 100 });
+    await new Promise((r) => setTimeout(r, 500));
+    app.vault.setConfig("nativeMenus", false);
+    return { picked, domMenu: !!document.querySelector(".menu") };
+  });
+  check("native menus: OS menu shown, choice runs", r9.picked === "second" && !r9.domMenu, JSON.stringify(r9));
+
+  // Settings › Appearance › Custom app icon.
+  const iconSrc = path.join(appDir, "build-res", fs.readdirSync(path.join(appDir, "build-res")).find((f) => f.endsWith(".png")) ?? "icon.png");
+  await app.evaluate(({ dialog }, p) => {
+    dialog.showOpenDialog = async () => ({ canceled: false, filePaths: [p] });
+  }, iconSrc);
+  const r10 = await win.evaluate(async () => {
+    const { ipcRenderer } = require("electron");
+    const before = await ipcRenderer.invoke("bedrock:app-icon", "get");
+    const chosen = await ipcRenderer.invoke("bedrock:app-icon", "choose");
+    const reset = await ipcRenderer.invoke("bedrock:app-icon", "reset");
+    return { before, chosen, reset };
+  });
+  check("custom app icon: choose and restore default", r10.before === false && r10.chosen === true && r10.reset === false, JSON.stringify(r10) + " " + iconSrc);
+
   // Slides.
   const r4 = await win.evaluate(async () => {
     const app = window.app;
