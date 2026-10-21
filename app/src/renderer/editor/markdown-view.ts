@@ -141,8 +141,10 @@ export class MarkdownView extends TextFileView {
     this.sizerEl = createDiv("cm-sizer");
     const container = createDiv("cm-contentContainer");
     scroller.insertBefore(this.sizerEl, this.cm.contentDOM);
-    this.editorHeaderEl = this.sizerEl.createDiv("cm-note-header");
+    // Inline title and properties are direct children of .cm-sizer, before the content
+    // container, exactly like the original (themes use `.cm-sizer > .inline-title`).
     this.sizerEl.appendChild(container);
+    this.editorHeaderEl = container;
     container.appendChild(this.cm.contentDOM);
     const sizer = this.sizerEl;
     const nativeInsert = Node.prototype.insertBefore;
@@ -162,8 +164,7 @@ export class MarkdownView extends TextFileView {
 
   private mountEditorHeader(): void {
     if (!this.editorHeaderEl || this.mode !== "source") return;
-    this.editorHeaderEl.empty();
-    this.mountHeader(this.editorHeaderEl, this.fmHidden && !this.sourceMode);
+    this.mountHeader(this.sizerEl, this.fmHidden && !this.sourceMode, this.editorHeaderEl);
   }
 
   get editMode(): any {
@@ -398,11 +399,12 @@ export class MarkdownView extends TextFileView {
   }
 
   // ----- header: inline title + properties -----
-  mountHeader(wrap: HTMLElement, withProperties: boolean): void {
-    if (this.app.vault.getConfig("showInlineTitle") !== false) wrap.appendChild(this.inlineTitleEl);
+  /** Put the inline title and properties into `wrap` (before `before`, if given). */
+  mountHeader(wrap: HTMLElement, withProperties: boolean, before: Node | null = null): void {
+    if (this.app.vault.getConfig("showInlineTitle") !== false) wrap.insertBefore(this.inlineTitleEl, before);
     else this.inlineTitleEl.detach();
     const showProps = this.app.vault.getConfig("propertiesInDocument") !== "hidden";
-    if (withProperties && showProps) wrap.appendChild(this.properties.el);
+    if (withProperties && showProps) wrap.insertBefore(this.properties.el, before);
     else if (this.properties.el.parentElement === wrap) this.properties.el.detach();
   }
 

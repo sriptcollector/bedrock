@@ -939,9 +939,7 @@ body.mod-macos .workspace-ribbon.mod-left .sidebar-toggle-button {
   transition: transform var(--anim-duration-fast);
   transform: none;
 }
-.tree-item-icon.collapse-icon.is-collapsed {
-  transform: rotate(-90deg);
-}
+/* Collapsed: only the svg turns (sidebar.css), never the container too, or it points up. */
 .tree-item-icon .svg-icon {
   width: 12px;
   height: 12px;
@@ -1492,9 +1490,6 @@ body.mod-macos .workspace-ribbon.mod-left .sidebar-toggle-button {
   max-width: 100%;
 }
 /* inline title and header */
-.cm-note-header:empty {
-  display: none;
-}
 .inline-title {
   font-size: var(--inline-title-size);
   font-weight: var(--inline-title-weight);
