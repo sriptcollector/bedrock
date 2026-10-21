@@ -59,14 +59,14 @@ try {
   Check "restore button restores" (-not [W]::IsZoomed($h))
 
   [W]::GetWindowRect($h, [ref]$r) | Out-Null
-  # Double-click an empty part of the tab bar (just left of the caption buttons).
-  $bx = $r.R - 200; $by = $r.T + 18
+  # Double-click an empty part of the tab bar (left of the tab list, right-sidebar toggle and caption buttons).
+  $bx = $r.R - 260; $by = $r.T + 18
   [W]::Click($bx, $by); Start-Sleep -Milliseconds 60; [W]::Click($bx, $by); Start-Sleep -Milliseconds 800
   Check "double-click tab bar maximizes" ([W]::IsZoomed($h))
   [W]::ShowWindow($h, 9) | Out-Null; Start-Sleep -Milliseconds 700
 
   [W]::GetWindowRect($h, [ref]$r) | Out-Null; $before = $r.L
-  [W]::Drag($r.R - 200, $r.T + 18, -120, 40); Start-Sleep -Milliseconds 600
+  [W]::Drag($r.R - 260, $r.T + 18, -120, 40); Start-Sleep -Milliseconds 600
   [W]::GetWindowRect($h, [ref]$r) | Out-Null
   Check "dragging the tab bar moves the window" ([Math]::Abs($r.L - ($before - 120)) -le 12)
 

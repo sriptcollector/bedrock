@@ -29,6 +29,7 @@ import { registerSimpleViews, IMAGE_EXTS } from "./views/simple-views";
 import { registerGraph } from "./views/graph/view";
 import { registerCanvas } from "./views/canvas/view";
 import { registerSidebar } from "./views/sidebar";
+import { fillPaneFileMenu } from "./views/sidebar/file-menu";
 import { PropertyTypes } from "./editor/properties";
 import { mountSyncUi } from "./sync-ui";
 import { InternalPlugins } from "./core-plugins/manager";
@@ -243,6 +244,10 @@ export class App {
     registerGraph(this);
     registerCanvas(this);
     registerSidebar(this);
+    // "More options" of a file view: the file's actions in the original's groups.
+    this.workspace.on("file-menu", (m: any, f: any, source: string, leaf: any) => {
+      if (source === "more-options" && f?.extension !== undefined) fillPaneFileMenu(this, m, f, leaf);
+    });
   }
 
   private registerRibbon(): void {

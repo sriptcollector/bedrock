@@ -350,6 +350,12 @@ export class WebViewerView extends ItemView {
   }
 
   onPaneMenu(menu: Menu, source: string): void {
+    const split = (dir: "vertical" | "horizontal") => () => {
+      const leaf = this.app.workspace.getLeaf("split", dir);
+      void leaf.setViewState({ type: VIEW_TYPE_WEBVIEWER, state: { url: this.url }, active: true });
+    };
+    menu.addItem((i) => i.setTitle("Split right").setIcon("separator-vertical").setSection("open").onClick(split("vertical")));
+    menu.addItem((i) => i.setTitle("Split down").setIcon("separator-horizontal").setSection("open").onClick(split("horizontal")));
     menu.addItem((i) => i.setTitle("Find...").setIcon("file-search").setSection("action").onClick(() => this.openFind()));
     menu.addItem((i) =>
       i

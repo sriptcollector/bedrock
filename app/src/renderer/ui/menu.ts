@@ -3,7 +3,7 @@ import { Component } from "../api/events";
 import { setIcon } from "../dom/icons";
 
 let openMenu: Menu | null = null;
-const SECTION_ORDER = ["title", "", "new", "open", "action-primary", "action", "clipboard", "selection", "type", "info", "view", "system", "close", "danger"];
+const SECTION_ORDER = ["title", "pane", "", "new", "open", "action-primary", "action", "find", "clipboard", "selection", "type", "info", "view", "zoom", "system", "close", "danger"];
 
 export class MenuItem {
   dom: HTMLElement;

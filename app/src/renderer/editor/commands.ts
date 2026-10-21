@@ -5,7 +5,7 @@ import { EditorSelection, type EditorState, type TransactionSpec } from "@codemi
 import { EditorView } from "@codemirror/view";
 import { moveLineUp, moveLineDown, deleteLine, selectAll, addCursorAbove, addCursorBelow } from "@codemirror/commands";
 import { foldAll, unfoldAll, toggleFold, foldCode, unfoldCode, foldable, foldedRanges, foldEffect, unfoldEffect, syntaxTree } from "@codemirror/language";
-import { openSearchPanel } from "@codemirror/search";
+import { openDocumentSearch } from "./search-panel";
 import type { Command, Hotkey } from "../commands/commands";
 import { Menu } from "../ui/menu";
 import { Notice } from "../ui/notice";
@@ -218,8 +218,8 @@ export function registerEditorCommands(app: any): void {
     const c = cm.coordsAtPos(cm.state.selection.main.head);
     showEditorMenu(app, v, cm, { x: c?.left ?? 0, y: c?.bottom ?? 0 });
   });
-  ed("editor:open-search", "Search current file", "search", (_v, cm) => openSearchPanel(cm), hk(["Mod"], "F"));
-  ed("editor:open-search-replace", "Search & replace in current file", "replace", (_v, cm) => openSearchPanel(cm), hk(["Mod"], "H"));
+  ed("editor:open-search", "Search current file", "search", (_v, cm) => openDocumentSearch(cm, false), hk(["Mod"], "F"));
+  ed("editor:open-search-replace", "Search & replace in current file", "replace", (_v, cm) => openDocumentSearch(cm, true), hk(["Mod"], "H"));
   add({
     id: "editor:focus",
     name: "Focus on last note",

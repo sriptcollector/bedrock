@@ -6,7 +6,7 @@ import { MarkdownView } from "../editor/markdown-view";
 import { WorkspaceTabs } from "../workspace/items";
 import { CommandPalette, QuickSwitcher } from "../views/switcher";
 import { foldAll, unfoldAll, toggleFold } from "@codemirror/language";
-import { openSearchPanel } from "@codemirror/search";
+import { openDocumentSearch } from "../editor/search-panel";
 import { Notice } from "../ui/notice";
 import { EditorSelection } from "@codemirror/state";
 import { registerEditorCommands } from "../editor/commands";
@@ -362,8 +362,8 @@ export function registerBuiltinCommands(app: App): void {
       undefined,
       "heading",
     );
-  editorCmd("editor:open-search", "Search current file", (v) => openSearchPanel(v.cm), hk(["Mod"], "F"), "search");
-  editorCmd("editor:open-search-replace", "Search & replace in current file", (v) => openSearchPanel(v.cm), hk(["Mod"], "H"), "replace");
+  editorCmd("editor:open-search", "Search current file", (v) => openDocumentSearch(v.cm, false), hk(["Mod"], "F"), "search");
+  editorCmd("editor:open-search-replace", "Search & replace in current file", (v) => openDocumentSearch(v.cm, true), hk(["Mod"], "H"), "replace");
   editorCmd("editor:fold-all", "Fold all headings and lists", (v) => foldAll(v.cm), undefined, "chevrons-down-up");
   editorCmd("editor:unfold-all", "Unfold all headings and lists", (v) => unfoldAll(v.cm), undefined, "chevrons-up-down");
   editorCmd("editor:toggle-fold", "Toggle fold on the current line", (v) => toggleFold(v.cm), undefined, "chevrons-right-left");

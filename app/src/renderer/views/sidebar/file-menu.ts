@@ -201,6 +201,47 @@ export function revealInExplorer(app: any, file: TAbstractFile): void {
   leaf.view?.revealInFolder?.(file);
 }
 
+/** The view's "More options" menu for a file (source "more-options"): splits, file actions,
+ *  find/replace, copy path, system and delete, in the original's groups. */
+export function fillPaneFileMenu(app: any, m: Menu, file: TFile, leaf: any): void {
+  const cmd = (id: string) => app.commands?.findCommand?.(id);
+  const run = (id: string) => () => {
+    if (leaf) app.workspace.setActiveLeaf(leaf, { focus: true });
+    app.commands.executeCommandById(id);
+  };
+  if (file.extension === "md" && cmd("backlink:toggle-backlinks-in-document"))
+    m.addItem((i) => i.setTitle("Backlinks in document").setIcon("links-coming-in").setSection("pane").onClick(run("backlink:toggle-backlinks-in-document")));
+  m.addItem((i) => i.setTitle("Split right").setIcon("separator-vertical").setSection("open").onClick(() => app.workspace.getLeaf("split", "vertical").openFile(file)));
+  m.addItem((i) => i.setTitle("Split down").setIcon("separator-horizontal").setSection("open").onClick(() => app.workspace.getLeaf("split", "horizontal").openFile(file)));
+  m.addItem((i) => i.setTitle("Open in new window").setIcon("picture-in-picture-2").setSection("open").onClick(() => app.workspace.getLeaf("window").openFile(file)));
+  m.addItem((i) => i.setTitle("Rename...").setIcon("edit-3").setSection("action").onClick(() => renamePrompt(app, file)));
+  m.addItem((i) => i.setTitle("Move file to...").setIcon("folder-tree").setSection("action").onClick(() => moveToFolder(app, file)));
+  bookmarkItem(app, m, file);
+  if (file.extension === "md" && cmd("note-composer:merge-file")) m.addItem((i) => i.setTitle("Merge entire file with...").setIcon("git-merge").setSection("action").onClick(run("note-composer:merge-file")));
+  if (file.extension === "md" && cmd("markdown:add-metadata-property")) m.addItem((i) => i.setTitle("Add file property").setIcon("plus-circle").setSection("action").onClick(run("markdown:add-metadata-property")));
+  if (file.extension === "md") {
+    m.addItem((i) => i.setTitle("Find...").setIcon("search").setSection("find").onClick(run("editor:open-search")));
+    m.addItem((i) => i.setTitle("Replace...").setIcon("replace").setSection("find").onClick(run("editor:open-search-replace")));
+  }
+  copyPathSubmenu(app, m, file);
+  m.addItem((i) => i.setTitle("Open in default app").setIcon("arrow-up-right").setSection("system").onClick(() => app.openWithDefaultApp(file.path)));
+  m.addItem((i) => i.setTitle("Show in system explorer").setIcon("arrow-up-right").setSection("system").onClick(() => app.showInFolder(file.path)));
+  m.addItem((i) => i.setTitle("Reveal file in navigation").setIcon("folder-open").setSection("system").onClick(() => revealInExplorer(app, file)));
+  m.addItem((i) => i.setTitle("Delete file").setIcon("trash-2").setWarning(true).setSection("danger").onClick(() => app.fileManager.promptForDeletion(file)));
+  // Original order inside groups: "Backlinks in document" leads the view group; "Export to PDF"
+  // (added by the view before this runs) ends the action group.
+  const items = m.items as any[];
+  const move = (title: string, toFront: boolean) => {
+    const i = items.findIndex((it) => it !== "separator" && it.titleEl?.textContent?.startsWith(title));
+    if (i < 0) return;
+    const [it] = items.splice(i, 1);
+    if (toFront) items.unshift(it);
+    else items.push(it);
+  };
+  move("Backlinks in document", true);
+  move("Export to PDF", false);
+}
+
 /** Show the standard file menu for a row in a sidebar pane. */
 export function showFileMenu(app: any, e: MouseEvent, f: TAbstractFile, source: string, leaf?: any): void {
   e.preventDefault();

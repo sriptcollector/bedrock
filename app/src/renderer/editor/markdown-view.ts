@@ -604,25 +604,28 @@ export class MarkdownView extends TextFileView {
       i
         .setTitle(this.mode === "preview" ? "Editing view" : "Reading view")
         .setIcon(this.mode === "preview" ? "pencil" : "book-open")
-        .setSection("view")
+        .setSection("pane")
         .onClick(() => this.toggleMode()),
     );
     menu.addItem((i) =>
       i
         .setTitle(this.sourceMode ? "Live Preview" : "Source mode")
         .setIcon("code")
-        .setSection("view")
+        .setSection("pane")
         .onClick(() => this.toggleSource()),
     );
     if (this.file)
       menu.addItem((i) =>
         i
-          .setTitle("Export to PDF")
+          .setTitle("Export to PDF...")
           .setIcon("file-output")
           .setSection("action")
           .onClick(() => this.app.commands.executeCommandById("workspace:export-pdf")),
       );
-    if (this.file) this.app.workspace.trigger("file-menu", menu, this.file, source, this.leaf);
+    if (this.file && !(menu as any).__fileMenuFired) {
+      (menu as any).__fileMenuFired = true;
+      this.app.workspace.trigger("file-menu", menu, this.file, source, this.leaf);
+    }
     super.onPaneMenu(menu, source);
   }
 

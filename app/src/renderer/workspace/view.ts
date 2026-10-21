@@ -59,7 +59,9 @@ export abstract class View extends Component {
   }
   onResize(): void {}
   abstract getDisplayText(): string;
-  onPaneMenu(menu: Menu, _source: string): void {
+  onPaneMenu(menu: Menu, source: string): void {
+    // "More options" has no Close item in the original (the tab menu does).
+    if (source === "more-options") return;
     menu.addItem((i) =>
       i
         .setTitle("Close")
@@ -104,7 +106,7 @@ export abstract class ItemView extends View {
       this.onPaneMenu(m, "more-options");
       this.app.workspace.trigger("leaf-menu", m, this.leaf);
       const r = this.moreOptionsButtonEl.getBoundingClientRect();
-      m.showAtPosition({ x: r.left, y: r.bottom + 4 });
+      m.showAtPosition({ x: r.right, y: r.bottom + 4, left: true });
       e.stopPropagation();
     });
     this.contentEl = this.containerEl.createDiv("view-content");
@@ -168,6 +170,15 @@ export abstract class FileView extends ItemView {
 
   canAcceptExtension(_ext: string): boolean {
     return false;
+  }
+
+  onPaneMenu(menu: Menu, source: string): void {
+    // File views offer the file's actions (plugins add theirs through "file-menu").
+    if (this.file && !(menu as any).__fileMenuFired) {
+      (menu as any).__fileMenuFired = true;
+      this.app.workspace.trigger("file-menu", menu, this.file, source, this.leaf);
+    }
+    super.onPaneMenu(menu, source);
   }
 
   updateHeader(): void {

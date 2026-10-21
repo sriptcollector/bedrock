@@ -1,6 +1,7 @@
 // Editor behaviour wiring: smart lists, auto-pair, indentation, folding, suggestions ([[links]],
 // #tags, properties, highlight colours), vim mode, line numbers, spellcheck, RTL and keymaps.
 import { Compartment, EditorState, type Extension, Prec } from "@codemirror/state";
+import { createSearchPanel } from "./search-panel";
 import { EditorView, keymap, lineNumbers, drawSelection, dropCursor, rectangularSelection, crosshairCursor, placeholder, type KeyBinding } from "@codemirror/view";
 import { defaultKeymap, history, historyKeymap } from "@codemirror/commands";
 import { foldKeymap, indentUnit, bracketMatching, codeFolding } from "@codemirror/language";
@@ -118,7 +119,7 @@ export function buildEditorExtensions(owner: any, c: EditorConfig, livePreview: 
     activeLineClass,
     highlightSelectionMatches(),
     bracketMatching(),
-    search({ top: true }),
+    search({ top: true, createPanel: createSearchPanel }),
     EditorView.lineWrapping,
     compartments.lineNumbers.of(ce.lineNumbers),
     compartments.spellcheck.of(ce.spellcheck),

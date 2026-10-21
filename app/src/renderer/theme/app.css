@@ -668,32 +668,59 @@ body.mod-macos .workspace-ribbon.mod-left .sidebar-toggle-button {
 .workspace-tabs.mod-stacked > .workspace-tab-container {
   overflow-x: auto;
 }
-.workspace-tabs.mod-stacked > .workspace-tab-container > .workspace-leaf {
-  flex: 0 0 auto;
-  width: min(700px, 85%);
-  display: flex !important;
-  flex-direction: row;
-  border-right: 1px solid var(--divider-color);
-  position: relative;
-}
 .workspace-tabs.mod-stacked .workspace-leaf > .workspace-tab-header {
-  writing-mode: vertical-rl;
+  writing-mode: vertical-lr;
   height: 100%;
-  width: 40px;
+  width: var(--tab-stacked-header-width);
   max-width: none;
   flex: none;
   border-radius: 0;
   position: sticky;
   left: 0;
   z-index: 2;
-  background: var(--background-secondary);
-  border-right: 1px solid var(--divider-color);
+  padding: 0;
+  background: var(--background-primary);
+  color: var(--text-normal);
+  border-right: 0;
   clip-path: none;
-  box-shadow: none;
-  padding: 8px 0;
+  box-shadow: -1px 0 0 0 var(--tab-outline-color), var(--tab-stacked-shadow);
 }
 .workspace-tabs.mod-stacked .workspace-leaf > .workspace-tab-header .workspace-tab-header-inner {
+  display: flex;
+  align-items: center;
+  gap: 0;
+  padding: 8px 8px 16px;
+  border-radius: 0;
+  height: 100%;
+}
+.workspace-tabs.mod-stacked .workspace-tab-header-inner-close-button {
+  order: 0;
+  opacity: 1;
+  margin-bottom: 2px;
+}
+.workspace-tabs.mod-stacked .workspace-tab-header-inner-icon {
+  order: 2;
+  display: flex !important;
+  padding: 4px;
+}
+.workspace-tabs.mod-stacked .workspace-tab-header-inner-title {
+  order: 3;
   padding: 4px 0;
+  font-size: var(--tab-stacked-font-size);
+  font-weight: var(--tab-stacked-font-weight);
+  text-align: var(--tab-stacked-text-align);
+  transform: var(--tab-stacked-text-transform);
+  writing-mode: var(--tab-stacked-text-writing-mode);
+}
+.workspace-tabs.mod-stacked .workspace-tab-header-status-container {
+  order: 4;
+}
+.workspace-tabs.mod-stacked > .workspace-tab-container > .workspace-leaf {
+  flex: 0 0 auto;
+  width: calc(var(--tab-stacked-pane-width) + var(--tab-stacked-header-width));
+  display: flex !important;
+  flex-direction: row;
+  position: relative;
 }
 .workspace-tabs.mod-stacked .workspace-leaf > .workspace-leaf-content {
   flex: 1;
@@ -763,6 +790,10 @@ body.mod-macos .workspace-ribbon.mod-left .sidebar-toggle-button {
 .view-actions {
   display: flex;
   gap: 0;
+}
+/* The bookmark action only shows for bookmarked files (the menu has "Bookmark..."). */
+.view-action.mod-bookmark:not(.mod-bookmarked) {
+  display: none;
 }
 .view-content {
   flex: 1;
@@ -1028,18 +1059,64 @@ body.mod-macos .workspace-ribbon.mod-left .sidebar-toggle-button {
   border-radius: var(--radius-s);
 }
 .cm-panels {
-  background: var(--background-secondary);
+  background: var(--background-primary);
   color: var(--text-normal);
-  border-color: var(--divider-color) !important;
+  border: 0 !important;
 }
-.cm-panel.cm-search {
-  padding: 8px;
-  font-size: var(--font-ui-small);
+/* In-file search and replace (editor/search-panel.ts) */
+.document-search-container {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin: 0 16px;
+  padding: 8px 0;
+  background: var(--background-primary);
+  font-family: var(--font-interface);
 }
-.cm-panel.cm-search input,
-.cm-panel.cm-search button {
-  margin: 2px 4px 2px 0;
-  height: 26px;
+.document-search,
+.document-replace {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  width: 100%;
+  max-width: var(--file-line-width);
+  margin: 0 auto;
+  padding: 0 8px;
+}
+.document-search .search-input-container {
+  flex: 1 1 auto;
+  position: relative;
+  margin: 0;
+}
+.document-search .search-input-container input {
+  width: 100%;
+  padding-right: 64px;
+}
+.document-search-count {
+  position: absolute;
+  right: 8px;
+  top: 50%;
+  transform: translateY(-50%);
+  font-size: var(--font-ui-smaller);
+  line-height: 18px;
+  color: var(--text-muted);
+  pointer-events: none;
+}
+.document-search-buttons,
+.document-replace-buttons {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+.document-search-button,
+.document-search-close-button {
+  display: flex;
+  padding: 4px 6px;
+  color: var(--icon-color);
+  border-radius: var(--radius-s);
+}
+.document-replace-input {
+  flex: 1 1 auto;
 }
 .cm-searchMatch {
   background: rgba(var(--color-yellow-rgb), 0.3);
@@ -1321,6 +1398,9 @@ body.mod-macos .workspace-ribbon.mod-left .sidebar-toggle-button {
 }
 .is-live-preview .cm-line.HyperMD-list-line {
   padding-bottom: var(--list-spacing);
+}
+.list-bullet * {
+  color: transparent !important;
 }
 .list-bullet::after {
   content: "";
@@ -1721,6 +1801,12 @@ input[type="checkbox"]:focus-visible {
 }
 .markdown-preview-sizer {
   padding-bottom: 50vh;
+}
+/* Embeds, popovers and reader mode size to their content. */
+.markdown-embed .markdown-preview-sizer,
+.popover .markdown-preview-sizer,
+.reader-mode-content .markdown-preview-sizer {
+  padding-bottom: 0;
 }
 .markdown-rendered h1,
 .markdown-rendered h2,
@@ -2427,7 +2513,7 @@ input[type="checkbox"]:focus-visible {
 .prompt-input-container .prompt-input,
 .prompt-input {
   width: 100%;
-  height: auto !important;
+  height: var(--prompt-input-height) !important;
   padding: 24px 48px 24px 24px;
   border: 0 !important;
   border-bottom: 1px solid var(--background-secondary) !important;
