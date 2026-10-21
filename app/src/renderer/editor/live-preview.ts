@@ -19,6 +19,7 @@ import { setIcon } from "../dom/icons";
 import { TableWidget, tableCursorCapture } from "./table";
 import { IMAGE_EXTS } from "../views/simple-views";
 import { HIGHLIGHT_COLORS } from "./formatting";
+import { listDrag } from "./list-drag";
 
 export const refreshLivePreview = StateEffect.define<null>();
 /** Show the source of the embed/image starting at this position (the "edit" button). */
@@ -39,6 +40,31 @@ function lineTouched(state: EditorState, from: number, to: number, hasFocus: boo
 }
 
 const hide = Decoration.replace({});
+
+/** The task box of a list item: GFM's [ ]/[x] or any single-character status like [/] or [-]. */
+function taskMarkerOf(state: EditorState, item: SyntaxNode): { from: number; to: number; ch: string } | null {
+  const marker = item.getChild("Task")?.getChild("TaskMarker");
+  // "- [ ]" with nothing after the box is a plain bullet in the original.
+  if (marker) return marker.to === state.doc.lineAt(marker.from).to ? null : { from: marker.from, to: marker.to, ch: state.sliceDoc(marker.from + 1, marker.from + 2) };
+  const mark = item.getChild("ListMark");
+  if (!mark) return null;
+  const start = state.sliceDoc(mark.to, mark.to + 1) === " " ? mark.to + 1 : -1;
+  if (start < 0) return null;
+  const m = /^\[([^\]\n])\](?=[ \t])/.exec(state.sliceDoc(start, Math.min(state.doc.lineAt(start).to, start + 4)));
+  return m ? { from: start, to: start + 3, ch: m[1] } : null;
+}
+
+/** List items inside block quotes keep their source (the original doesn't render them there). */
+function inQuote(node: SyntaxNode): boolean {
+  for (let p = node.parent; p; p = p.parent) if (p.name === "Blockquote") return true;
+  return false;
+}
+
+/** "-" alone on a line (no space after the marker) stays plain text, like the original. */
+function isBareMarker(state: EditorState, item: SyntaxNode): boolean {
+  const mark = item.getChild("ListMark");
+  return !!mark && mark.to === state.doc.lineAt(mark.from).to && item.to === mark.to;
+}
 const COLOR_BY_EMOJI = new Map(Object.entries(HIGHLIGHT_COLORS).map(([k, v]) => [v, k]));
 const EMOJI_RE = new RegExp("^(" + Object.values(HIGHLIGHT_COLORS).join("|") + ")", "u");
 const isExternal = (href: string) => /^[a-z][a-z0-9+.-]*:/i.test(href);
@@ -209,7 +235,7 @@ class ExternalImageWidget extends WidgetType {
   }
   toDOM(view: EditorView) {
     const m = this.alt.match(/^(.*?)\|(\d+)(?:x(\d+))?$/);
-    const s = createSpan({ cls: "image-embed external-embed cm-embed-block", attr: { contenteditable: "false" } });
+    const s = createSpan({ cls: "cm-external-image", attr: { contenteditable: "false" } });
     const img = s.createEl("img", { attr: { src: this.src, alt: m ? m[1] : this.alt, referrerpolicy: "no-referrer" } });
     if (m) {
       img.setAttr("width", m[2]);
@@ -322,6 +348,21 @@ class InlineHtmlWidget extends WidgetType {
   }
 }
 
+class HighlightSwatchWidget extends WidgetType {
+  constructor(readonly color: string) {
+    super();
+  }
+  eq(o: HighlightSwatchWidget) {
+    return o.color === this.color;
+  }
+  toDOM() {
+    const s = createSpan({ cls: "cm-highlight-color-widget", attr: { "data-highlight": this.color, contenteditable: "false" } });
+    s.createEl("img", { cls: "highlight-swatch", attr: { src: "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg'/%3E", draggable: "false", "data-highlight": this.color } });
+    s.appendText("\u200b");
+    return s;
+  }
+}
+
 class CodeFlairWidget extends WidgetType {
   constructor(readonly label: string) {
     super();
@@ -410,7 +451,13 @@ function buildBlockDecorations(state: EditorState, ctx: BlockCtx): DecorationSet
         const first = state.doc.lineAt(from);
         const last = state.doc.lineAt(to);
         const widget = new TableWidget(state.sliceDoc(from, to), from, app, sourcePath, () => (owner?.tableCellExtensions?.() ?? []));
-        decos.push(Decoration.line({ class: `HyperMD-table-2 HyperMD-table-row HyperMD-table-row-${last.number - first.number}` }).range(first.from));
+        if (selectionTouches(state, from, to, true)) {
+          // Cursor inside the table source (editing a cell): the widget covers the whole range.
+          decos.push(Decoration.replace({ widget, block: true }).range(first.from, last.to));
+          return false;
+        }
+        const rows = last.number - first.number;
+        decos.push(Decoration.line({ class: `HyperMD-table-2 HyperMD-table-row HyperMD-table-row-${rows <= 1 ? 0 : rows}` }).range(first.from));
         decos.push(Decoration.replace({}).range(from, to));
         decos.push(Decoration.widget({ widget, block: true, side: 1 }).range(to));
         return false;
@@ -424,7 +471,9 @@ function buildBlockDecorations(state: EditorState, ctx: BlockCtx): DecorationSet
         return true;
       }
       if (name === "BlockMath") {
-        const src = state.sliceDoc(from, to).trim().replace(/^\$\$|\$\$$/g, "");
+        const raw = state.sliceDoc(from, to).trim();
+        if (raw.length < 4 || !raw.endsWith("$$")) return false; // unclosed $$: plain text
+        const src = raw.replace(/^\$\$|\$\$$/g, "");
         if (!lineTouched(state, from, to, focus)) decos.push(Decoration.replace({ widget: new MathWidget(src, true, from), block: true }).range(from, to));
         else decos.push(Decoration.widget({ widget: new MathWidget(src, true, -1), block: true, side: 1 }).range(to));
         return false;
@@ -438,7 +487,7 @@ function buildBlockDecorations(state: EditorState, ctx: BlockCtx): DecorationSet
       if (name === "FencedCode") {
         const info = node.node.getChild("CodeInfo");
         const lang = info ? state.sliceDoc(info.from, info.to).trim() : "";
-        if (lang === "mermaid" && app?.vault?.getConfig?.("showMermaid") !== false) {
+        if (lang === "mermaid" && app?.vault?.getConfig?.("mermaid") === true) {
           const text = node.node.getChild("CodeText");
           const src = text ? state.sliceDoc(text.from, text.to) : "";
           if (!lineTouched(state, from, to, focus)) decos.push(Decoration.replace({ widget: new MermaidWidget(src, from), block: true }).range(from, to));
@@ -588,7 +637,8 @@ function buildInline(view: EditorView): InlineResult {
             const info = node.node.getChild("CodeInfo");
             const lang = info ? state.sliceDoc(info.from, info.to).trim() : "";
             const label = languageLabel(lang);
-            if (first.length) {
+            const closed = last.number !== first.number && /^\s*(`{3,}|~{3,})\s*$/.test(last.text);
+            if (first.length && closed) {
               if (label) replaceWith(first.from, first.to, new CodeFlairWidget(label));
               else hideRange(first.from, first.to);
             }
@@ -623,6 +673,7 @@ function buildInline(view: EditorView): InlineResult {
           return false;
         }
         if (name === "ListItem") {
+          if (inQuote(node.node) || isBareMarker(state, node.node)) return false;
           const l = state.doc.lineAt(from);
           let depth = 0;
           for (let p = node.node.parent; p; p = p.parent) if (p.name === "BulletList" || p.name === "OrderedList") depth++;
@@ -647,17 +698,14 @@ function buildInline(view: EditorView): InlineResult {
               }
             }
           }
-          const task = node.node.getChild("Task");
-          if (task) {
-            const marker = task.getChild("TaskMarker");
-            if (marker) {
-              const ch = state.sliceDoc(marker.from + 1, marker.from + 2);
-              decos.push(Decoration.line({ class: "HyperMD-task-line", attributes: { "data-task": ch } }).range(l.from));
-              mark(marker.from, marker.to, "cm-formatting cm-formatting-task");
-              const listMark = node.node.getChild("ListMark");
-              if (lp && !selectionTouches(state, listMark ? listMark.from : marker.from, marker.to, focus)) {
-                replaceWith(marker.from, marker.to, new CheckboxWidget(ch !== " ", marker.from));
-              }
+          const marker = taskMarkerOf(state, node.node);
+          if (marker) {
+            const ch = marker.ch;
+            decos.push(Decoration.line({ class: "HyperMD-task-line", attributes: { "data-task": ch } }).range(l.from));
+            mark(marker.from, marker.to, "cm-formatting cm-formatting-task");
+            const listMark = node.node.getChild("ListMark");
+            if (lp && !selectionTouches(state, listMark ? listMark.from : marker.from, marker.to, focus)) {
+              replaceWith(marker.from, marker.to, new CheckboxWidget(ch !== " ", marker.from));
             }
           }
           return true;
@@ -669,7 +717,7 @@ function buildInline(view: EditorView): InlineResult {
           for (let p = node.node.parent; p; p = p.parent) if (p.name === "BulletList" || p.name === "OrderedList") depth++;
           const after = state.sliceDoc(to, to + 1) === " " ? to + 1 : to;
           mark(from, after, `cm-formatting cm-formatting-list ${isBullet ? "cm-formatting-list-ul" : "cm-formatting-list-ol"} cm-list-${depth}`);
-          const taskMarker = node.node.parent?.getChild("Task")?.getChild("TaskMarker");
+          const taskMarker = node.node.parent ? taskMarkerOf(state, node.node.parent) : null;
           const revealTo = taskMarker ? taskMarker.to : to;
           if (lp && isBullet) {
             if (!selectionTouches(state, from, revealTo, focus)) {
@@ -741,6 +789,7 @@ function buildInline(view: EditorView): InlineResult {
               const color = COLOR_BY_EMOJI.get(em[0]);
               mark(contentFrom + em[0].length, close ? close.from : to, `cm-highlight cm-highlight-${color}`);
               if (!touched) hideRange(contentFrom, contentFrom + em[0].length);
+              else replaceWith(contentFrom, contentFrom + em[0].length, new HighlightSwatchWidget(color ?? ""));
               contentFrom += em[0].length;
             }
             for (const c of [open, close]) if (c && !touched) hideRange(c.from, c.to);
@@ -955,6 +1004,16 @@ export const inlineLivePreview = ViewPlugin.fromClass(
         }
         return false;
       },
+      mouseover(e: MouseEvent, view: EditorView) {
+        // Page preview: links in the editor raise "hover-link" (source "editor").
+        const el = (e.target as HTMLElement).closest?.<HTMLElement>("[data-href]");
+        const owner = view.state.field(editorInfoField, false);
+        if (!el || !owner?.app) return false;
+        const href = el.getAttribute("data-href")!;
+        if (isExternal(href)) return false;
+        owner.app.workspace.trigger("hover-link", { event: e, source: "editor", hoverParent: owner, targetEl: el, linktext: href, sourcePath: owner.file?.path ?? "" });
+        return false;
+      },
       compositionend(_e: Event, view: EditorView) {
         view.dispatch({ effects: refreshLivePreview.of(null) });
         return false;
@@ -998,7 +1057,7 @@ export const hashtagDecorations = ViewPlugin.fromClass(
 const focusWatcher = EditorView.focusChangeEffect.of((_state, focusing) => focusChanged.of(focusing));
 
 export function livePreviewExtensions(): Extension[] {
-  return [revealedField, blockDecorationsField, inlineLivePreview, hashtagDecorations, focusWatcher, tableCursorCapture];
+  return [revealedField, blockDecorationsField, inlineLivePreview, hashtagDecorations, focusWatcher, tableCursorCapture, listDrag];
 }
 
 /** Extensions for the small editors inside table cells (inline live preview only). */

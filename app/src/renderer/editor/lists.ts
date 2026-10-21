@@ -282,7 +282,16 @@ export const renumberOnChange = EditorState.transactionFilter.of((tr) => {
   const to = Math.min(doc.lines, b + 300);
   const changes = renumberChanges(doc, tr.startState.tabSize, from, to);
   if (!changes.length) return tr;
-  return [tr, { changes, sequential: true, annotations: renumbering.of(true) }];
+  // A cursor inside a rewritten number goes to the start of it (like the original).
+  const set = ChangeSet.of(changes, doc.length);
+  const ranges = changes as { from: number; to: number }[];
+  const mapPos = (p: number) => {
+    for (const c of ranges) if (p > c.from && p <= c.to) return set.mapPos(c.from, -1);
+    return set.mapPos(p, 1);
+  };
+  const sel = tr.newSelection;
+  const selection = EditorSelection.create(sel.ranges.map((r) => EditorSelection.range(mapPos(r.anchor), mapPos(r.head))), sel.mainIndex);
+  return [tr, { changes, sequential: true, selection, annotations: renumbering.of(true) }];
 });
 
 
@@ -395,20 +404,18 @@ export function toggleChecklistStatus(state: EditorState): TransactionSpec | nul
   const tasks = items.filter((x) => x.it && x.it.task !== null);
   const changes: ChangeSpec[] = [];
   if (tasks.length === items.length) {
-    const states = new Set(tasks.map((x) => (x.it!.task === " " ? "open" : /[xX]/.test(x.it!.task!) ? "done" : "other")));
-    if (states.size > 1) return null;
-    const s = [...states][0];
-    if (s === "other") return null;
+    // Any open box -> check them all; otherwise clear them all (custom statuses count as checked).
+    const anyOpen = tasks.some((x) => x.it!.task === " ");
     for (const { l, it } of tasks) {
       const at = l.from + it!.contentStart - (l.text.slice(it!.contentStart - 1, it!.contentStart) === " " ? 3 : 2);
-      changes.push({ from: at, to: at + 1, insert: s === "open" ? "x" : " " });
+      const want = anyOpen ? "x" : " ";
+      if (l.text[at - l.from] !== want) changes.push({ from: at, to: at + 1, insert: want });
     }
-    return { changes, userEvent: "input" };
+    return changes.length ? { changes, userEvent: "input" } : null;
   }
   for (const { l, it } of items) {
     if (it && it.task !== null) continue;
     if (it) {
-      if (isOrdered(it)) continue;
       changes.push({ from: l.from + it.contentStart, insert: "[ ] " });
     } else {
       const q = (QUOTE_RE.exec(l.text) ?? [""])[0];

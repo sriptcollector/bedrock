@@ -15,6 +15,7 @@ import { toggleChecklistStatus, cycleListChecklist, toggleLinePrefix, setHeading
 import { tableCommand, bindTableEditor, type TableOp } from "./table";
 import { editorInfoField } from "./fields";
 import { addSpellingItems } from "./spellcheck";
+import { renameHeadingLinks } from "./rename-heading";
 import { ExportPdfModal } from "./export-pdf";
 import { splitAlias } from "../../core/links";
 
@@ -350,7 +351,8 @@ async function renameHeading(app: any, v: any, cm: EditorView): Promise<void> {
   const next = await promptDialog(app, { title: "Rename heading", value: old, cta: "Rename" });
   if (next == null || next === old || !next.trim()) return;
   cm.dispatch({ changes: { from: line.from + m[1].length, to: line.from + m[1].length + old.length, insert: next }, userEvent: "input" });
-  await app.fileManager?.renameHeadingLinks?.(v.file, old, next);
+  const n = await renameHeadingLinks(app, v.file, old, next);
+  if (n) new Notice(`Updated links in ${n} note${n === 1 ? "" : "s"}.`);
 }
 
 async function downloadAttachments(app: any, v: any): Promise<void> {
@@ -459,7 +461,7 @@ export function showEditorMenu(app: any, v: any, cm: EditorView, at: { x: number
     s.addSeparator();
     s.addItem((x) => x.setTitle("Clear formatting").setIcon("eraser").onClick(() => run(clearFormatting(st()))));
   });
-  const inTable = tableCommand(cm, "row-after", true);
+  const inTable = !!cm.dom.closest(".cm-table-widget") || tableCommand(cm, "row-after", true);
   m.addItem((i) => {
     i.setTitle("Paragraph").setIcon("pilcrow").setSection("format").setDisabled(inTable);
     if (inTable) return;

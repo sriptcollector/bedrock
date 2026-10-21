@@ -54,7 +54,7 @@ exports[`markdown renderer > comments 1`] = `
 `;
 
 exports[`markdown renderer > embeds 1`] = `
-"<p data-line="0"><span alt="Note" src="Note" class="internal-embed" tabindex="-1"></span> <span alt="300" src="image.png" class="internal-embed" tabindex="-1"></span> <span alt="Note#Heading" src="Note#Heading" class="internal-embed" tabindex="-1"></span> <span alt="Note#^block" src="Note#^block" class="internal-embed" tabindex="-1"></span> <span alt="clip.mp3" src="clip.mp3" class="internal-embed" tabindex="-1"></span> <span alt="doc.pdf#page=2" src="doc.pdf#page=2" class="internal-embed" tabindex="-1"></span></p>
+"<p data-line="0"><span alt="Note" src="Note" class="internal-embed" tabindex="-1"></span> <span alt="300" src="image.png" class="internal-embed" tabindex="-1"></span> <span alt="Note &gt; Heading" src="Note#Heading" class="internal-embed" tabindex="-1"></span> <span alt="Note &gt; ^block" src="Note#^block" class="internal-embed" tabindex="-1"></span> <span alt="clip.mp3" src="clip.mp3" class="internal-embed" tabindex="-1"></span> <span alt="doc.pdf &gt; page=2" src="doc.pdf#page=2" class="internal-embed" tabindex="-1"></span></p>
 "
 `;
 

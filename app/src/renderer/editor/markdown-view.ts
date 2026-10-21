@@ -551,6 +551,16 @@ export class MarkdownView extends TextFileView {
     this.sourceEl.toggleClass("show-line-numbers", !!v.getConfig("showLineNumber"));
     const showProps = v.getConfig("propertiesInDocument") !== "hidden";
     this.sourceEl.toggleClass("show-properties", showProps);
+    const guides = v.getConfig("showIndentGuide") !== false;
+    this.sourceEl.toggleClass("show-indentation-guide", guides);
+    this.previewMode.previewEl.toggleClass("show-indentation-guide", guides);
+    const rtl = !!v.getConfig("rightToLeft");
+    this.sourceEl.toggleClass("is-rtl", rtl);
+    this.previewMode.previewEl.toggleClass("is-rtl", rtl);
+    this.previewMode.previewEl.setAttr("dir", rtl ? "rtl" : "ltr");
+    this.sourceEl.toggleClass("is-folding", v.getConfig("foldHeading") !== false || v.getConfig("foldIndent") !== false);
+    this.previewMode.previewEl.toggleClass("allow-fold-headings", v.getConfig("foldHeading") !== false);
+    this.previewMode.previewEl.toggleClass("allow-fold-lists", v.getConfig("foldIndent") !== false);
   }
 
   updateOptions(): void {
@@ -563,6 +573,8 @@ export class MarkdownView extends TextFileView {
         compartments.tabs.reconfigure(ce.tabs),
         compartments.autopair.reconfigure(ce.autopair),
         compartments.fold.reconfigure(ce.fold),
+        compartments.lists.reconfigure(ce.lists),
+        compartments.direction.reconfigure(ce.direction),
         compartments.plugins.reconfigure(this.app.workspace.editorExtensions.slice()),
         refreshLivePreview.of(null),
       ],

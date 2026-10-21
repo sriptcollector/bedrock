@@ -107,7 +107,7 @@ export class ReadingRenderer extends Component {
     if (this.renderComp) this.removeChild(this.renderComp);
     this.renderComp = this.addChild(new Component());
     const app = this.host.app;
-    const html = md(!!app?.vault?.getConfig?.("strictLineBreaks")).render(body, { lineOffset, codeBlockProcessors });
+    const html = md(!!app?.vault?.getConfig?.("strictLineBreaks")).render(body, { lineOffset, codeBlockProcessors, mermaid: app?.vault?.getConfig?.("mermaid") === true });
     const totalLines = body.split("\n").length;
     this.sections = splitSections(html, totalLines, lineOffset);
     this.virtual = this.sections.length >= VIRTUALISE_FROM;

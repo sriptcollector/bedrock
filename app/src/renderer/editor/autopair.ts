@@ -15,7 +15,7 @@ const closers = StateField.define<number[]>({
   create: () => [],
   update(v, tr) {
     let out = v;
-    if (tr.docChanged) out = out.map((p) => tr.changes.mapPos(p, 1)).filter((p, i) => tr.changes.mapPos(v[i], -1) === p);
+    if (tr.docChanged) out = out.map((p) => tr.changes.mapPos(p, 1)).filter((p) => p < tr.newDoc.length);
     for (const e of tr.effects) if (e.is(addCloser)) out = [...out, e.value];
     if (tr.selection) {
       const line = tr.newDoc.lineAt(tr.newSelection.main.head);

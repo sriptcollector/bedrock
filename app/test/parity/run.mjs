@@ -81,6 +81,21 @@ async function runCase(c, cs) {
     else if (kind === "key") for (const k of val.split(" ")) await press(c, k);
     else if (kind === "cmd") await c.evaluate(`__parity.command(${JSON.stringify(val)})`);
     else if (kind === "wait") await sleep(Number(val));
+    else if (kind === "click") {
+      // click:<css selector>[@index] — a real mouse click at the element's centre.
+      const [sel, idx] = val.split("@");
+      const r = await c.evaluate(`(()=>{const e=document.querySelectorAll('.workspace-leaf.mod-active ' + ${JSON.stringify(sel)})[${Number(idx ?? 0)}]; if(!e) return null; const b=e.getBoundingClientRect(); return {x:b.x+b.width/2,y:b.y+b.height/2}})()`);
+      if (r) for (const type of ["mousePressed", "mouseReleased"]) await c.send("Input.dispatchMouseEvent", { type, x: r.x, y: r.y, button: "left", clickCount: 1 });
+      await sleep(250);
+    } else if (kind === "ikey") {
+      // Key events straight to the focused element (nested editors inside widgets).
+      for (const k of val.split(" ")) {
+        const mods = k.split("+");
+        const key = mods.pop();
+        await c.evaluate(`document.activeElement.dispatchEvent(new KeyboardEvent('keydown',{key:${JSON.stringify(key)},code:${JSON.stringify(key)},shiftKey:${mods.includes("Shift")},ctrlKey:${mods.includes("Ctrl")},altKey:${mods.includes("Alt")},bubbles:true,cancelable:true}))`);
+        await sleep(200);
+      }
+    } else if (kind === "itext") await c.evaluate(`document.execCommand('insertText', false, ${JSON.stringify(val)})`);
     else if (kind === "blur") await c.evaluate("__parity.blur()");
     else if (kind === "focus") await c.evaluate("__parity.focus()");
     await sleep(40);
@@ -175,6 +190,8 @@ function writeDoc(results) {
       md += `| ${esc(r.name)} | \`${esc(r.doc)}\`<br>${esc((r.steps ?? []).join(", "))}${r.mode === "source" ? " (source mode)" : ""} | ${summary(r.ref, r)} | ${summary(r.bedrock, r)} | ${r.match ? "yes" : "**no**"} |\n`;
     }
   }
+  const notes = path.join(here, "notes.md");
+  if (fs.existsSync(notes)) md += "\n" + fs.readFileSync(notes, "utf8");
   fs.writeFileSync(path.join(repoDir, "docs", "PARITY-EDITOR.md"), md);
   console.log("wrote docs/PARITY-EDITOR.md");
 }

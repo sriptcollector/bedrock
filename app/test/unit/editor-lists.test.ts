@@ -96,6 +96,11 @@ describe("renumbering", () => {
     type(v, "5. a");
     expect(marked(v.state)).toBe("5. a‸");
   });
+  it("a cursor inside a rewritten number moves to its start", () => {
+    const v = makeView("1. a\n2‸. b\n3. c");
+    type(v, "0");
+    expect(marked(v.state)).toBe("1. a\n‸2. b\n3. c");
+  });
   it("editing the first number moves the rest", () => {
     const v = makeView("1‸. a\n2. b");
     type(v, "0");
@@ -138,10 +143,11 @@ describe("checkboxes and list toggles", () => {
     ["‸", "- [ ] ‸"],
     ["> a‸", "> - [ ] a‸"],
     ["\t- a‸", "\t- [ ] a‸"],
-    ["1. a‸", "1. a‸"],
-    ["- [/] a‸", "- [/] a‸"],
+    ["1. a‸", "1. [ ] a‸"],
+    ["- [/] a‸", "- [ ] a‸"],
     ["«- [ ] a\n- [ ] b»", "«- [x] a\n- [x] b»"],
-    ["«- [ ] a\n- [x] b»", "«- [ ] a\n- [x] b»"],
+    ["«- [ ] a\n- [x] b»", "«- [x] a\n- [x] b»"],
+    ["«- [x] a\n- [-] b»", "«- [ ] a\n- [ ] b»"],
     ["«a\nb»", "- [ ] «a\n- [ ] b»"],
   ])("Ctrl+L %j", (src, want) => {
     expect(run(src, toggleChecklistStatus)).toBe(want);

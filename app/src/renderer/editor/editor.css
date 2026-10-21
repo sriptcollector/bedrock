@@ -68,6 +68,22 @@
   border-inline-end: var(--indentation-guide-width, 1px) solid var(--indentation-guide-color, rgba(0, 0, 0, 0.12));
 }
 
+/* ---- list item drag by bullet */
+.markdown-source-view.is-live-preview .list-bullet {
+  cursor: grab;
+}
+.cm-editor.is-dragging-list-item,
+.cm-editor.is-dragging-list-item * {
+  cursor: grabbing !important;
+}
+.cm-list-drop-indicator {
+  position: fixed;
+  height: 2px;
+  background-color: var(--interactive-accent);
+  pointer-events: none;
+  z-index: var(--layer-popover, 30);
+}
+
 /* ---- highlight colours ==🔴text== */
 .cm-highlight.cm-highlight-red,
 .markdown-rendered mark.highlight-red {

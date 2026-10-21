@@ -7,12 +7,15 @@ import { Annotation, EditorSelection, EditorState, Prec, type Extension } from "
 import { EditorView, WidgetType, keymap, drawSelection } from "@codemirror/view";
 import { syntaxTree } from "@codemirror/language";
 import { history, historyKeymap, defaultKeymap, undo, redo } from "@codemirror/commands";
-import { parseTable, formatTable, cellOffset, cellAt, applyTableOp, type TableModel, type TableOp } from "./table-model";
+import { parseTable, formatTable, cellOffset, cellAt, applyTableOp, columnWidths, type TableModel, type TableOp } from "./table-model";
 import { setIcon } from "../dom/icons";
 import { Menu } from "../ui/menu";
 import { renderInlineMarkdown } from "../markdown/renderer";
 
 export type { TableOp } from "./table-model";
+
+/** Where the source cursor goes in an empty cell reached by arrows: the original isn't consistent; we use the cell end. */
+const EMPTY_CELL_AT_START = false;
 
 /** Marks transactions written by the table editor itself. */
 export const tableEdit = Annotation.define<boolean>();
@@ -51,7 +54,7 @@ function writeTable(cm: EditorView, range: { from: number; to: number }, t: Tabl
     annotations: tableEdit.of(true),
     userEvent: "input.table",
   });
-  if (refocus) pendingFocus.set(cm, { from: range.from, row, col });
+  if (refocus) pendingFocus.set(cm, { from: range.from, row, col, atEnd: true });
   // Re-focus the cell once the widget has re-rendered.
   requestAnimationFrame(() => focusPending(cm));
 }
@@ -80,6 +83,7 @@ function findWidgetAt(cm: EditorView, from: number): HTMLElement | null {
 class TableController {
   model: TableModel;
   active: { row: number; col: number; editor: EditorView } | null = null;
+  placement: "start" | "end" | "all" | number = "end";
   constructor(public view: EditorView, public dom: HTMLElement, public source: string, public from: number, public app: any, public sourcePath: string, public cellExtensions: () => Extension[]) {
     this.model = parseTable(source) ?? { rows: [[""]], aligns: [null] };
   }
@@ -202,6 +206,8 @@ class TableController {
   }
 
   write(t: TableModel, row: number, col: number, refocus: boolean): void {
+    // Structural change: drop the cell editor so the widget re-renders from the new table.
+    this.deactivate();
     writeTable(this.view, { from: this.from, to: this.to }, t, row, col, refocus);
   }
 
@@ -306,6 +312,7 @@ class TableController {
       }),
     });
     this.active = { row, col, editor };
+    this.placement = where;
     this.dom.addClass("has-focus");
     const len = editor.state.doc.length;
     const sel = where === "all" ? EditorSelection.range(0, len) : where === "start" ? EditorSelection.cursor(0) : where === "end" ? EditorSelection.cursor(len) : EditorSelection.cursor(Math.min(len, where));
@@ -340,9 +347,15 @@ class TableController {
   private syncMainSelection(): void {
     if (!this.active) return;
     const off = cellOffset(this.model, this.active.row, this.active.col);
-    const head = this.active.editor.state.selection.main.head;
-    const pos = Math.min(this.view.state.doc.length, this.from + off + head);
-    if (this.view.state.selection.main.head !== pos || this.view.state.selection.ranges.length > 1) this.view.dispatch({ selection: { anchor: pos }, annotations: tableEdit.of(true) });
+    const sel = this.active.editor.state.selection.main;
+    let base = off;
+    // An empty cell reached with the arrow keys/Enter puts the source cursor at its start.
+    if (!this.active.editor.state.doc.length && this.placement === "start" && EMPTY_CELL_AT_START) base = off - columnWidths(this.model)[this.active.col] - 1;
+    const clamp = (p: number) => Math.min(this.view.state.doc.length, this.from + base + p);
+    const anchor = clamp(sel.anchor);
+    const head = clamp(sel.head);
+    const cur = this.view.state.selection.main;
+    if (cur.anchor !== anchor || cur.head !== head || this.view.state.selection.ranges.length > 1) this.view.dispatch({ selection: { anchor, head }, annotations: tableEdit.of(true) });
   }
 
   private onCellUpdate(u: any): void {
