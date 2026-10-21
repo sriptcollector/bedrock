@@ -25,6 +25,7 @@ import { FileExplorerView } from "./views/file-explorer";
 import { registerSimpleViews, IMAGE_EXTS } from "./views/simple-views";
 import { registerGraph } from "./views/graph/view";
 import { registerCanvas } from "./views/canvas/view";
+import { registerSidebar } from "./views/sidebar";
 import { PropertyTypes } from "./editor/properties";
 import { mountSyncUi } from "./sync-ui";
 import { scanVault } from "../core/scan";
@@ -230,6 +231,7 @@ export class App {
     registerSimpleViews(this);
     registerGraph(this);
     registerCanvas(this);
+    registerSidebar(this);
   }
 
   private registerRibbon(): void {
