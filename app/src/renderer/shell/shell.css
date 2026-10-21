@@ -1,0 +1,65 @@
+/* App shell: vault switcher at the bottom of the left sidebar, debug info, popout workspaces. */
+.workspace-sidedock-vault-profile {
+  order: 1000;
+  display: flex;
+  align-items: center;
+  gap: var(--size-4-1);
+  padding: var(--size-4-2) var(--size-4-3);
+  border-top: 1px solid var(--divider-color);
+  flex-shrink: 0;
+}
+.workspace-split.mod-left-split.is-sidedock-collapsed .workspace-sidedock-vault-profile {
+  display: none;
+}
+.workspace-drawer-vault-switcher {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  align-items: center;
+  gap: var(--size-4-1);
+  padding: var(--size-4-1) var(--size-4-2);
+  border-radius: var(--radius-s);
+  color: var(--text-normal);
+  font-size: var(--font-ui-small);
+  font-weight: var(--font-medium);
+  cursor: var(--cursor);
+}
+.workspace-drawer-vault-switcher:hover {
+  background: var(--background-modifier-hover);
+}
+.workspace-drawer-vault-switcher-icon {
+  display: flex;
+  color: var(--icon-color);
+}
+.workspace-drawer-vault-switcher-icon .svg-icon {
+  width: var(--icon-xs);
+  height: var(--icon-xs);
+}
+.workspace-drawer-vault-name {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.workspace-drawer-vault-actions {
+  display: flex;
+  gap: var(--size-2-1);
+}
+.mod-debug-info .debug-info-list {
+  font-family: var(--font-monospace);
+  font-size: var(--font-ui-small);
+  user-select: text;
+  line-height: 1.6;
+}
+.mod-debug-info .debug-info-key {
+  color: var(--text-muted);
+}
+body.is-popout-workspace {
+  display: flex;
+  flex-direction: column;
+  height: 100vh;
+  margin: 0;
+  overflow: hidden;
+}
+body.is-popout-workspace .app-container {
+  height: 100%;
+}

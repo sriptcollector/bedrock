@@ -159,7 +159,9 @@ export class HotkeyManager {
     this.baked.clear();
     for (const [id, cmd] of Object.entries(this.app.commands.commands)) {
       for (const hk of this.customKeys[id] ?? cmd.hotkeys ?? []) {
-        const k = modifiersToString(hk.modifiers) + "|" + hk.key.toUpperCase();
+        // On Windows/Linux "Ctrl" in a hotkey is the same key as "Mod" (events report Mod).
+        const mods = process.platform === "darwin" ? hk.modifiers : Array.from(new Set(hk.modifiers.map((m) => (m === "Ctrl" ? "Mod" : m))));
+        const k = modifiersToString(mods) + "|" + hk.key.toUpperCase();
         (this.baked.get(k) ?? this.baked.set(k, []).get(k)!).push(id);
       }
     }

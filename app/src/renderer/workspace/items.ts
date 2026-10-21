@@ -36,8 +36,11 @@ export abstract class WorkspaceItem extends Events {
     return x;
   }
 
+  /** The main root split, or the popout window this item lives in. */
   getContainer(): WorkspaceParent {
-    return this.getRoot() as WorkspaceParent;
+    let x: WorkspaceItem = this;
+    while (x.parent && x.type !== "window") x = x.parent;
+    return x as WorkspaceParent;
   }
 
   setDimension(d: number | null): void {

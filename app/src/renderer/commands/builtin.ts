@@ -270,8 +270,8 @@ export function registerBuiltinCommands(app: App): void {
     const i = (t.children.indexOf(leaf) + d + t.children.length) % t.children.length;
     app.workspace.setActiveLeaf(t.children[i], { focus: true });
   };
-  add({ id: "workspace:next-tab", name: "Go to next tab", hotkeys: hk(["Ctrl"], "Tab").concat(hk(["Mod"], "PageDown")), callback: () => cycle(1) });
-  add({ id: "workspace:previous-tab", name: "Go to previous tab", hotkeys: hk(["Ctrl", "Shift"], "Tab").concat(hk(["Mod"], "PageUp")), callback: () => cycle(-1) });
+  add({ id: "workspace:next-tab", name: "Go to next tab", hotkeys: hk(["Ctrl"], "Tab").concat(hk(["Ctrl"], "PageDown")), callback: () => cycle(1) });
+  add({ id: "workspace:previous-tab", name: "Go to previous tab", hotkeys: hk(["Ctrl", "Shift"], "Tab").concat(hk(["Ctrl"], "PageUp")), callback: () => cycle(-1) });
 
   // Editing commands.
   editorCmd("editor:toggle-bold", "Toggle bold", (v) => wrapSelection(v, "**"), hk(["Mod"], "B"), "bold");

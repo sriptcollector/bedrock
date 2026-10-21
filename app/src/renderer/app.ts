@@ -31,6 +31,7 @@ import { mountSyncUi } from "./sync-ui";
 import { InternalPlugins } from "./core-plugins/manager";
 import { applyConfigDirOverride, startSettingsFeatures, afterLayoutSettingsFeatures } from "./settings/bootstrap";
 import { mountAgentsUi } from "./settings/agents-tab";
+import { mountShell } from "./shell";
 import { scanVault } from "../core/scan";
 import type { WorkspaceLeaf } from "./workspace/leaf";
 import type { ViewState } from "./workspace/view";
@@ -157,6 +158,7 @@ export class App {
     await Promise.all([this.customCss.load(), this.propertyTypes.load()]);
     this.registerCoreViews();
     registerBuiltinCommands(this);
+    mountShell(this); // app shell: commands, URIs, vaults (shell/)
     await this.hotkeyManager.load();
     this.registerRibbon();
     await startSettingsFeatures(this); // keychain, core plugins, zoom (settings/bootstrap.ts)
@@ -327,11 +329,15 @@ export class App {
   }
 
   // ---------- attachments: paste & drop ----------
-  async handlePaste(e: ClipboardEvent, view: MarkdownView): Promise<boolean> {
+  // Synchronous on purpose: CodeMirror treats any truthy return (a Promise too) as "handled" and
+  // would swallow every ordinary text paste.
+  handlePaste(e: ClipboardEvent, view: MarkdownView): boolean {
     const files = Array.from(e.clipboardData?.files ?? []);
     if (!files.length) return false;
     e.preventDefault();
-    for (const f of files) await this.saveAttachment(f, view);
+    void (async () => {
+      for (const f of files) await this.saveAttachment(f, view);
+    })();
     return true;
   }
 

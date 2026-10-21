@@ -188,6 +188,7 @@ export class WorkspaceLeaf extends WorkspaceItem {
       await view.setState(vs.state ?? {}, { history: !fromHistory });
     }
     if (eState) this.view.setEphemeralState(eState);
+    (this.getContainer() as any).adoptEditors?.(); // popout window: editors measure in its document
     this.updateHeader();
     if (vs.active) ws.setActiveLeaf(this, { focus: true });
     ws.onLeafStateChanged(this);
