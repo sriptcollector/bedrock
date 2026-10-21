@@ -1,0 +1,87 @@
+name: release
+
+on:
+  push:
+    tags: ["v*"]
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  build:
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [windows-latest, macos-latest]
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+      - run: npm ci
+      - run: npm test -w app
+      # Signing turns on by itself once the secrets exist (docs/SIGNING.md); without them the
+      # Windows build is unsigned and the Mac build is ad-hoc signed.
+      - name: Build installers
+        shell: bash
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          APPLE_CERTIFICATE: ${{ secrets.APPLE_CERTIFICATE }}
+          APPLE_CERTIFICATE_PASSWORD: ${{ secrets.APPLE_CERTIFICATE_PASSWORD }}
+          APPLE_ID: ${{ secrets.APPLE_ID }}
+          APPLE_APP_PASSWORD: ${{ secrets.APPLE_APP_PASSWORD }}
+          APPLE_PASSWORD: ${{ secrets.APPLE_PASSWORD }}
+          APPLE_TEAM_ID: ${{ secrets.APPLE_TEAM_ID }}
+          AZURE_CLIENT_ID: ${{ secrets.AZURE_CLIENT_ID }}
+          AZURE_CLIENT_SECRET: ${{ secrets.AZURE_CLIENT_SECRET }}
+          AZURE_TENANT_ID: ${{ secrets.AZURE_TENANT_ID }}
+          TRUSTED_SIGNING_ACCOUNT: ${{ secrets.TRUSTED_SIGNING_ACCOUNT }}
+          TRUSTED_SIGNING_PROFILE: ${{ secrets.TRUSTED_SIGNING_PROFILE }}
+          TRUSTED_SIGNING_ENDPOINT: ${{ secrets.TRUSTED_SIGNING_ENDPOINT }}
+        run: |
+          if [ -n "$APPLE_CERTIFICATE" ]; then
+            echo "Developer ID signing: on"
+            export CSC_LINK="$APPLE_CERTIFICATE" CSC_KEY_PASSWORD="$APPLE_CERTIFICATE_PASSWORD"
+            if [ -n "$APPLE_ID" ] && [ -n "$APPLE_TEAM_ID" ]; then
+              echo "Notarization: on"
+              export APPLE_APP_SPECIFIC_PASSWORD="${APPLE_APP_PASSWORD:-$APPLE_PASSWORD}" BEDROCK_NOTARIZE=1
+            fi
+          else
+            export CSC_IDENTITY_AUTO_DISCOVERY=false
+          fi
+          npm run dist -w app -- --publish never
+      - uses: actions/upload-artifact@v4
+        with:
+          name: installers-${{ matrix.os }}
+          path: |
+            app/release/*.exe
+            app/release/*.dmg
+            app/release/*.blockmap
+            app/release/latest*.yml
+          if-no-files-found: error
+
+  publish:
+    needs: build
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+      - uses: actions/download-artifact@v4
+        with:
+          path: dist-all
+          merge-multiple: true
+      # toolbay.json (the hub's install manifest) with real sizes and sha256 for each asset.
+      - run: node app/scripts/manifest.mjs --assets dist-all
+      - name: Publish the GitHub release
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          tag="${GITHUB_REF_NAME}"
+          notes="docs/release-notes/${tag}.md"
+          [ -f "$notes" ] || notes=/dev/null
+          gh release create "$tag" --title "Bedrock notes app ${tag}" --notes-file "$notes" \
+            dist-all/*.exe dist-all/*.dmg dist-all/*.blockmap dist-all/latest*.yml toolbay.json
