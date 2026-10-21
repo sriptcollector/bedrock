@@ -115,7 +115,7 @@
   window.__parity = {
     async open(path, mode) {
       // Dismiss popovers (an editing popover steals app.workspace.activeEditor) with an outside click.
-      if (document.querySelector(".popover")) {
+      if (document.querySelector(".popover, .menu")) {
         for (const t of ["mousedown", "mouseup", "click"]) document.body.dispatchEvent(new MouseEvent(t, { bubbles: true }));
         await sleep(300);
       }

@@ -410,7 +410,7 @@
   inset-inline-start: -1.2em;
   top: 0;
   width: 1.2em;
-  height: var(--line-height-normal, 1.5em);
+  height: 1.5em;
 }
 .markdown-rendered ul.has-list-bullet > li.task-list-item > .list-bullet {
   display: none;
