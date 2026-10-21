@@ -1,4 +1,4 @@
-# toolbay-vault architecture (working name, final name TBD: brand.json is the only place it lives)
+# Bedrock architecture (the name lives only in brand.json)
 
 A free, open-source rebuild of Obsidian with sync built in. One vault per Toolbay account, synced
 automatically. Clean-room: we never copy Obsidian's code, CSS, icons, fonts, sounds or wording.
