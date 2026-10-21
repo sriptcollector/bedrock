@@ -296,7 +296,7 @@ describe("force layout", () => {
     const sim = createSimulation();
     const links = new Uint32Array(160000 * 2);
     let seed = 1;
-    const rnd = () => ((seed = (seed * 1103515245 + 12345) & 0x7fffffff) / 0x7fffffff);
+    const rnd = () => ((seed = (Math.imul(seed, 1103515245) + 12345) & 0x7fffffff) / 0x7fffffff);
     for (let k = 0; k < 160000; k++) {
       const a = Math.floor(rnd() * n);
       let b = Math.floor(rnd() * n);

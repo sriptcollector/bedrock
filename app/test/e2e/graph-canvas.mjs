@@ -156,7 +156,7 @@ try {
       const n = 10000;
       const nodes = {};
       let seed = 7;
-      const rnd = () => ((seed = (seed * 1103515245 + 12345) & 0x7fffffff) / 0x7fffffff);
+      const rnd = () => ((seed = (Math.imul(seed, 1103515245) + 12345) & 0x7fffffff) / 0x7fffffff);
       for (let i = 0; i < n; i++) nodes["n" + i + ".md"] = { type: "", links: {} };
       let made = 0;
       while (made < 160000) {
@@ -184,15 +184,22 @@ try {
   await sheet(`graph-view-${theme}`, path.join(REF, `graph-view-${theme}.png`), graphShot);
 
   // hover highlights a node; click opens it
-  const hover = await win.evaluate(() => {
-    const r = window.app.workspace.getLeavesOfType("graph")[0].view.engine.renderer;
-    const i = r.graph.ids.indexOf(r.graph.ids.find((id) => id.endsWith("Welcome.md")) ?? r.graph.ids[0]);
-    const rect = r.canvasEl.getBoundingClientRect();
-    return { x: rect.left + r.x[i] * r.scale + r.panX, y: rect.top + r.y[i] * r.scale + r.panY, id: r.graph.ids[i] };
-  });
-  await win.mouse.move(hover.x, hover.y);
-  await win.waitForTimeout(600);
-  const hl = await win.evaluate(() => window.app.workspace.getLeavesOfType("graph")[0].view.engine.renderer.highlight);
+  const nodePos = () =>
+    win.evaluate(() => {
+      const r = window.app.workspace.getLeavesOfType("graph")[0].view.engine.renderer;
+      const i = r.graph.ids.indexOf(r.graph.ids.find((id) => id.endsWith("Welcome.md")) ?? r.graph.ids[0]);
+      const rect = r.canvasEl.getBoundingClientRect();
+      return { x: rect.left + r.x[i] * r.scale + r.panX, y: rect.top + r.y[i] * r.scale + r.panY, id: r.graph.ids[i] };
+    });
+  let hover = await nodePos();
+  let hl = -1;
+  // the layout may still be drifting: re-aim a few times
+  for (let attempt = 0; attempt < 4 && hl < 0; attempt++) {
+    hover = await nodePos();
+    await win.mouse.move(hover.x, hover.y);
+    await win.waitForTimeout(300);
+    hl = await win.evaluate(() => window.app.workspace.getLeavesOfType("graph")[0].view.engine.renderer.highlight);
+  }
   if (!benchVault) check("hovering a node highlights it", hl >= 0, hover.id);
   await shot(`graph-hover-${theme}`);
   await win.mouse.move(5, 400);
@@ -208,6 +215,16 @@ try {
   await win.evaluate(() => window.app.workspace.getLeavesOfType("graph")[0].view.engine.onOption("showTags", false, "data"));
 
   if (!benchVault) {
+    // timelapse: starts with a few nodes and grows back to the whole graph
+    const anim = await win.evaluate(async () => {
+      const e = window.app.workspace.getLeavesOfType("graph")[0].view.engine;
+      const p = e.renderProgression();
+      await new Promise((r) => setTimeout(r, 120));
+      const early = e.renderer.graph.ids.length;
+      await p;
+      return { early, final: e.renderer.graph.ids.length };
+    });
+    check("timelapse animation grows the graph", anim.early < anim.final && (src !== DEMO || anim.final === 17), JSON.stringify(anim));
     await win.waitForTimeout(1500);
     const target = await win.evaluate(() => {
       const r = window.app.workspace.getLeavesOfType("graph")[0].view.engine.renderer;

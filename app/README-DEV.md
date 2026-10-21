@@ -117,6 +117,12 @@ test/fixtures/vault/   sample vault incl. a test community plugin
 | vault-copy (Orion's vault copy, incl. code folders) | 955 / 517 | 594 ms (scan 404, read+parse 184) | 354 ms | 446 ms | renderer heap 45 MB, working set 175 MB |
 | synthetic 10k (`scripts/gen-bench-vault.mjs`, 43 MB, 160k links) | 10,000 / 10,000 | 1,089 ms (read+parse 841, resolve 235) | 68 ms | 1,863 ms | renderer heap 111 MB, working set 259 MB |
 
+Graph view (same synthetic 10k vault, `node test/e2e/graph-canvas.mjs --bench <vault>`, WebGL2, 240 Hz
+display): 10,050 nodes / 49,962 links draw at the display rate (240 fps, < 1.5 ms of main-thread work
+per frame) while the worker lays them out at ~42 ticks/s; the layout settles 6.1 s after opening. A
+synthetic 10,000-node / 160,000-link graph: `setData` 57 ms, 240 fps, 28 layout ticks/s (worker),
+25 ms per tick in the unit benchmark.
+
 The window is usable at layout-ready; the metadata cache fills in behind it (worker pool, 150 files
 per batch) and fires `resolved` when done.
 
