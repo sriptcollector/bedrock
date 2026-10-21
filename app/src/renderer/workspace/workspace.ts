@@ -18,6 +18,7 @@ import type { ViewRegistry } from "./registry";
 import type { View, ViewState } from "./view";
 import { PlaceholderView } from "../views/placeholder";
 import { parseLinktext } from "../../core/links";
+import { WorkspaceFloating, WorkspaceWindow, openPopout, moveToPopout, restoreFloating } from "./popout";
 
 export type PaneType = "tab" | "split" | "window";
 
@@ -29,6 +30,8 @@ export class Workspace extends Events {
   leftSplit: WorkspaceSidedock;
   rightSplit: WorkspaceSidedock;
   rootSplit: WorkspaceRoot;
+  /** Popout windows. */
+  floatingSplit: WorkspaceFloating;
   activeLeaf: WorkspaceLeaf | null = null;
   layoutReady = false;
   requestSaveLayout: () => void;
@@ -50,6 +53,7 @@ export class Workspace extends Events {
     this.leftSplit = new WorkspaceSidedock(this, "left");
     this.rightSplit = new WorkspaceSidedock(this, "right");
     this.rootSplit = new WorkspaceRoot(this);
+    this.floatingSplit = new WorkspaceFloating(this);
     this.leftRibbon = new WorkspaceRibbon(this, "left");
     this.rightRibbon = new WorkspaceRibbon(this, "right");
     this.containerEl.append(this.leftRibbon.containerEl, this.leftSplit.containerEl, this.rootSplit.containerEl, this.rightSplit.containerEl, this.rightRibbon.containerEl);
@@ -144,7 +148,8 @@ export class Workspace extends Events {
   }
 
   isRootLeaf(leaf: WorkspaceLeaf): boolean {
-    return leaf.getRoot() === this.rootSplit;
+    const r = leaf.getRoot();
+    return r === this.rootSplit || r === this.floatingSplit;
   }
 
   private isLastRootLeaf(leaf: WorkspaceLeaf): boolean {
@@ -178,6 +183,7 @@ export class Workspace extends Events {
   getLeaf(newLeaf?: PaneType | boolean, direction: SplitDirection = "vertical"): WorkspaceLeaf {
     if (!newLeaf) return this.getUnpinnedLeaf();
     const recent = (this.activeLeaf && this.isRootLeaf(this.activeLeaf) ? this.activeLeaf : this.getMostRecentLeaf()) ?? null;
+    if (newLeaf === "window") return this.openPopoutLeaf();
     if (newLeaf === "split") return recent ? this.createLeafBySplit(recent, direction) : this.getUnpinnedLeaf();
     const tabs = (recent?.parent as WorkspaceTabs) ?? this.firstRootTabs();
     return this.createLeafInTabs(tabs, recent ? tabs.children.indexOf(recent) + 1 : undefined);
@@ -380,9 +386,11 @@ export class Workspace extends Events {
   }
   iterateRootLeaves(cb: (l: WorkspaceLeaf) => any): void {
     this.iterateLeaves(this.rootSplit, cb);
+    this.iterateLeaves(this.floatingSplit, cb);
   }
   iterateAllLeaves(cb: (l: WorkspaceLeaf) => any): void {
     this.iterateLeaves(this.rootSplit, cb);
+    this.iterateLeaves(this.floatingSplit, cb);
     this.iterateLeaves(this.leftSplit, cb);
     this.iterateLeaves(this.rightSplit, cb);
   }
@@ -429,6 +437,7 @@ export class Workspace extends Events {
       left: this.leftSplit.serialize(),
       right: this.rightSplit.serialize(),
       "left-ribbon": this.leftRibbon.serialize(),
+      ...(this.floatingSplit.children.length ? { floating: this.floatingSplit.serialize() } : {}),
       active: this.activeLeaf?.id,
       lastOpenFiles: this.lastOpenFiles,
     };
@@ -514,6 +523,7 @@ export class Workspace extends Events {
         p.removeChild(c, true);
       }
     };
+    this.floatingSplit.closeAll();
     clear(this.rootSplit);
     clear(this.leftSplit);
     clear(this.rightSplit);
@@ -582,6 +592,7 @@ export class Workspace extends Events {
     if (layout.main?.direction) this.rootSplit.setDirection(layout.main.direction);
     fillDock(this.leftSplit, layout.left);
     fillDock(this.rightSplit, layout.right);
+    if (layout.floating) restoreFloating(this, layout.floating, fillDock);
     // Flatten single-child nested splits created from older layouts.
     for (const dock of [this.rootSplit, this.leftSplit, this.rightSplit]) {
       for (const c of dock.children.slice()) if (c instanceof WorkspaceSplit) c.cleanupIfEmpty();
@@ -658,11 +669,19 @@ export class Workspace extends Events {
     this.iterateAllLeaves((l) => (l.view as any)?.editMode?.updateOptions?.() ?? (l.view as any)?.updateOptions?.());
   }
 
-  // Popout windows are not supported yet; they open as tabs.
-  openPopoutLeaf(): WorkspaceLeaf {
-    return this.getLeaf("tab");
+  /** A new popout window (obsidian API). */
+  openPopoutLeaf(data?: { size?: { width: number; height: number } }): WorkspaceLeaf {
+    return openPopout(this, data?.size);
   }
-  moveLeafToPopout(leaf: WorkspaceLeaf): WorkspaceLeaf {
-    return leaf;
+  /** Move a leaf into a new popout window (obsidian API). */
+  moveLeafToPopout(leaf: WorkspaceLeaf, data?: { size?: { width: number; height: number } }): WorkspaceLeaf {
+    void data;
+    return moveToPopout(this, leaf);
+  }
+  /** The popout window holding `leaf`, if any. */
+  getWindowOf(leaf: WorkspaceLeaf): WorkspaceWindow | null {
+    let x: any = leaf;
+    while (x && !(x instanceof WorkspaceWindow)) x = x.parent;
+    return x ?? null;
   }
 }

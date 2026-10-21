@@ -22,7 +22,9 @@ export async function waitForPort(port, timeoutMs = 60000) {
 export const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
 
 export async function connect(port, pick = (pages) => pages[0]) {
-  const pages = (await listTargets(port)).filter((t) => t.type === "page");
+  const all = (await listTargets(port)).filter((t) => t.type === "page");
+  // Popout windows are about:blank pages; the main window comes first unless asked for.
+  const pages = [...all.filter((t) => t.url !== "about:blank"), ...all.filter((t) => t.url === "about:blank")];
   const target = pick(pages);
   if (!target) throw new Error("no page target on port " + port);
   const ws = new WebSocket(target.webSocketDebuggerUrl);

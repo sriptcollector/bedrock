@@ -274,6 +274,48 @@ export function registerEditorCommands(app: any): void {
   for (const [op, label, icon] of tableOps)
     ed(`editor:table-${op}`, `Table: ${label}`, icon, (_v, cm) => tableCommand(cm, op), undefined, { check: (_v, cm) => tableCommand(cm, op, true) });
 
+  // Popout windows.
+  const activeLeaf = () => app.workspace.activeLeaf;
+  add({
+    id: "workspace:open-in-new-window",
+    name: "Open current tab in new window",
+    icon: "picture-in-picture-2",
+    checkCallback: (checking) => {
+      const leaf = activeLeaf();
+      if (!leaf) return false;
+      if (!checking) {
+        const nl = app.workspace.openPopoutLeaf();
+        void nl.setViewState({ ...leaf.getViewState(), active: true }, leaf.getEphemeralState?.());
+      }
+      return true;
+    },
+  });
+  add({
+    id: "workspace:move-to-new-window",
+    name: "Move current tab to new window",
+    icon: "picture-in-picture-2",
+    checkCallback: (checking) => {
+      const leaf = activeLeaf();
+      if (!leaf) return false;
+      if (!checking) app.workspace.moveLeafToPopout(leaf);
+      return true;
+    },
+  });
+  add({ id: "workspace:new-window", name: "Open new window", icon: "app-window", callback: () => app.workspace.openPopoutLeaf() });
+  add({
+    id: "workspace:close-window",
+    name: "Close window",
+    icon: "x",
+    hotkeys: hk(["Mod", "Shift"], "W"),
+    checkCallback: (checking) => {
+      const leaf = activeLeaf();
+      const win = leaf ? app.workspace.getWindowOf?.(leaf) : null;
+      if (!win) return false;
+      if (!checking) win.close();
+      return true;
+    },
+  });
+
   add({
     id: "workspace:export-pdf",
     name: "Export to PDF",
