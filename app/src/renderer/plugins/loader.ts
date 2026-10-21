@@ -9,13 +9,40 @@
 import type { PluginManifest, Plugin } from "./plugin";
 import { Notice } from "../ui/notice";
 
+const LEGACY_CM: Record<string, string> = {
+  "@codemirror/text": "@codemirror/state",
+  "@codemirror/rangeset": "@codemirror/state",
+  "@codemirror/closebrackets": "@codemirror/autocomplete",
+  "@codemirror/comment": "@codemirror/commands",
+  "@codemirror/history": "@codemirror/commands",
+  "@codemirror/fold": "@codemirror/language",
+  "@codemirror/gutter": "@codemirror/view",
+  "@codemirror/highlight": "@codemirror/language",
+  "@codemirror/matchbrackets": "@codemirror/language",
+  "@codemirror/panel": "@codemirror/view",
+  "@codemirror/rectangular-selection": "@codemirror/view",
+  "@codemirror/stream-parser": "@codemirror/language",
+  "@codemirror/tooltip": "@codemirror/view",
+};
+
 export class PluginManager {
   manifests: Record<string, PluginManifest> = {};
   plugins: Record<string, Plugin> = {};
   enabledPlugins = new Set<string>();
   private styleEls: Record<string, HTMLStyleElement> = {};
 
-  constructor(private app: any, private apiModule: () => any, private sharedModules: Record<string, any>) {}
+  /** id -> last error a plugin threw (load failures and uncaught errors whose stack points at it). */
+  loadErrors: Record<string, string> = {};
+
+  constructor(private app: any, private apiModule: () => any, private sharedModules: Record<string, any>) {
+    const record = (err: any) => {
+      const stack = String(err?.stack ?? err ?? "");
+      const m = /plugin:([^:\s)]+)/.exec(stack);
+      if (m) this.loadErrors[decodeURIComponent(m[1])] = String(err?.message ?? err).slice(0, 300);
+    };
+    window.addEventListener("unhandledrejection", (e) => record(e.reason));
+    window.addEventListener("error", (e) => record(e.error ?? e.message));
+  }
 
   get dir(): string {
     return this.app.vault.configDir + "/plugins";
@@ -73,6 +100,12 @@ export class PluginManager {
     return (name: string) => {
       if (name === "obsidian") return this.apiModule();
       if (this.sharedModules[name]) return this.sharedModules[name];
+      // CodeMirror 0.19-era package names map to their CodeMirror 6 homes (as in Obsidian).
+      const legacy = LEGACY_CM[name];
+      if (legacy && this.sharedModules[legacy]) {
+        console.warn(`Plugin requires deprecated "${name}"; using "${legacy}".`);
+        return this.sharedModules[legacy];
+      }
       if (name.startsWith("./") || name.startsWith("../")) return nodeRequire(this.app.vault.adapter.getFullPath(dir + "/" + name));
       return nodeRequire(name);
     };
@@ -85,8 +118,10 @@ export class PluginManager {
     try {
       const code = await this.app.vault.adapter.read(m.dir + "/main.js");
       const module = { exports: {} as any };
-      const fn = new Function("require", "module", "exports", "app", code + `\n//# sourceURL=plugin:${encodeURIComponent(id)}`);
-      fn(this.makeRequire(m.dir!), module, module.exports, this.app);
+      // Same CommonJS wrapper shape as Obsidian: (require, module, exports) only — plugins may declare
+      // their own top-level `app` (Excalidraw does); window.app is the global.
+      const fn = (0, eval)(`(function anonymous(require,module,exports){${code}\n})\n//# sourceURL=plugin:${encodeURIComponent(id)}`);
+      fn(this.makeRequire(m.dir!), module, module.exports);
       const PluginClass = module.exports.default ?? module.exports;
       if (typeof PluginClass !== "function") throw new Error("main.js does not export a plugin class");
       const plugin: Plugin = new PluginClass(this.app, m);
@@ -105,6 +140,7 @@ export class PluginManager {
       return plugin;
     } catch (e: any) {
       console.error(`Plugin "${id}" failed to load`, e);
+      this.loadErrors[id] = String(e?.message ?? e).slice(0, 300);
       new Notice(`The plugin "${m.name}" couldn't start: ${e?.message ?? e}`);
       return null;
     }
@@ -138,5 +174,26 @@ export class PluginManager {
 
   getPlugin(id: string): Plugin | null {
     return this.plugins[id] ?? null;
+  }
+
+  /** Turn off, forget and delete a plugin's folder (Settings › Community plugins › Uninstall). */
+  async uninstallPlugin(id: string): Promise<void> {
+    const m = this.manifests[id];
+    await this.unloadPlugin(id);
+    if (this.enabledPlugins.delete(id)) await this.saveEnabledList();
+    if (m?.dir) await this.app.vault.adapter.rmdir(m.dir, true).catch((e: any) => console.error(e));
+    delete this.manifests[id];
+  }
+
+  /** Obsidian's names, used by some plugins (e.g. "Hot Reload"). */
+  async enablePlugin(id: string): Promise<boolean> {
+    if (!this.isEnabled()) return false;
+    return !!(await this.loadPlugin(id));
+  }
+  async disablePlugin(id: string): Promise<void> {
+    await this.unloadPlugin(id);
+  }
+  setEnable(v: boolean): void {
+    this.setEnabled(v);
   }
 }

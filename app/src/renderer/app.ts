@@ -25,6 +25,8 @@ import { FileExplorerView } from "./views/file-explorer";
 import { registerSimpleViews, IMAGE_EXTS } from "./views/simple-views";
 import { PropertyTypes } from "./editor/properties";
 import { mountSyncUi } from "./sync-ui";
+import { InternalPlugins } from "./core-plugins/manager";
+import { applyConfigDirOverride, startSettingsFeatures, afterLayoutSettingsFeatures } from "./settings/bootstrap";
 import { scanVault } from "../core/scan";
 import type { WorkspaceLeaf } from "./workspace/leaf";
 import type { ViewState } from "./workspace/view";
@@ -97,6 +99,7 @@ export class App {
   titleBar: TitleBar;
   watcher: VaultWatcher;
   internalPlugins: any;
+  secretStorage: any = null;
   protocolHandlers: Record<string, (p: any) => any> = {};
   closedTabs: ViewState[] = [];
   recentCommands: string[] = [];
@@ -128,20 +131,10 @@ export class App {
     this.plugins = new PluginManager(this, apiModule, sharedModules);
     this.watcher = new VaultWatcher(this.vault);
     setModalApp(this);
-    this.internalPlugins = {
-      plugins: Object.fromEntries(
-        Object.entries(CORE_PLUGINS).map(([id, p]) => [id, { ...p, id, enabled: p.available, instance: { options: {} }, _loaded: p.available }]),
-      ),
-      getPluginById: (id: string) => {
-        const p = this.internalPlugins.plugins[id];
-        return p?.enabled ? p : null;
-      },
-      getEnabledPluginById: (id: string) => this.internalPlugins.getPluginById(id)?.instance ?? null,
-      setEnabled: (id: string, v: boolean) => {
-        const p = this.internalPlugins.plugins[id];
-        if (p?.available) p.enabled = v;
-      },
-    };
+    // Core plugins (core-plugins.json, per-plugin options, behaviour): core-plugins/manager.ts.
+    // CORE_PLUGINS["x"].available marks plugins whose views are built elsewhere in the app.
+    this.internalPlugins = new InternalPlugins(this, CORE_PLUGINS);
+    applyConfigDirOverride(this);
   }
 
   // ---------- startup ----------
@@ -162,12 +155,14 @@ export class App {
     registerBuiltinCommands(this);
     await this.hotkeyManager.load();
     this.registerRibbon();
+    await startSettingsFeatures(this); // keychain, core plugins, zoom (settings/bootstrap.ts)
     window.addEventListener("keydown", (e) => this.onKeyDown(e), true);
     ["mousedown", "keydown", "click"].forEach((t) => window.addEventListener(t, (e) => (this.lastEvent = e), true));
 
     await this.workspace.loadLayout();
     this.workspace.markLayoutReady();
     const tLayout = performance.now();
+    void afterLayoutSettingsFeatures(this);
     this.watcher.start();
     mountSyncUi(this);
 
@@ -239,6 +234,7 @@ export class App {
   }
 
   private onKeyDown(e: KeyboardEvent): void {
+    if ((window as any).__bedrockRecordingHotkey) return; // Settings › Hotkeys is recording a key
     // Scopes first (modals, plugins), then global command hotkeys.
     const scoped = this.keymap.scopes.length > 0;
     if (scoped) {

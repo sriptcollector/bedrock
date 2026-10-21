@@ -1,9 +1,10 @@
 // Self-update from GitHub releases (electron-updater). Only in packaged builds. This talks to
 // GitHub's release feed only; no analytics or identifiers are sent.
 import { app } from "electron";
+import { readAppSettings } from "./settings-host";
 
 export function startAutoUpdate(): void {
-  if (!app.isPackaged || process.env.BEDROCK_NO_UPDATE === "1") return;
+  if (!app.isPackaged || process.env.BEDROCK_NO_UPDATE === "1" || readAppSettings().updateDisabled) return;
   try {
     const { autoUpdater } = require("electron-updater") as typeof import("electron-updater");
     autoUpdater.autoDownload = true;

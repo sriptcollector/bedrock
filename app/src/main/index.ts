@@ -11,6 +11,7 @@ import { startAutoUpdate, checkNow } from "./updater";
 import { ensureMainVault, importIntoMain, isVaultFolder, readRegistry, rememberOther } from "./vaults";
 import { createVaultWindow, vaultWindows } from "./windows";
 import { runSelftest } from "./selftest";
+import { applyEarlyAppSettings, registerSettingsIpc } from "./settings-host";
 
 // ---- identity & app data (before anything touches userData) ----
 app.setName(BRAND.displayName);
@@ -19,6 +20,7 @@ if (process.platform === "win32") app.setAppUserModelId(BRAND.appId);
 const userDataOverride = process.env.BEDROCK_USER_DATA;
 app.setPath("userData", userDataOverride ? path.resolve(userDataOverride) : path.join(app.getPath("appData"), BRAND.appId));
 account.captureEnvToken();
+applyEarlyAppSettings();
 
 function argValue(argv: string[], flag: string): string | null {
   const i = argv.indexOf(flag);
@@ -128,6 +130,7 @@ function startApp(): void {
   app.on("activate", () => show());
 
   registerIpc({ openOtherVault });
+  registerSettingsIpc();
 
   app.whenReady().then(() => {
     if (process.platform !== "darwin") Menu.setApplicationMenu(null);

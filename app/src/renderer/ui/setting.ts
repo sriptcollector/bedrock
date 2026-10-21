@@ -397,7 +397,13 @@ export class Setting {
     return this.add(new ExtraButtonComponent(this.controlEl), cb);
   }
   addToggle(cb: (c: ToggleComponent) => any): this {
+    this.settingEl.addClass("mod-toggle");
     return this.add(new ToggleComponent(this.controlEl), cb);
+  }
+  addComponent<T extends BaseComponent>(cb: (el: HTMLElement) => T): this {
+    const c = cb(this.controlEl);
+    if (c) this.components.push(c);
+    return this;
   }
   addText(cb: (c: TextComponent) => any): this {
     return this.add(new TextComponent(this.controlEl), cb);
@@ -440,13 +446,65 @@ export abstract class SettingTab {
   icon = "settings";
   id = "";
   name = "";
+  /** Definitions from getSettingDefinitions(), stored by update() (1.13 declarative settings). */
+  settingItems: any[] = [];
   constructor() {
     this.containerEl = createDiv("vertical-tab-content");
   }
-  abstract display(): void;
+  /** Override to describe the tab declaratively; display() then renders these. */
+  getSettingDefinitions(): any[] {
+    return [];
+  }
+  update(): void {
+    try {
+      this.settingItems = this.getSettingDefinitions() ?? [];
+    } catch (e) {
+      console.error(`Settings tab "${this.id}" failed to describe its settings`, e);
+      this.settingItems = [];
+    }
+    // Re-render if this tab is on screen.
+    if (this.containerEl.isConnected && this.settingItems.length) {
+      this.runCleanups();
+      this.containerEl.empty();
+      settingsRenderer?.renderDefinitions(this, this.settingItems, this.containerEl);
+    }
+  }
+  getControlValue(key: string): unknown {
+    return this.app?.vault?.getConfig(key);
+  }
+  setControlValue(key: string, value: unknown): void | Promise<void> {
+    this.app?.vault?.setConfig(key, value);
+    this.app?.workspace?.updateOptions?.();
+  }
+  refreshDomState(): void {
+    settingsRenderer?.refreshDomState(this);
+  }
+  /** Default: render the definitions. Imperative tabs (and most plugins) override this. */
+  display(): void {
+    this.settingItems = this.getSettingDefinitions() ?? [];
+    this.containerEl.empty();
+    settingsRenderer?.renderDefinitions(this, this.settingItems, this.containerEl);
+  }
   hide(): void {
+    this.runCleanups();
     this.containerEl.empty();
   }
+  private runCleanups(): void {
+    const c = (this as any).__cleanups as (() => void)[] | undefined;
+    if (c) for (const f of c.splice(0)) {
+      try {
+        f();
+      } catch (e) {
+        console.error(e);
+      }
+    }
+  }
+}
+
+/** Set by the settings module (avoids an import cycle with settings/render.ts). */
+let settingsRenderer: { renderDefinitions(tab: any, items: any[], el: HTMLElement): void; refreshDomState(tab: any): void } | null = null;
+export function setSettingsRenderer(r: typeof settingsRenderer): void {
+  settingsRenderer = r;
 }
 
 export abstract class PluginSettingTab extends SettingTab {
@@ -457,5 +515,14 @@ export abstract class PluginSettingTab extends SettingTab {
     this.plugin = plugin;
     this.id = plugin?.manifest?.id ?? "";
     this.name = plugin?.manifest?.name ?? "";
+  }
+  getControlValue(key: string): unknown {
+    return this.plugin?.settings?.[key];
+  }
+  async setControlValue(key: string, value: unknown): Promise<void> {
+    if (!this.plugin) return;
+    this.plugin.settings = this.plugin.settings ?? {};
+    this.plugin.settings[key] = value;
+    await this.plugin.saveData?.(this.plugin.settings);
   }
 }

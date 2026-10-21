@@ -72,11 +72,11 @@ export class MarkdownRenderer extends MarkdownRenderChild {
 
   /** obsidian API: render markdown into `el`. */
   static async render(app: any, markdown: string, el: HTMLElement, sourcePath: string, component: Component): Promise<void> {
-    await renderMarkdownInto(app, markdown, el, sourcePath, component, { embedDepth: 0 });
+    await renderMarkdownInto(app, markdown, el, sourcePath, component, { embedDepth: 0, flat: true });
   }
 
   static async renderMarkdown(markdown: string, el: HTMLElement, sourcePath: string, component: Component): Promise<void> {
-    await renderMarkdownInto((window as any).app, markdown, el, sourcePath, component, { embedDepth: 0 });
+    await renderMarkdownInto((window as any).app, markdown, el, sourcePath, component, { embedDepth: 0, flat: true });
   }
 }
 
@@ -85,6 +85,8 @@ export interface RenderOptions {
   lineOffset?: number;
   frontmatter?: any;
   sourceText?: string;
+  /** API renders (MarkdownRenderer.render): blocks go straight into el, without section divs (as in Obsidian). */
+  flat?: boolean;
 }
 
 /** Render `markdown` into `el` as Obsidian-style sections and run post processors. */
@@ -105,7 +107,8 @@ export async function renderMarkdownInto(app: any, markdown: string, el: HTMLEle
     sec.appendChild(node);
     sections.push(sec);
   }
-  for (const s of sections) el.appendChild(s);
+  if (opts.flat) for (const s of sections) el.appendChild(s.firstChild!);
+  else for (const s of sections) el.appendChild(s);
   const docId = String(++docCounter);
   const lines = (opts.sourceText ?? markdown).split("\n");
   const ctx: MarkdownPostProcessorContext = {

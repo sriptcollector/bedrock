@@ -28,12 +28,52 @@ export class Vault extends Events {
   }
 
   // ---------- config (.obsidian/app.json) ----------
+  // Like Obsidian, app.json and appearance.json are one merged config; appearance keys are written
+  // to appearance.json, everything else to app.json, and only non-default values are stored.
+  static APPEARANCE_KEYS = new Set([
+    "accentColor",
+    "theme",
+    "cssTheme",
+    "enabledCssSnippets",
+    "showViewHeader",
+    "showRibbon",
+    "nativeMenus",
+    "translucency",
+    "textFontFamily",
+    "interfaceFontFamily",
+    "monospaceFontFamily",
+    "baseFontSize",
+    "baseFontSizeAction",
+    "slidingSidebar",
+    "floatingNavigation",
+    "autoFullScreen",
+  ]);
+  /** Raw contents of the two files (unknown keys are kept and written back untouched). */
+  private configFiles: { app: Record<string, any>; appearance: Record<string, any> } = { app: {}, appearance: {} };
+
   async loadConfig(): Promise<void> {
+    const read = async (name: string) => {
+      try {
+        const j = JSON.parse(await this.adapter.read(`${this.configDir}/${name}.json`));
+        return j && typeof j === "object" && !Array.isArray(j) ? j : {};
+      } catch {
+        return {};
+      }
+    };
+    this.configFiles = { app: await read("app"), appearance: await read("appearance") };
+    this.config = { ...this.configFiles.app, ...this.configFiles.appearance };
+  }
+
+  /** Read a JSON file in the config folder (`.obsidian/<name>.json`); null when missing or invalid. */
+  async readConfigJson(name: string): Promise<any> {
     try {
-      this.config = JSON.parse(await this.adapter.read(this.configDir + "/app.json")) ?? {};
+      return JSON.parse(await this.adapter.read(`${this.configDir}/${name}.json`));
     } catch {
-      this.config = {};
+      return null;
     }
+  }
+  async writeConfigJson(name: string, data: any): Promise<void> {
+    await this.adapter.write(`${this.configDir}/${name}.json`, JSON.stringify(data, null, 2));
   }
 
   static DEFAULT_CONFIG: Record<string, any> = {
@@ -65,9 +105,35 @@ export class Vault extends Events {
     propertiesInDocument: "visible",
     focusNewTab: true,
     showUnsupportedFiles: false,
-    userIgnoreFilters: [],
+    userIgnoreFilters: null,
     alwaysShowTabHeaders: true,
     stackedTabs: false,
+    // Remaining Obsidian 1.14 keys (docs/reference/settings.json configDefaults).
+    rightToLeft: false,
+    autoConvertHtml: true,
+    deleteUnlinkedAttachments: "ask",
+    openBehavior: "",
+    uriCallbacks: false,
+    settingsPopoutWindow: true,
+    mermaid: false,
+    showEditingModeInStatusBar: true,
+    // appearance.json
+    theme: "system",
+    accentColor: "",
+    cssTheme: "",
+    enabledCssSnippets: [],
+    showViewHeader: true,
+    showRibbon: true,
+    nativeMenus: null,
+    translucency: false,
+    textFontFamily: "",
+    interfaceFontFamily: "",
+    monospaceFontFamily: "",
+    baseFontSize: 16,
+    baseFontSizeAction: false,
+    slidingSidebar: true,
+    floatingNavigation: true,
+    autoFullScreen: true,
   };
 
   getConfig(key: string): any {
@@ -75,13 +141,31 @@ export class Vault extends Events {
   }
 
   setConfig(key: string, value: any): void {
-    if (value === undefined || value === Vault.DEFAULT_CONFIG[key]) delete this.config[key];
-    else this.config[key] = value;
+    const which = Vault.APPEARANCE_KEYS.has(key) ? "appearance" : "app";
+    const file = this.configFiles[which];
+    const isDefault = value === undefined || value === null || sameValue(value, Vault.DEFAULT_CONFIG[key]);
+    const before = JSON.stringify(file);
+    if (isDefault) {
+      delete this.config[key];
+      delete file[key];
+    } else {
+      this.config[key] = value;
+      file[key] = value;
+    }
     this.trigger("config-changed", key, value);
+    if (JSON.stringify(file) === before) return; // nothing changed on disk
+    this.dirtyConfig.add(which);
     clearTimeout(this.configSaveTimer);
-    this.configSaveTimer = setTimeout(() => {
-      this.adapter.write(this.configDir + "/app.json", JSON.stringify(this.config, null, 2)).catch(console.error);
-    }, 300);
+    this.configSaveTimer = setTimeout(() => this.flushConfig(), 300);
+  }
+
+  private dirtyConfig = new Set<"app" | "appearance">();
+  /** Write pending app.json / appearance.json changes now. */
+  async flushConfig(): Promise<void> {
+    clearTimeout(this.configSaveTimer);
+    const files = [...this.dirtyConfig];
+    this.dirtyConfig.clear();
+    for (const f of files) await this.adapter.write(`${this.configDir}/${f}.json`, JSON.stringify(this.configFiles[f], null, 2)).catch(console.error);
   }
 
   // ---------- tree ----------
@@ -384,4 +468,11 @@ export class Vault extends Events {
     this.addChild(file);
     this.trigger("create", file);
   }
+}
+
+/** Deep equality for config values (arrays/objects compare by content). */
+function sameValue(a: any, b: any): boolean {
+  if (a === b) return true;
+  if (a && b && typeof a === "object" && typeof b === "object") return JSON.stringify(a) === JSON.stringify(b);
+  return false;
 }

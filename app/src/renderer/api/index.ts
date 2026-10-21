@@ -40,6 +40,53 @@ export {
   AbstractTextComponent,
 } from "../ui/setting";
 export { Scope, Keymap, Platform } from "../commands/keymap";
+export { SettingGroup, SettingPage } from "../settings/render";
+export { SecretStorage, SecretComponent } from "../settings/secret-storage";
+export { PopoverSuggest, AbstractInputSuggest, EditorSuggest } from "./suggest";
+export {
+  ConfirmationModal,
+  ConfirmationButton,
+  MenuSeparator,
+  TExternalFile,
+  CapacitorAdapter,
+  WorkspaceContainer,
+  WorkspaceWindow,
+  WorkspaceFloating,
+  WorkspaceMobileDrawer,
+  MarkdownPreviewView,
+  MarkdownEditView,
+  MarkdownPreviewRenderer,
+  RenderContext,
+  DisplayValueComponent,
+  livePreviewState,
+  parsePropertyId,
+  Value,
+  NullValue,
+  NotNullValue,
+  PrimitiveValue,
+  StringValue,
+  NumberValue,
+  BooleanValue,
+  DateValue,
+  RelativeDateValue,
+  DurationValue,
+  RegExpValue,
+  UrlValue,
+  HTMLValue,
+  IconValue,
+  ImageValue,
+  TagValue,
+  LinkValue,
+  FileValue,
+  ListValue,
+  ObjectValue,
+  BasesEntry,
+  BasesEntryGroup,
+  BasesQueryResult,
+  BasesViewConfig,
+  BasesView,
+  QueryController,
+} from "./compat";
 export { prepareFuzzySearch, prepareSimpleSearch, renderMatches, renderResults, sortSearchResults } from "../ui/search";
 export { setIcon, getIcon, addIcon, removeIcon, getIconIds } from "../dom/icons";
 export { normalizePath } from "../../core/path";

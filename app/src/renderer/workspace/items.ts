@@ -492,5 +492,18 @@ export class WorkspaceRibbon {
       it.hidden = !!this.hiddenItems[it.id];
       it.buttonEl.toggle(!it.hidden);
     }
+    this.applyOrder();
+  }
+
+  /** Order follows the key order of hiddenItems (Settings › Interface › Ribbon menu configuration). */
+  applyOrder(): void {
+    const order = Object.keys(this.hiddenItems);
+    if (!order.length) return;
+    const rank = (id: string) => {
+      const i = order.indexOf(id);
+      return i < 0 ? order.length : i;
+    };
+    this.items.sort((a, b) => rank(a.id) - rank(b.id));
+    for (const it of this.items) this.actionsEl.appendChild(it.buttonEl);
   }
 }

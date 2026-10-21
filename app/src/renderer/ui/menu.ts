@@ -131,19 +131,23 @@ export class Menu extends Component {
 
   showAtMouseEvent(evt: MouseEvent): this {
     evt.preventDefault?.();
-    return this.showAtPosition({ x: evt.clientX, y: evt.clientY });
+    const doc = ((evt.target as Node | null)?.ownerDocument ?? (evt as any).view?.document) as Document | undefined;
+    return this.showAtPosition({ x: evt.clientX, y: evt.clientY }, doc);
   }
 
-  showAtPosition(pos: { x: number; y: number; width?: number; overlap?: boolean; left?: boolean }, _doc?: Document): this {
+  showAtPosition(pos: { x: number; y: number; width?: number; overlap?: boolean; left?: boolean }, docArg?: Document): this {
     if (openMenu && openMenu !== this && !openMenu.dom.contains(this.dom)) openMenu.hide();
     this.render();
+    // Popout windows (settings) show menus in their own document.
+    const document: Document = docArg ?? (window as any).activeDocument ?? window.document;
+    const win = document.defaultView ?? window;
     document.body.appendChild(this.dom);
     this.load();
     const r = this.dom.getBoundingClientRect();
     let x = pos.x;
     let y = pos.y;
-    if (x + r.width > window.innerWidth - 4) x = Math.max(4, window.innerWidth - r.width - 4);
-    if (y + r.height > window.innerHeight - 4) y = Math.max(4, window.innerHeight - r.height - 4);
+    if (x + r.width > win.innerWidth - 4) x = Math.max(4, win.innerWidth - r.width - 4);
+    if (y + r.height > win.innerHeight - 4) y = Math.max(4, win.innerHeight - r.height - 4);
     this.dom.style.left = x + "px";
     this.dom.style.top = y + "px";
     openMenu = this;

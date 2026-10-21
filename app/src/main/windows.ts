@@ -6,6 +6,7 @@ import fs from "node:fs";
 import path from "node:path";
 import { IPC } from "../shared/ipc";
 import { BRAND } from "../shared/brand";
+import { popoutWindowOptions, registerPopout, readAppSettings } from "./settings-host";
 
 export interface VaultWindow {
   win: BrowserWindow;
@@ -79,7 +80,7 @@ export function createVaultWindow(opts: { vaultPath: string; isMain: boolean; sh
     title: BRAND.displayName,
     icon: fs.existsSync(iconPath()) ? iconPath() : undefined,
     backgroundColor: "#1e1e1e",
-    frame: isMac,
+    frame: isMac || readAppSettings().frame === "native",
     titleBarStyle: isMac ? "hiddenInset" : undefined,
     trafficLightPosition: isMac ? { x: 12, y: 12 } : undefined,
     webPreferences: {
@@ -110,10 +111,14 @@ export function createVaultWindow(opts: { vaultPath: string; isMain: boolean; sh
   win.on("closed", () => vaultWindows.delete(id));
 
   // Links open in the browser, never inside the app window.
-  win.webContents.setWindowOpenHandler(({ url }) => {
+  win.webContents.setWindowOpenHandler(({ url, frameName, features }) => {
+    // Settings / plugin browser popouts: same-process about:blank windows driven by this renderer.
+    const popout = url === "about:blank" ? popoutWindowOptions(frameName, features) : null;
+    if (popout) return { action: "allow", overrideBrowserWindowOptions: popout };
     if (/^https?:|^mailto:/i.test(url)) shell.openExternal(url);
     return { action: "deny" };
   });
+  win.webContents.on("did-create-window", (child, details) => registerPopout(win.webContents, details.frameName, child));
   win.webContents.on("will-navigate", (e, url) => {
     if (!url.startsWith("file:")) {
       e.preventDefault();

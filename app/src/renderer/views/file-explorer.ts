@@ -50,6 +50,15 @@ export class FileExplorerView extends ItemView {
   getDisplayText(): string {
     return "Files";
   }
+  /** Obsidian's `view.fileItems` (path -> {el, selfEl, innerEl, file}), read by plugins such as Iconize. */
+  get fileItems(): Record<string, any> {
+    const out: Record<string, any> = {};
+    for (const [path, n] of this.nodes) {
+      const innerEl = n.selfEl.querySelector(".tree-item-inner") ?? n.selfEl;
+      out[path] = { el: n.el, selfEl: n.selfEl, titleEl: n.selfEl, innerEl, titleInnerEl: innerEl, childrenEl: n.childrenEl, file: this.app.vault.getAbstractFileByPath(path) };
+    }
+    return out;
+  }
   getState(): any {
     return { sortOrder: this.sortOrder, autoReveal: this.autoReveal };
   }

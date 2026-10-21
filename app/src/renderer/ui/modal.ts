@@ -60,11 +60,13 @@ export class Modal {
   open(): void {
     if (this.isOpen) return;
     this.isOpen = true;
-    document.body.appendChild(this.containerEl);
+    // Open in the focused window (the settings window is its own popout window).
+    const doc: Document = (window as any).activeDocument ?? document;
+    doc.body.appendChild(this.containerEl);
     this.app?.keymap?.pushScope(this.scope);
     this.onOpen();
     const first = this.modalEl.querySelector<HTMLElement>("input, textarea, button.mod-cta");
-    if (first && !this.modalEl.contains(document.activeElement)) first.focus();
+    if (first && !this.modalEl.contains(doc.activeElement)) first.focus();
   }
 
   close(): void {

@@ -63,11 +63,12 @@ export function createFragment(cb?: (el: DocumentFragment) => void): DocumentFra
   return f;
 }
 
-let installed = false;
+// Per window: popout windows (settings, plugin browser) get the same helpers on their prototypes.
+const installed = new WeakSet<object>();
 
 export function installDomHelpers(win: Window & typeof globalThis = window as any): void {
-  if (installed) return;
-  installed = true;
+  if (installed.has(win)) return;
+  installed.add(win);
   const NP = win.Node.prototype as any;
   const EP = win.Element.prototype as any;
   const HP = win.HTMLElement.prototype as any;
