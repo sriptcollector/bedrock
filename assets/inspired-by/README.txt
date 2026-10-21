@@ -23,3 +23,7 @@ Terms stated on the brand page (summary; see the page for the exact wording):
 
 The lead downloads the file (never extract it from the app). app/scripts/build.mjs copies it into
 the build as renderer/inspired-by.svg when it is present.
+
+Downloaded 2026-10-21 with Orion's approval (unmodified copy of obsidian-logo-gradient.svg). Orion chose
+to proceed with the credit; keep the file unedited and unrecoloured as the brand terms require.
+Remove the credit everywhere by clearing brand.json -> inspiredBy.

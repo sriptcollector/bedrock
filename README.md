@@ -1,5 +1,5 @@
 <p align="center"><img src="assets/icon.png" width="96" alt=""></p>
-<p align="center"><sub>Inspired by <a href="https://obsidian.md">Obsidian</a>. Bedrock is an independent open-source project and is not affiliated with or endorsed by Obsidian or Dynalist Inc.</sub></p>
+<p align="center"><sub>Inspired by <a href="https://obsidian.md"><img src="assets/inspired-by/obsidian.svg" alt="Obsidian logo" width="14" height="14"> Obsidian</a>. Bedrock is an independent open-source project and is not affiliated with or endorsed by Obsidian or Dynalist Inc.</sub></p>
 
 # Bedrock notes app
 
