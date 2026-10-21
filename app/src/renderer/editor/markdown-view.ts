@@ -564,7 +564,7 @@ export class MarkdownView extends TextFileView {
     }
   }
 
-  protected async onClose(): Promise<void> {
+  async onClose(): Promise<void> {
     await super.onClose();
     this.cm.destroy();
   }

@@ -1,0 +1,96 @@
+# Bedrock: rules for contributors and coding agents
+
+Bedrock (the "Bedrock notes app", shown as "Bedrock by Toolbay") is a free, open-source rebuild of
+the Obsidian desktop app with sync built in. It's part of Toolbay, where every tool is a free version
+of a paid app and opens from the Toolbay hub. These rules apply to every change; the "Toolbay tool
+rules" apply to every Toolbay app (same list as `toolbay-flow/AGENTS.md`).
+
+The product name lives only in `brand.json` (`name`, `displayName`, `appId`, `exeName`, `repo`,
+`vaultFolderName`, `inspiredBy`). Code reads it through `app/src/shared/brand.ts`; packaging reads it
+in `app/electron-builder.config.cjs` and `app/scripts/manifest.mjs`. Never hard-code the name.
+Titles and marketing say "Bedrock notes app" or "Bedrock by Toolbay", never "Bedrock" alone.
+
+## Toolbay tool rules (every Toolbay app)
+
+1. **Consumer-first.** Built for people who never open a terminal. Double-click the installer and
+   it works: no runtimes, drivers or choices, no admin prompt (per-user install). Plain-language
+   onboarding. Runs on an average 8 GB laptop with no GPU. Updates itself, recovers from crashes,
+   and every error says what happened and what to do, in plain words.
+2. **Simplicity first.** The smallest design that works. No setting where a good default will do.
+3. **One-step install.** Everything the app needs ships in the one installer.
+4. **Automatic choices.** Anything hardware-dependent is picked automatically; manual choice only
+   under "Advanced".
+5. **1:1 parity with the original is the bar.** Every screen, setting, hotkey, state and flow of
+   Obsidian, in the same order and with the same behaviour. The checklist is `docs/FEATURES.md`;
+   nothing ships as "done" while items are missing.
+6. **Everything free.** No plans, paywalls, limits, trials or required sign-in.
+7. **Local by default, no telemetry.** Nothing leaves the computer except vault sync (only when
+   signed in to Toolbay) and update checks against GitHub releases. No analytics, no crash uploads.
+8. **Clean-room only.** Rebuild behaviour from observation and public information. Never copy
+   Obsidian's code, CSS, binaries, sounds, fonts, icons, screenshots or wording. Write your own.
+9. **Branding.** Our own logo (`assets/icon.svg`, a cut river stone showing rock layers; it must
+   never look like Obsidian's crystal, AWS Bedrock's gradient tiles or Minecraft's blocks). The credit
+   is "Inspired by Obsidian" with Obsidian's official logo, small and unmodified, plus the
+   `notAffiliated` sentence beside it, all from `brand.json` → `inspiredBy`. The original's logo
+   appears only inside that credit (Settings › General footer, About, README header).
+10. **Look.** 1:1 with Obsidian's UI: layout, sizes, spacing, palette, light/dark, states. Measured
+    values are in `docs/UI-SPEC.md`; reference screenshots live outside the repo
+    (`C:\Users\orion\tbv-scratch\ref\`, never commit them). Our CSS is written from scratch on the
+    public variable and class names (`app/src/renderer/theme/app.css`).
+11. **Lives under the hub.** `toolbay.json` ships with each release. Supports `--from-toolbay`,
+    `--show`, `--hide`, `--quit`, single instance (a second launch forwards its arguments),
+    `running.json` ({pid, version, visible, window, updatedAt, hub}) in the app data dir
+    (`%APPDATA%\<appId>`, `~/Library/Application Support/<appId>`) rewritten on every show/hide and
+    removed on quit, a tray icon (Show / Hide / Quit), and the hub's `TOOLBAY_TOKEN` (read once,
+    memory only, deleted from the environment so plugins never see it). The signed-in session is read
+    from the hub's keychain entry (service `ai.toolbay.desktop`, account `session`); we never write it.
+12. **Account sync.** The vault syncs through the user's Toolbay account (design in
+    `docs/ARCHITECTURE.md` and `docs/SYNC.md`). Signed out, the app works fully on its own.
+13. **Reverse-engineering tools during the build.** Use REA (`mcp__rea__*`) while building, not only
+    for reports: trace each feature in the installed original (Obsidian 1.14.4 at
+    `C:\Users\orion\AppData\Local\Programs\Obsidian`, app code
+    `C:\Users\orion\AppData\Roaming\obsidian\obsidian-1.14.4.asar`) before building it, run behaviour
+    parity checks against it (editor behaviours, link resolution, graph, plugin API calls), and track
+    `docs/FEATURES.md` with REA's reconstruction obligation ledger / coverage evaluation. Each release
+    states a parity-coverage number (checked items / total) in its notes. Clean-room still applies:
+    observe behaviour and public interfaces, write our own code. Probe only the isolated instance
+    (`--user-data-dir=C:\Users\orion\tbv-scratch\ud`, demo vault `C:\Users\orion\tbv-scratch\demo-vault`,
+    scripts in `C:\Users\orion\tbv-scratch\scripts`), never Orion's real vault or config.
+
+## Bedrock-specific rules
+
+- **Vault compatibility.** A Bedrock vault is an Obsidian vault and the other way round: plain `.md`
+  files, `[[wikilinks]]`, `![[embeds]]`, YAML frontmatter, JSON Canvas, and the `.obsidian/` files
+  (app.json, appearance.json, hotkeys.json, core-plugins.json, community-plugins.json,
+  workspace.json, types.json, bookmarks.json, plugins/, themes/, snippets/) with Obsidian's shapes
+  and key names. Only write non-default values. Never rewrite a file the user didn't change, never
+  drop keys we don't understand (round-trip unknown workspace views as placeholders).
+- **Plugin compatibility.** The `obsidian` module we hand to plugins (`app/src/renderer/api/`) follows
+  the MIT `obsidian` package's `obsidian.d.ts` exactly: same class names, method names, argument
+  order, events and DOM class names. Plugins `require("obsidian")`, `require("electron")`, Node
+  builtins and `@codemirror/*` / `@lezer/*` (they must get our editor's instances). The renderer
+  runs with `nodeIntegration` like Obsidian for this reason. Community plugins only run after the
+  person turns them on for that vault (restricted mode is the default).
+- **Theme compatibility.** Keep Obsidian's DOM structure and class names (`.workspace-leaf`,
+  `.cm-sizer`, `.markdown-preview-view`, `.nav-file-title`, `.HyperMD-*`, `.cm-formatting-*`...) and
+  its CSS variables. Community themes and snippets must apply on top of our default theme.
+- **The one vault.** Each person has one synced vault (default `Documents\<displayName>`), created on
+  first run with a short welcome note. No vault picker on normal start. Other folders open from
+  Settings › General › Advanced ("Open another folder as vault", not synced) or can be imported into
+  the synced vault.
+- **Performance.** A 10,000-note vault must index in a few seconds without freezing the window
+  (`--selftest <vault>` prints counts, timings and memory; keep the numbers in `app/README-DEV.md`).
+- **Don't touch** `packages/sync` or `server/` from app work; they have their own owners and tests.
+
+## Working on Bedrock
+
+- `npm install` at the repo root (npm workspaces: `app`, `packages/*`, `server`).
+- `npm start -w app` builds and runs the app. `npm run watch -w app` rebuilds on save.
+- `npm test -w app` runs the unit tests (vitest). `npm run test:e2e -w app` runs the Playwright
+  smoke test (screenshots in `app/test/out/`, gitignored).
+- `bedrock --selftest <vaultPath>` (or `npx electron app --selftest <vault>` in dev) indexes a vault
+  headlessly and prints JSON. Use a copy of a real vault, never the original.
+- `npm run dist -w app` builds the installer (`Bedrock_<version>_x64-setup.exe`, DMGs on macOS) and
+  rewrites `toolbay.json`. Release: bump `version` in `app/package.json`, tag `vX.Y.Z`; CI builds and
+  attaches `toolbay.json` with sizes and checksums, and the notes state the parity-coverage number.
+- Module map and extension points: `app/README-DEV.md`.

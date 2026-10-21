@@ -136,7 +136,7 @@ export function parseMetadata(text: string): CachedMetadata {
 
   // ---- blocks ----
   type Block = { type: string; start: number; end: number; fence?: string; list?: boolean };
-  let cur: Block | null = null;
+  let cur = null as Block | null;
   const listStack: { indent: number; line: number; idx: number }[] = [];
   let listRoot = 0;
   let lastItem: ListItemCache | null = null;

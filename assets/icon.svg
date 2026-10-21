@@ -1,0 +1,17 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1024 1024">
+  <!-- Bedrock app icon: a smooth river stone cut open to show its rock layers. Original artwork. -->
+  <defs>
+    <clipPath id="stone">
+      <path d="M512 214c170 0 306 74 342 196 30 102-12 232-118 316-62 49-140 76-224 76s-163-26-226-74C178 646 140 520 170 414c34-122 172-200 342-200z"/>
+    </clipPath>
+  </defs>
+  <rect x="64" y="64" width="896" height="896" rx="200" fill="#1d2126"/>
+  <g clip-path="url(#stone)">
+    <rect x="100" y="180" width="824" height="700" fill="#efe2c8"/>
+    <path d="M120 420c110-44 220-30 330 6s230 50 474-30v640H120z" fill="#d8b98d"/>
+    <path d="M120 520c140 40 250 22 360-12s250-46 444 18v540H120z" fill="#b8865c"/>
+    <path d="M120 628c120-30 230-24 350 10s260 30 454-24v460H120z" fill="#7d5a43"/>
+    <path d="M120 722c150 34 280 30 400 0s250-30 404 6v360H120z" fill="#4a3a33"/>
+  </g>
+  <path d="M512 214c170 0 306 74 342 196 30 102-12 232-118 316-62 49-140 76-224 76s-163-26-226-74C178 646 140 520 170 414c34-122 172-200 342-200z" fill="none" stroke="#f6efe2" stroke-opacity="0.18" stroke-width="10"/>
+</svg>

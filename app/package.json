@@ -16,9 +16,10 @@
     "icons": "node scripts/icons.mjs",
     "test": "vitest run",
     "test:e2e": "npm run build && node test/e2e/smoke.mjs",
-    "selftest": "npm run build && electron . --selftest",
-    "dist": "npm run build && electron-builder --config electron-builder.config.cjs",
-    "dist:dir": "npm run build && electron-builder --config electron-builder.config.cjs --dir"
+    "selftest": "node scripts/build.mjs && electron . --selftest",
+    "dist": "node scripts/build.mjs --prod && node scripts/manifest.mjs && electron-builder --config electron-builder.config.cjs",
+    "dist:dir": "node scripts/build.mjs --prod && electron-builder --config electron-builder.config.cjs --dir",
+    "manifest": "node scripts/manifest.mjs"
   },
   "dependencies": {
     "@napi-rs/keyring": "^2.1.2",
@@ -38,7 +39,6 @@
     "@lezer/markdown": "^1.0.0",
     "@replit/codemirror-vim": "^6.4.0",
     "@resvg/resvg-js": "^2.6.2",
-    "@types/markdown-it": "^14.0.0",
     "@types/node": "^22.0.0",
     "electron": "45.0.0",
     "electron-builder": "^26.15.3",

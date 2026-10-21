@@ -25,7 +25,7 @@ export async function runSelftest(vault: string): Promise<number> {
   const t1 = performance.now();
   const files = entries.filter((e) => !e.folder).map((e) => e.path);
   const md = files.filter((f) => /\.md$/i.test(f));
-  const indexed = await indexFiles(vault, files, { workerScript: path.join(__dirname, "index-worker.js") });
+  const indexed = await indexFiles(vault, files, { workerScript: path.join(__dirname, "index-worker.js").replace(/app\.asar([\\/])/, "app.asar.unpacked$1") });
   const t2 = performance.now();
   const idx = new LinkIndex(files);
   let resolved = 0;

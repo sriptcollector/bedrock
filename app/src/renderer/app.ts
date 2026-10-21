@@ -153,7 +153,7 @@ export class App {
     const entries = await scanVault(this.boot.vaultPath);
     this.vault.buildTree(entries);
     const tScan = performance.now();
-    const workerScript = nodePath.join(this.distDir(), "index-worker.js");
+    const workerScript = nodePath.join(this.distDir(), "index-worker.js").replace(/app\.asar([\\/])/, "app.asar.unpacked$1");
     const indexing = this.metadataCache.initialIndex(workerScript);
 
     this.buildDom();

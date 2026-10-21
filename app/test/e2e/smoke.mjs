@@ -92,12 +92,13 @@ try {
 
   await run("markdown:toggle-preview");
   await win.waitForSelector(".workspace-leaf.mod-active .markdown-reading-view .el-h1, .workspace-leaf.mod-active .markdown-reading-view .el-p", { timeout: 10000 });
+  if (!argVault) await win.waitForFunction(() => document.querySelector(".workspace-leaf.mod-active .markdown-reading-view .mermaid svg"), null, { timeout: 8000 }).catch(() => {});
   await win.waitForTimeout(800);
   const rv = await win.evaluate(() => {
     const r = document.querySelector(".workspace-leaf.mod-active .markdown-reading-view");
     return { sections: r.querySelectorAll("[class^='el-']").length, callouts: r.querySelectorAll(".callout").length, mermaid: r.querySelectorAll(".mermaid svg").length, embeds: r.querySelectorAll(".internal-embed.is-loaded").length };
   });
-  check("reading view renders", rv.sections > 3, JSON.stringify(rv));
+  check("reading view renders (sections, callouts, mermaid, embeds)", rv.sections > 3 && (argVault || (rv.callouts >= 2 && rv.mermaid >= 1 && rv.embeds >= 2)), JSON.stringify(rv));
   await shot("03-reading-view");
   await run("markdown:toggle-preview");
 
@@ -147,6 +148,26 @@ try {
   await win.evaluate(() => window.app.workspace.saveLayout());
   const ws = JSON.parse(fs.readFileSync(path.join(vault, ".obsidian", "workspace.json"), "utf8"));
   check("workspace.json saved in Obsidian's shape", ws.main?.type === "split" && ws.left?.type === "split" && Array.isArray(ws.lastOpenFiles), `main children: ${ws.main?.children?.length}`);
+
+  if (!argVault) {
+    // Community plugin: restricted mode is on by default, so nothing ran yet.
+    const before = await win.evaluate(() => !!window.__bedrockTestPlugin);
+    const plug = await win.evaluate(async () => {
+      window.app.plugins.setEnabled(true);
+      await window.app.plugins.loadPlugin("bedrock-test-plugin");
+      await new Promise((r) => setTimeout(r, 300));
+      const leaf = window.app.workspace.getLeaf("tab");
+      await leaf.setViewState({ type: "bedrock-test-view", active: true });
+      return {
+        report: window.__bedrockTestPlugin,
+        command: !!window.app.commands.findCommand("bedrock-test-plugin:say-hello"),
+        view: document.querySelector('.workspace-leaf.mod-active [data-type="bedrock-test-view"] h4')?.textContent,
+      };
+    });
+    check("plugins stay off until turned on (restricted mode)", !before);
+    check("community plugin loads through require('obsidian') and registers commands/views", !!plug.report && plug.report.errors.length === 0 && plug.command && /Files: \d+/.test(plug.view ?? ""), JSON.stringify(plug));
+    await shot("08-plugin-view");
+  }
 
   const mem = await app.evaluate(async ({ app: a }) => a.getAppMetrics().map((m) => ({ type: m.type, mb: Math.round(m.memory.workingSetSize / 1024) })));
   console.log("memory (working set MB):", JSON.stringify(mem));

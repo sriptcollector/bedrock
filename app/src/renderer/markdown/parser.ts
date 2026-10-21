@@ -2,11 +2,7 @@
 // task lists, autolinks) + wikilinks/embeds with aliases, headings and blocks, ==highlights==,
 // %%comments%%, #tags, $math$/$$math$$ (KaTeX), footnotes (incl. inline ^[...]), callouts
 // (> [!type]± title, foldable), mermaid fences, and `data-line` source positions on blocks.
-import MarkdownIt from "markdown-it";
-import type StateInline from "markdown-it/lib/rules_inline/state_inline.mjs";
-import type StateBlock from "markdown-it/lib/rules_block/state_block.mjs";
-import type StateCore from "markdown-it/lib/rules_core/state_core.mjs";
-import type Token from "markdown-it/lib/token.mjs";
+import MarkdownItCtor, { type MarkdownIt, type StateInline, type StateBlock, type StateCore, type Token } from "markdown-it";
 // @ts-ignore no types
 import footnote from "markdown-it-footnote";
 import katex from "katex";
@@ -301,7 +297,7 @@ export interface ParserOptions {
 }
 
 export function createMarkdownIt(opts: ParserOptions = {}): MarkdownIt {
-  const md = new MarkdownIt({ html: true, linkify: true, breaks: !opts.strictLineBreaks, typographer: false });
+  const md = new (MarkdownItCtor as any)({ html: true, linkify: true, breaks: !opts.strictLineBreaks, typographer: false });
   md.use(footnote);
   md.inline.ruler.before("link", "obsidian_wikilink", wikilinkRule);
   md.inline.ruler.before("emphasis", "obsidian_highlight", highlightRule);

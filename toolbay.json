@@ -1,0 +1,66 @@
+{
+  "schema": 1,
+  "id": "bedrock",
+  "name": "Bedrock",
+  "tagline": "Free notes app that works with your Obsidian vaults, with sync built in.",
+  "description": "Bedrock notes app: write in plain Markdown files on your own computer with links, live preview, properties and plugins. Opens existing Obsidian vaults and plugins. Your vault syncs end-to-end encrypted to your other computers through your Toolbay account. No account needed to use it offline, no limits, no telemetry.",
+  "version": "0.1.0",
+  "repo": "sriptcollector/bedrock",
+  "identifier": "ai.toolbay.bedrock",
+  "license": "MIT",
+  "homepage": "https://github.com/sriptcollector/bedrock",
+  "icon": "https://raw.githubusercontent.com/sriptcollector/bedrock/main/assets/icon.png",
+  "replaces": "Obsidian",
+  "inspiredBy": {
+    "name": "Obsidian",
+    "company": "Dynalist Inc.",
+    "logoUrl": "assets/inspired-by/obsidian.svg",
+    "website": "https://obsidian.md",
+    "notAffiliated": "Bedrock is an independent open-source project and is not affiliated with or endorsed by Obsidian or Dynalist Inc."
+  },
+  "categories": [
+    "productivity",
+    "notes",
+    "writing"
+  ],
+  "platforms": {
+    "windows-x86_64": {
+      "asset": "Bedrock_0.1.0_x64-setup.exe",
+      "kind": "nsis",
+      "silentArgs": [
+        "/S"
+      ],
+      "exe": "bedrock.exe",
+      "uninstaller": "Uninstall Bedrock.exe"
+    },
+    "darwin-aarch64": {
+      "asset": "Bedrock_0.1.0_arm64.dmg",
+      "kind": "dmg",
+      "app": "Bedrock.app"
+    },
+    "darwin-x86_64": {
+      "asset": "Bedrock_0.1.0_x64.dmg",
+      "kind": "dmg",
+      "app": "Bedrock.app"
+    }
+  },
+  "files": [],
+  "launch": {
+    "args": [
+      "--from-toolbay"
+    ],
+    "singleInstance": true,
+    "control": {
+      "show": [
+        "--show"
+      ],
+      "hide": [
+        "--hide"
+      ],
+      "quit": [
+        "--quit"
+      ]
+    },
+    "stateFile": "running.json"
+  }
+}

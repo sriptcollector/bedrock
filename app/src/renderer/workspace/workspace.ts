@@ -374,7 +374,7 @@ export class Workspace extends Events {
 
   // ---------- iteration ----------
   private iterateLeaves(item: WorkspaceItem, cb: (l: WorkspaceLeaf) => any): boolean {
-    if (item instanceof WorkspaceLeaf) return !!cb(item);
+    if (item instanceof WorkspaceLeaf) return cb(item) === true;
     if (item instanceof WorkspaceParent) for (const c of item.children.slice()) if (this.iterateLeaves(c, cb)) return true;
     return false;
   }
