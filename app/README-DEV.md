@@ -55,11 +55,19 @@ src/renderer/
                        view (View/ItemView/FileView/TextFileView), registry (registerView/Extensions),
                        dnd (tab drag: reorder, move, edge-split)
   editor/              markdown-view.ts (MarkdownView: live preview / source / reading, inline title,
-                       properties), editor.ts (Editor API), syntax.ts (Lezer extensions + cm-* classes),
-                       live-preview.ts (hiding + widgets), extensions.ts (lists, autopair, folding,
-                       [[ and # autocomplete, vim, compartments), properties.ts, fields.ts
+                       properties), editor.ts (Editor API), syntax.ts (Lezer extensions + cm-* classes,
+                       footnotes), live-preview.ts (per-group hiding, atomic ranges, widgets),
+                       extensions.ts (wiring + compartments + keymaps), lists.ts (Enter/Tab/renumber,
+                       checkbox and list toggles), autopair.ts, formatting.ts (inline toggles, insert
+                       commands), commands.ts (every editor:* command, editor context menu),
+                       table.ts + table-model.ts (live preview table editor), suggest.ts (EditorSuggest
+                       API, [[link]] / #tag / ==colour suggest), folding.ts (fold service, indicators,
+                       saved folds), list-drag.ts, rename-heading.ts, export-pdf.ts, spellcheck.ts,
+                       vim.ts (:w :q ...), properties.ts (+ key/value autocomplete), editor.css
   markdown/            parser.ts (markdown-it + Obsidian syntax), renderer.ts (MarkdownRenderer,
-                       post processors, embeds, callouts, mermaid), highlight.ts (Lezer -> Prism classes)
+                       post processors, embeds, callouts, mermaid), reading.ts (virtualised reading
+                       view, heading/list folds, footnote hovers), highlight.ts (Lezer -> Prism classes)
+  workspace/popout.ts  popout windows (floating split): window.open from the main renderer
   views/               file-explorer.ts, simple-views.ts (empty/image/audio/video/pdf),
                        switcher.ts (quick switcher, command palette), placeholder.ts (unbuilt/unknown views)
   commands/            commands.ts (registry + HotkeyManager, hotkeys.json), keymap.ts (Scope, Keymap,
@@ -71,7 +79,9 @@ src/renderer/
   sync-ui/index.ts     extension point for the sync UI (status bar item stub)
   ui/                  Modal/SuggestModal/FuzzySuggestModal, Notice, Menu, Setting components,
                        fuzzy search, title bar + status bar
-test/unit/             vitest: links, parse, vault (+rename updates links), markdown snapshots, workspace
+test/unit/             vitest: links, parse, vault (+rename updates links), markdown snapshots, workspace,
+                       editor lists / formatting / tables / suggest / misc, embed snapshots
+test/parity/           editor behaviour-diff harness (see below)
 test/e2e/smoke.mjs     Playwright _electron smoke test
 test/fixtures/vault/   sample vault incl. a test community plugin
 ```
@@ -110,10 +120,29 @@ test/fixtures/vault/   sample vault incl. a test community plugin
 The window is usable at layout-ready; the metadata cache fills in behind it (worker pool, 150 files
 per batch) and fires `resolved` when done.
 
+## Editor parity harness
+
+`test/parity/` drives Bedrock and an isolated instance of the original app over CDP with the same
+key sequences and compares document text, cursor/selection and what each editor shows per line.
+Start the reference instance yourself with its own user-data dir and a copy of the demo vault,
+`--remote-debugging-port=9733` (never Orion's real vault or config), then:
+
+```
+node test/parity/run.mjs --vault <copy of the same vault> --keep [--reload] [--filter lists] [--write]
+node test/parity/run.mjs --explore "- one‸" "key:Enter" "type:two"      # both apps, one ad-hoc case
+node test/parity/perf.mjs 9734                                           # 1 MB note typing latency
+node test/parity/shots.mjs <outDir> <name> <note> [--doc "..."] [--mode preview]   # side-by-side
+```
+
+Bedrock is launched on port 9734 with a temp copy of the vault (`--keep` leaves it running so
+`--reload` can pick up a rebuild). `--write` regenerates `docs/PARITY-EDITOR.md`. Cases live in
+`test/parity/cases.mjs` (no code from the original app; only its observable behaviour).
+
 ## Known gaps
 
 See the final report in the PR / commit history; the short list: graph, canvas, search, backlinks,
-outline, bookmarks, daily notes, templates, page preview are placeholders; popout windows open as
-tabs; reading view renders the whole note (no virtualised sections yet); the table and callout
-widgets in live preview are read-only renders (click "</>" or move the cursor in to edit the source);
-no plugin/theme browser; settings opens as a modal, not its own window.
+outline, bookmarks, daily notes, templates, page preview are placeholders; no plugin/theme browser;
+settings opens as a modal, not its own window. Editor: PDF embeds use Chromium's viewer (not the
+original's pdf.js toolbar); popout windows use a native frame on Windows and menus open in the main
+window; the spellcheck language picker UI belongs to Settings (helpers in editor/spellcheck.ts).
+Remaining editor differences are listed in docs/PARITY-EDITOR.md.

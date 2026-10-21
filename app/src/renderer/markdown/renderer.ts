@@ -191,11 +191,18 @@ export async function postProcess(app: any, el: HTMLElement, sourcePath: string,
     const pre = code.parentElement!;
     const lang = (code.className.match(/language-([\w+#-]+)/) ?? [])[1];
     if (lang) highlightCodeInto(code, code.textContent ?? "", lang);
-    const btn = pre.createEl("button", { cls: "copy-code-button", text: "Copy" });
+    const btn = pre.createEl("button", { cls: "copy-code-button", attr: { "aria-label": "Copy" } });
+    setIcon(btn, "copy");
     btn.addEventListener("click", () => {
       navigator.clipboard.writeText(code.textContent ?? "");
-      btn.setText("Copied!");
-      setTimeout(() => btn.setText("Copy"), 1200);
+      btn.empty();
+      setIcon(btn, "check");
+      btn.addClass("mod-copied");
+      setTimeout(() => {
+        btn.empty();
+        setIcon(btn, "copy");
+        btn.removeClass("mod-copied");
+      }, 1200);
     });
   });
   // Plugin code block processors

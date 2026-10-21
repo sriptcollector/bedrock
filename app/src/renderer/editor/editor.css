@@ -84,30 +84,38 @@
   z-index: var(--layer-popover, 30);
 }
 
-/* ---- highlight colours ==🔴text== */
+/* ---- highlight colours (==, colour emoji, text, ==) */
+.cm-highlight-red .cm-highlight,
+.cm-highlight-orange .cm-highlight,
+.cm-highlight-yellow .cm-highlight,
+.cm-highlight-green .cm-highlight,
+.cm-highlight-blue .cm-highlight,
+.cm-highlight-purple .cm-highlight {
+  background-color: transparent;
+}
 .cm-highlight.cm-highlight-red,
 .markdown-rendered mark.highlight-red {
-  background-color: rgba(var(--color-red-rgb, 233, 49, 71), 0.2);
+  background-color: color-mix(in srgb, rgb(var(--color-red-rgb)) 28%, var(--background-primary));
 }
 .cm-highlight.cm-highlight-orange,
 .markdown-rendered mark.highlight-orange {
-  background-color: rgba(var(--color-orange-rgb, 236, 117, 0), 0.2);
+  background-color: color-mix(in srgb, rgb(var(--color-orange-rgb)) 28%, var(--background-primary));
 }
 .cm-highlight.cm-highlight-yellow,
 .markdown-rendered mark.highlight-yellow {
-  background-color: rgba(var(--color-yellow-rgb, 224, 172, 0), 0.25);
+  background-color: color-mix(in srgb, rgb(var(--color-yellow-rgb)) 28%, var(--background-primary));
 }
 .cm-highlight.cm-highlight-green,
 .markdown-rendered mark.highlight-green {
-  background-color: rgba(var(--color-green-rgb, 8, 185, 78), 0.2);
+  background-color: color-mix(in srgb, rgb(var(--color-green-rgb)) 28%, var(--background-primary));
 }
 .cm-highlight.cm-highlight-blue,
 .markdown-rendered mark.highlight-blue {
-  background-color: rgba(var(--color-blue-rgb, 8, 109, 221), 0.2);
+  background-color: color-mix(in srgb, rgb(var(--color-blue-rgb)) 28%, var(--background-primary));
 }
 .cm-highlight.cm-highlight-purple,
 .markdown-rendered mark.highlight-purple {
-  background-color: rgba(var(--color-purple-rgb, 120, 82, 238), 0.2);
+  background-color: color-mix(in srgb, rgb(var(--color-purple-rgb)) 28%, var(--background-primary));
 }
 
 /* ---- escapes, footnotes */
@@ -198,13 +206,14 @@
 /* ---- table editor (live preview) */
 .markdown-source-view.mod-cm6 .cm-table-widget {
   overflow-x: auto;
+  margin: 0 -16px;
+  padding: 0;
 }
 .markdown-source-view.mod-cm6 .cm-table-widget .table-wrapper {
   position: relative;
   display: inline-block;
   padding: 16px;
-  margin: 0 -16px;
-  min-width: calc(100% + 32px);
+  box-sizing: border-box;
 }
 .markdown-source-view.mod-cm6 .cm-table-widget table.table-editor {
   border-collapse: collapse;
@@ -383,6 +392,12 @@
 }
 .suggestion-container .prompt-instructions {
   border-top: 1px solid var(--background-modifier-border);
+}
+
+/* ---- callouts in live preview: no trailing gap under the last block */
+.cm-callout .callout-content > :last-child,
+.cm-callout .callout-content > div:last-child > :last-child {
+  margin-bottom: 0;
 }
 
 /* ---- reading view extras */

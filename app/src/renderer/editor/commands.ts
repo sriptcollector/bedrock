@@ -235,7 +235,7 @@ export function registerEditorCommands(app: any): void {
     ["left", "to the left"],
     ["right", "to the right"],
   ] as const)
-    add({ id: `editor:focus-${dir}`, name: `Focus on tab group ${label}`, icon: `arrow-${dir === "top" ? "up" : dir === "bottom" ? "down" : dir}`, callback: () => app.workspace.focusAdjacent?.(dir) });
+    add({ id: `editor:focus-${dir}`, name: `Focus on tab group ${label}`, icon: `arrow-${dir === "top" ? "up" : dir === "bottom" ? "down" : dir}`, callback: () => focusAdjacentGroup(app, dir) });
 
   // Settings toggles.
   const toggleSetting = (id: string, name: string, icon: string, key: string, def: boolean) =>
@@ -302,7 +302,7 @@ export function registerEditorCommands(app: any): void {
       return true;
     },
   });
-  add({ id: "workspace:new-window", name: "Open new window", icon: "app-window", callback: () => app.workspace.openPopoutLeaf() });
+  add({ id: "workspace:new-window", name: "New window", icon: "app-window", callback: () => app.workspace.openPopoutLeaf() });
   add({
     id: "workspace:close-window",
     name: "Close window",
@@ -319,7 +319,7 @@ export function registerEditorCommands(app: any): void {
 
   add({
     id: "workspace:export-pdf",
-    name: "Export to PDF",
+    name: "Export to PDF...",
     icon: "file-output",
     checkCallback: (checking) => {
       const v = activeMd();
@@ -341,6 +341,36 @@ export function registerEditorCommands(app: any): void {
       return true;
     },
   });
+}
+
+/** Focus the visible tab group next to the active one in a direction (by on-screen position). */
+function focusAdjacentGroup(app: any, dir: "top" | "bottom" | "left" | "right"): void {
+  const active = app.workspace.activeLeaf;
+  if (!active) return;
+  const a = active.containerEl.getBoundingClientRect();
+  const ax = a.left + a.width / 2;
+  const ay = a.top + a.height / 2;
+  let best: any = null;
+  let bestD = Infinity;
+  const seen = new Set<any>();
+  app.workspace.iterateRootLeaves((leaf: any) => {
+    const tabs = leaf.parent;
+    if (!tabs || seen.has(tabs) || tabs === active.parent) return;
+    seen.add(tabs);
+    const r = tabs.containerEl.getBoundingClientRect();
+    if (!r.width || !r.height) return;
+    const cx = r.left + r.width / 2;
+    const cy = r.top + r.height / 2;
+    const ok = dir === "left" ? r.right <= a.left + 1 : dir === "right" ? r.left >= a.right - 1 : dir === "top" ? r.bottom <= a.top + 1 : r.top >= a.bottom - 1;
+    if (!ok) return;
+    const d = Math.hypot(cx - ax, cy - ay);
+    if (d < bestD) {
+      bestD = d;
+      best = tabs;
+    }
+  });
+  const leaf = best?.children?.[best.currentTab ?? 0];
+  if (leaf) app.workspace.setActiveLeaf(leaf, { focus: true });
 }
 
 async function renameHeading(app: any, v: any, cm: EditorView): Promise<void> {
