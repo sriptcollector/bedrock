@@ -266,21 +266,9 @@ input[type="range"].slider::-webkit-slider-thumb {
   -webkit-mask-repeat: no-repeat;
   pointer-events: none;
 }
-.search-input-clear-button {
-  position: absolute;
-  right: 6px;
-  top: 7px;
-  width: 16px;
-  height: 16px;
-  border-radius: 50%;
-  cursor: pointer;
-  display: none;
-  background-color: var(--text-faint);
-  -webkit-mask-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Ccircle cx='12' cy='12' r='10' fill='black'/%3E%3Cpath d='m15 9-6 6M9 9l6 6' stroke='white' stroke-width='2' stroke-linecap='round'/%3E%3C/svg%3E");
-  -webkit-mask-size: 16px;
-}
+/* The clear button itself is styled in views/sidebar/sidebar.css (shared). */
 .search-input-container input:not(:placeholder-shown) ~ .search-input-clear-button {
-  display: block;
+  display: flex;
 }
 .search-input-container input:placeholder-shown ~ .search-input-clear-button {
   display: none !important;

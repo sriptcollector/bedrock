@@ -49,6 +49,9 @@ src/renderer/
   app.ts               App: wires everything, window chrome, startup sequence, paste/drop attachments
   api/index.ts         the `obsidian` module (what require("obsidian") returns)
   api/events.ts        Events, Component
+  api/suggest.ts       PopoverSuggest, AbstractInputSuggest, EditorSuggest (+ editor-change dispatcher)
+  api/compat.ts        plugin compatibility: ConfirmationModal, Bases values, CodeMirror 5 shim,
+                       metadataTypeManager, embedRegistry + embeddable editor (docs/PLUGINS.md)
   dom/augment.ts       createEl/createDiv/el.empty()/addClass/... prototype helpers plugins expect
   dom/icons.ts         setIcon/getIcon/addIcon (Lucide set + Obsidian's legacy icon names)
   vault/               TAbstractFile/TFile/TFolder, FileSystemAdapter (atomic writes), Vault,
@@ -88,8 +91,24 @@ src/renderer/
                        sidebar.css (imported as text, injected after app.css)
   commands/            commands.ts (registry + HotkeyManager, hotkeys.json), keymap.ts (Scope, Keymap,
                        Platform, Mod mapping), builtin.ts (built-in commands with Obsidian's ids)
-  settings/modal.ts    settings modal with vertical tabs; built-in tabs are SettingTab subclasses
-  plugins/             plugin.ts (Plugin base), loader.ts (community plugins, CommonJS wrapper)
+  settings/            the settings window: modal.ts (SettingsModal: popout window or in-window modal,
+                       nav groups, search, sub-pages), popout.ts (about:blank popout driven by this
+                       renderer; mirrors styles/body classes; native caption buttons), render.ts
+                       (declarative settings: SettingGroup, SettingPage, definitions renderer),
+                       tabs/*.ts (General, Appearance, Interface, Editor, Files and links, Hotkeys,
+                       Keychain, Core plugins, Community plugins), secret-storage.ts (app.secretStorage,
+                       safeStorage-encrypted, outside the vault), bootstrap.ts (startup wiring),
+                       suggest.ts / file-picker.ts (folder/file pickers)
+  core-plugins/        manager.ts (app.internalPlugins: core-plugins.json, <id>.json options, lifecycle),
+                       list.ts (all 1.14 core plugins), daily-notes/, templates/ (format.ts: {{title}}
+                       {{date}} {{time}} variables), zk-prefixer/, note-composer/, file-recovery/
+                       (IndexedDB snapshots + browser), bases/ (expr.ts: .base parser, expressions,
+                       filters, formulas; index.ts: table/cards view), misc.ts (random note, workspaces,
+                       audio recorder, format converter, slash commands, footnotes view, quick
+                       switcher + command palette options)
+  plugins/             plugin.ts (Plugin base), loader.ts (community plugins, CommonJS wrapper,
+                       load errors), browser/ (plugin + theme browser window; catalog.ts: GitHub lists,
+                       install/update/uninstall)
   theme/               app.css (default theme on Obsidian's public variables/classes), custom-css.ts
                        (light/dark, accent, themes/, snippets/ from appearance.json)
   sync-ui/             sync UI: index.ts (status bar icon + menu, commands, file menu, notices),
@@ -99,6 +118,8 @@ src/renderer/
                        fuzzy search, title bar + status bar
 test/unit/             vitest: links, parse, vault (+rename updates links), markdown snapshots, workspace
 test/e2e/smoke.mjs     Playwright _electron smoke test
+test/e2e/settings-tabs.mjs   settings window: screenshots of every tab and sub-page, config writes
+test/e2e/settings-window.ps1 real mouse clicks on the settings window's caption buttons and a toggle
 test/fixtures/vault/   sample vault incl. a test community plugin
 ```
 
@@ -115,9 +136,20 @@ test/fixtures/vault/   sample vault incl. a test community plugin
   editorCallback | editorCheckCallback})`; use Obsidian's command ids (`docs/reference/commands.json`)
   so users' hotkeys.json keeps working. Default keys go in `commands/builtin.ts`.
 - **Settings**: `app.setting.addSettingTab(tab, "options" | "core" | "community")` with a `SettingTab`
-  subclass (`settings/modal.ts`). Values go through `app.vault.getConfig/setConfig` (app.json).
+  subclass; core and community tabs are listed alphabetically (Sync lands between Quick switcher and
+  Templates). Prefer `getSettingDefinitions()` (obsidian 1.13 declarative settings) so the settings
+  search finds your rows; imperative `display()` still works. Values go through
+  `app.vault.getConfig/setConfig` (app.json / appearance.json split, non-default values only). The
+  settings window is a popout of this renderer: open modals/menus in `activeDocument`, attach key
+  listeners to `el.doc` / `el.win`, not the global `document`.
+- **Core plugins**: `app.internalPlugins.register({id, defaultOptions, onEnable(p), onDisable(p),
+  settingTab(p)})` (core-plugins/manager.ts). `p.addCommand` / `addRibbonIcon` / `registerView` /
+  `registerEvent` are cleaned up when the user switches the plugin off; `p.options` is saved to
+  `.obsidian/<id>.json` (non-default only) with `p.setOption(k, v)`. Views built without an impl can
+  still mark a plugin available (`plugins[id].available = true`).
 - **Plugins**: `plugins/loader.ts`. Restricted mode = `app.plugins.isEnabled()` (per vault, stored in
-  app data localStorage, not in the vault). Plugin browser and update checks are not built yet.
+  app data localStorage, not in the vault). Browser and installs: `plugins/browser/`
+  (`openCommunityBrowser(app, "plugins" | "themes")`). Compatibility notes: docs/PLUGINS.md.
 - **Sync**: the engine runs in the main process (`main/sync/host.ts`); the renderer calls it with
   `ipcRenderer.invoke(IPC.syncCall, op, ...args)` (returns `{ok, value | error}`) and listens to
   `IPC.syncUpdate` (snapshot) / `IPC.syncEvent`. `window.app.sync` is the client (snapshot, versions,
@@ -153,3 +185,7 @@ per batch) and fires `resolved` when done.
 
 Tracked in docs/FEATURES.md (unchecked items). Short list: page preview popovers are read-only; the
 Backlinks / Page preview settings tabs are not built (options live in backlink.json / page-preview.json).
+Settings/core plugins: Web viewer and Slides core plugins aren't built (toggles say so); Publish is
+shown as not part of the app; General › Language (English only), Command line interface and
+Appearance › Custom app icon are shown disabled; Bases has table and cards views only (no
+list/map views, no formula editor UI; filters are edited as expressions). Plugin gaps: docs/PLUGINS.md.

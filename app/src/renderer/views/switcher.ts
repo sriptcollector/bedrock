@@ -28,7 +28,9 @@ export class QuickSwitcher extends SuggestModal<FileHit> {
   }
 
   getSuggestions(query: string): FileHit[] {
-    const files: TFile[] = this.app.vault.getFiles().filter((f: TFile) => f.extension === "md" || f.extension === "canvas" || this.app.viewRegistry.isExtensionRegistered(f.extension));
+    // Settings › Quick switcher (switcher.json): attachments / all file types / existing only.
+    const o = this.app.internalPlugins?.getEnabledPluginById?.("switcher")?.options ?? {};
+    const files: TFile[] = this.app.vault.getFiles().filter((f: TFile) => f.extension === "md" || f.extension === "canvas" || o.showAllFileTypes || (o.showAttachments !== false && this.app.viewRegistry.isExtensionRegistered(f.extension)));
     if (!query.trim()) {
       const recent = this.app.workspace.getLastOpenFiles().map((p: string) => this.app.vault.getFileByPath(p)).filter(Boolean) as TFile[];
       const rest = files.filter((f) => !recent.includes(f)).sort((a, b) => b.stat.mtime - a.stat.mtime);
@@ -43,7 +45,7 @@ export class QuickSwitcher extends SuggestModal<FileHit> {
     }
     hits.sort((a, b) => b.match!.score - a.match!.score);
     const exact = hits.some((h) => h.name.toLowerCase() === query.trim().toLowerCase());
-    if (!exact) hits.push({ file: null, name: query.trim(), path: query.trim(), match: null, create: true });
+    if (!exact && !o.showExistingOnly) hits.push({ file: null, name: query.trim(), path: query.trim(), match: null, create: true });
     return hits;
   }
 
@@ -93,9 +95,12 @@ export class CommandPalette extends SuggestModal<{ cmd: Command; match: SearchRe
     const cmds: Command[] = this.app.commands.listCommands();
     const recent: string[] = this.app.recentCommands ?? [];
     if (!query.trim()) {
-      const byRecent = recent.map((id) => cmds.find((c) => c.id === id)).filter(Boolean) as Command[];
-      const rest = cmds.filter((c) => !byRecent.includes(c)).sort((a, b) => a.name.localeCompare(b.name));
-      return [...byRecent, ...rest].map((cmd) => ({ cmd, match: null }));
+      // Pinned commands (Settings › Command palette) first, then recent, then A to Z.
+      const pinnedIds: string[] = this.app.internalPlugins?.getEnabledPluginById?.("command-palette")?.options?.pinned ?? [];
+      const pinned = pinnedIds.map((id) => cmds.find((c) => c.id === id)).filter(Boolean) as Command[];
+      const byRecent = (recent.map((id) => cmds.find((c) => c.id === id)).filter(Boolean) as Command[]).filter((c) => !pinned.includes(c));
+      const rest = cmds.filter((c) => !byRecent.includes(c) && !pinned.includes(c)).sort((a, b) => a.name.localeCompare(b.name));
+      return [...pinned, ...byRecent, ...rest].map((cmd) => ({ cmd, match: null }));
     }
     const fn = prepareFuzzySearch(query);
     const out: { cmd: Command; match: SearchResult | null }[] = [];

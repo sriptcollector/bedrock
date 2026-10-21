@@ -20,7 +20,7 @@ Legend: **[later]** = not needed for the first release. **[ours]** = Bedrock doe
 - [ ] Vault switcher at the bottom of the left sidebar: vault name, menu to switch or manage vaults, help button, settings button
 - [ ] Loading state while a big vault is indexed (progress in the status bar)
 - [ ] App-package self-update: small installer plus a signed renderer package checked on start and hourly; "relaunch to update" prompt; early-access channel toggle [ours: Toolbay release feed]
-- [ ] Zoom in / out / reset for the whole window; hardware acceleration toggle (restart)
+- [x] Zoom in / out / reset for the whole window; hardware acceleration toggle (restart)
 - [ ] Spellcheck language list from the OS spellchecker
 - [ ] Interface languages (English first) [later: others]
 - [ ] Command line interface toggle [later]
@@ -219,30 +219,30 @@ Legend: **[later]** = not needed for the first release. **[ours]** = Bedrock doe
 
 ## 9. Daily notes, templates and note tools
 
-- [ ] Daily notes: open today's note (create from template if missing), previous and next daily note; date format (moment syntax, default YYYY-MM-DD); folder; template; ribbon button
-- [ ] Templates: template folder; insert template picker; `{{title}}`, `{{date}}`, `{{time}}`, `{{date:FORMAT}}`, `{{time:FORMAT}}`; date and time format settings; insert current date / time commands
-- [ ] Unique note creator: timestamp prefix (default YYYYMMDDHHmm), folder, template [later]
-- [ ] Note composer: merge file into another, extract selection or heading to a new note; leave a link (default), embed or nothing; template with `{{content}}`, `{{fromTitle}}`, `{{newTitle}}`; confirm before merge
-- [ ] Random note [later]
+- [x] Daily notes: open today's note (create from template if missing), previous and next daily note; date format (moment syntax, default YYYY-MM-DD); folder; template; ribbon button
+- [x] Templates: template folder; insert template picker; `{{title}}`, `{{date}}`, `{{time}}`, `{{date:FORMAT}}`, `{{time:FORMAT}}`; date and time format settings; insert current date / time commands
+- [x] Unique note creator: timestamp prefix (default YYYYMMDDHHmm), folder, template [later]
+- [x] Note composer: merge file into another, extract selection or heading to a new note; leave a link (default), embed or nothing; template with `{{content}}`, `{{fromTitle}}`, `{{newTitle}}`; confirm before merge
+- [x] Random note [later]
 - [ ] Word count in the status bar (words and characters, selection-aware)
-- [ ] File recovery: snapshots at most every 5 minutes, kept 7 days, outside the vault; snapshot browser with diff, restore, copy; clear history
+- [x] File recovery: snapshots at most every 5 minutes, kept 7 days, outside the vault; snapshot browser with diff, restore, copy; clear history
 - [ ] Export note to PDF (page size, orientation, margins, scale)
 - [ ] Slides (present a note split by `---`) [later]
 - [ ] Audio recorder (record into the vault) [later]
-- [ ] Bases (`.base` table and card views over properties, with sort, group, filter, formulas) [later]
+- [x] Bases (`.base` table and card views over properties, with sort, group, filter, formulas) [later]
 - [ ] Web viewer (in-app browser, reader mode, save page as Markdown, ad blocking) [later]
 
 ## 10. Look and feel
 
 - [ ] Default theme written from scratch to match the measured values in `UI-SPEC.md` (light and dark)
-- [ ] Base color scheme: light, dark, follow system (default)
-- [ ] Accent color picker (default violet `#8a5cf5`) with restore-default; derived accent variables
-- [ ] Interface font, text font, monospace font pickers (system fonts); font size slider (default 16) with restore-default; Ctrl+scroll font size (setting, off)
+- [x] Base color scheme: light, dark, follow system (default)
+- [x] Accent color picker (default violet `#8a5cf5`) with restore-default; derived accent variables
+- [x] Interface font, text font, monospace font pickers (system fonts); font size slider (default 16) with restore-default; Ctrl+scroll font size (setting, off)
 - [ ] Every public CSS variable name from `docs/reference/css-variables.json` defined with the same default values
 - [ ] Same DOM class names and nesting for every component (UI-SPEC section 4)
 - [ ] Lucide icons by name; our own drawings for the few custom icons (sidebar toggles, links in/out, fold triangle)
-- [ ] Community themes: theme browser (search, sort, light/dark filters, installed only, preview images, detail page, install/use/uninstall, update check); one active theme; `themes/<name>/theme.css` + `manifest.json`
-- [ ] CSS snippets: list `.obsidian/snippets/*.css`, toggle each, reload list, open folder
+- [x] Community themes: theme browser (search, sort, light/dark filters, installed only, preview images, detail page, install/use/uninstall, update check); one active theme; `themes/<name>/theme.css` + `manifest.json`
+- [x] CSS snippets: list `.obsidian/snippets/*.css`, toggle each, reload list, open folder
 - [ ] Translucent window (setting) [later]
 - [ ] Native menus option [later]
 - [ ] Custom app icon [later]
@@ -250,112 +250,112 @@ Legend: **[later]** = not needed for the first release. **[ours]** = Bedrock doe
 
 ## 11. Settings window
 
-- [ ] Left navigation: Options tabs, then core plugin tabs with options, then community plugin tabs; icons per tab
-- [ ] Search box that filters settings across all tabs
+- [x] Left navigation: Options tabs, then core plugin tabs with options, then community plugin tabs; icons per tab
+- [x] Search box that filters settings across all tabs
 - [ ] Every setting below with the same label, control and default
 
 
 ### Settings > General
 
-- [ ] "Version 1.14.4": button "Check for updates"
+- [x] "Version 1.14.4": button "Check for updates"
 - [ ] "Update Available": button "Download"
-- [ ] "Automatic updates": toggle, on
+- [x] "Automatic updates": toggle, on
 - [ ] "Receive early access versions": toggle shown only with a Catalyst license
 - [ ] "Language": dropdown, English (51 options); button "Relaunch"
-- [ ] "Help": button "Open"
+- [x] "Help": button "Open"
 - [ ] Account / "Your account": button "Log in"; button "Sign up"
 - [ ] Account / "Catalyst license": shows license status when signed in
 - [ ] Account / "Commercial license": button "Activate"; button "Purchase"
 - [ ] Advanced / "Notify if startup takes longer than expected": toggle, off; icon button "Check now"
 - [ ] Advanced / "Command line interface": toggle, off
-- [ ] Advanced / "Hardware acceleration": toggle, on; button "Relaunch"
+- [x] Advanced / "Hardware acceleration": toggle, on; button "Relaunch"
 
 ### Settings > Appearance
 
-- [ ] "Base color scheme": dropdown, Adapt to system (options: Dark, Light, Adapt to system)
-- [ ] "Accent color": color, #8a5cf5; restore-default button
-- [ ] "Themes": dropdown, Default; button "Manage"; icon button "Open themes folder"
-- [ ] "Current community themes": count of installed themes
-- [ ] "CSS snippets": subpage (chevron row; shows "0 enabled")
-- [ ] Font / "Interface font": subpage (font picker; default: theme font)
-- [ ] Font / "Text font": subpage (font picker; default: theme font)
-- [ ] Font / "Monospace font": subpage (font picker; default: theme font)
-- [ ] Font / "Font size": slider, 16; restore-default button
-- [ ] Font / "Quick font size adjustment": toggle, off
+- [x] "Base color scheme": dropdown, Adapt to system (options: Dark, Light, Adapt to system)
+- [x] "Accent color": color, #8a5cf5; restore-default button
+- [x] "Themes": dropdown, Default; button "Manage"; icon button "Open themes folder"
+- [x] "Current community themes": count of installed themes
+- [x] "CSS snippets": subpage (chevron row; shows "0 enabled")
+- [x] Font / "Interface font": subpage (font picker; default: theme font)
+- [x] Font / "Text font": subpage (font picker; default: theme font)
+- [x] Font / "Monospace font": subpage (font picker; default: theme font)
+- [x] Font / "Font size": slider, 16; restore-default button
+- [x] Font / "Quick font size adjustment": toggle, off
 - [ ] Advanced / "Custom app icon": button "Choose"; button "Relaunch"; restore-default button
 
 ### Settings > Interface
 
-- [ ] "Show tab title bar": toggle, on
-- [ ] "Show ribbon": toggle, on
-- [ ] "Ribbon menu configuration": subpage (show/hide and reorder ribbon items)
-- [ ] Advanced / "Zoom level": slider, 0; restore-default button
+- [x] "Show tab title bar": toggle, on
+- [x] "Show ribbon": toggle, on
+- [x] "Ribbon menu configuration": subpage (show/hide and reorder ribbon items)
+- [x] Advanced / "Zoom level": slider, 0; restore-default button
 - [ ] Advanced / "Native menus": toggle, off
-- [ ] Advanced / "Window frame style": dropdown, Hidden (default) (options: Hidden (default), Obsidian frame, Native frame); button "Relaunch"
-- [ ] Advanced / "Open settings in new window": toggle, on
+- [x] Advanced / "Window frame style": dropdown, Hidden (default) (options: Hidden (default), Obsidian frame, Native frame); button "Relaunch"
+- [x] Advanced / "Open settings in new window": toggle, on
 
 ### Settings > Editor
 
-- [ ] "Default view for new tabs": dropdown, Editing view (options: Editing view, Reading view)
-- [ ] "Default editing mode": dropdown, Live Preview (options: Live Preview, Source mode)
-- [ ] "Show editing mode in status bar": toggle, on
-- [ ] Display / "Inline title": toggle, on
-- [ ] Display / "Readable line length": toggle, on
-- [ ] Display / "Strict line breaks": toggle, off
-- [ ] Display / "Properties in document": dropdown, Visible (options: Visible, Hidden, Source)
-- [ ] Display / "Fold heading": toggle, on
-- [ ] Display / "Fold indent": toggle, on
-- [ ] Display / "Line numbers": toggle, off
-- [ ] Display / "Indentation guides": toggle, on
-- [ ] Display / "Right-to-left (RTL)": toggle, off
-- [ ] Display / "Show Mermaid diagrams in notes": toggle, off
-- [ ] Behavior / "Spellcheck": toggle, on; icon button
-- [ ] Behavior / "Spellcheck languages": dropdown, + (58 options)
-- [ ] Behavior / "Auto-pair brackets": toggle, on
-- [ ] Behavior / "Auto-pair Markdown syntax": toggle, on
-- [ ] Behavior / "Smart lists": toggle, on
-- [ ] Behavior / "Indent using tabs": toggle, on
-- [ ] Behavior / "Indent visual width": slider, 4; restore-default button
-- [ ] Advanced / "Convert pasted HTML to Markdown": toggle, on
-- [ ] Advanced / "Vim key bindings": toggle, off
+- [x] "Default view for new tabs": dropdown, Editing view (options: Editing view, Reading view)
+- [x] "Default editing mode": dropdown, Live Preview (options: Live Preview, Source mode)
+- [x] "Show editing mode in status bar": toggle, on
+- [x] Display / "Inline title": toggle, on
+- [x] Display / "Readable line length": toggle, on
+- [x] Display / "Strict line breaks": toggle, off
+- [x] Display / "Properties in document": dropdown, Visible (options: Visible, Hidden, Source)
+- [x] Display / "Fold heading": toggle, on
+- [x] Display / "Fold indent": toggle, on
+- [x] Display / "Line numbers": toggle, off
+- [x] Display / "Indentation guides": toggle, on
+- [x] Display / "Right-to-left (RTL)": toggle, off
+- [x] Display / "Show Mermaid diagrams in notes": toggle, off
+- [x] Behavior / "Spellcheck": toggle, on; icon button
+- [x] Behavior / "Spellcheck languages": dropdown, + (58 options)
+- [x] Behavior / "Auto-pair brackets": toggle, on
+- [x] Behavior / "Auto-pair Markdown syntax": toggle, on
+- [x] Behavior / "Smart lists": toggle, on
+- [x] Behavior / "Indent using tabs": toggle, on
+- [x] Behavior / "Indent visual width": slider, 4; restore-default button
+- [x] Advanced / "Convert pasted HTML to Markdown": toggle, on
+- [x] Advanced / "Vim key bindings": toggle, off
 
 ### Settings > Files and links
 
-- [ ] "Default file to open": dropdown, Last opened (options: Last opened, New note, Specific file, Daily note)
-- [ ] "File to open": file picker with clear button; default empty
-- [ ] "Always focus new tabs": toggle, on
-- [ ] "Default location for new notes": dropdown, Vault folder (options: Vault folder, Same folder as current file, In the folder specified below)
-- [ ] "Folder to create new notes in": text, empty (placeholder "Example: folder 1/folder 2")
-- [ ] "Default location for new attachments": dropdown, Vault folder (options: Vault folder, Same folder as current file, In subfolder under current folder, In the folder specified below)
-- [ ] "Attachment folder path": text, empty (placeholder "Attachments")
-- [ ] "Subfolder name": text, empty (placeholder "Attachments")
-- [ ] Links / "New link format": dropdown, Shortest path when possible (options: Shortest path when possible, Path from current file, Path from vault folder)
-- [ ] Links / "Automatically update internal links": toggle, off
-- [ ] Links / "Use [[Wikilinks]]": toggle, on
-- [ ] Links / "Show all file types": toggle, off
-- [ ] Trash / "Confirm before deleting files": toggle, on
-- [ ] Trash / "Delete attachments when deleting files": dropdown, Ask each time (options: Ask each time, Always, Never)
-- [ ] Trash / "Deleted files": dropdown, Move to system trash (options: Move to system trash, Move to Obsidian trash (.trash folder), Permanently delete)
-- [ ] Advanced / "Excluded files": subpage (list of excluded paths and patterns; default empty)
-- [ ] Advanced / "Override config folder": text, empty (placeholder ".obsidian"); button "Relaunch"
-- [ ] Advanced / "Allow URI callbacks": toggle, off
-- [ ] Advanced / "Rebuild vault cache": button "Rebuild"
+- [x] "Default file to open": dropdown, Last opened (options: Last opened, New note, Specific file, Daily note)
+- [x] "File to open": file picker with clear button; default empty
+- [x] "Always focus new tabs": toggle, on
+- [x] "Default location for new notes": dropdown, Vault folder (options: Vault folder, Same folder as current file, In the folder specified below)
+- [x] "Folder to create new notes in": text, empty (placeholder "Example: folder 1/folder 2")
+- [x] "Default location for new attachments": dropdown, Vault folder (options: Vault folder, Same folder as current file, In subfolder under current folder, In the folder specified below)
+- [x] "Attachment folder path": text, empty (placeholder "Attachments")
+- [x] "Subfolder name": text, empty (placeholder "Attachments")
+- [x] Links / "New link format": dropdown, Shortest path when possible (options: Shortest path when possible, Path from current file, Path from vault folder)
+- [x] Links / "Automatically update internal links": toggle, off
+- [x] Links / "Use [[Wikilinks]]": toggle, on
+- [x] Links / "Show all file types": toggle, off
+- [x] Trash / "Confirm before deleting files": toggle, on
+- [x] Trash / "Delete attachments when deleting files": dropdown, Ask each time (options: Ask each time, Always, Never)
+- [x] Trash / "Deleted files": dropdown, Move to system trash (options: Move to system trash, Move to Obsidian trash (.trash folder), Permanently delete)
+- [x] Advanced / "Excluded files": subpage (list of excluded paths and patterns; default empty)
+- [x] Advanced / "Override config folder": text, empty (placeholder ".obsidian"); button "Relaunch"
+- [x] Advanced / "Allow URI callbacks": toggle, off
+- [x] Advanced / "Rebuild vault cache": button "Rebuild"
 
 ### Settings > Keychain
 
-- [ ] Secrets / "No secrets have been added. Secrets are used to store information like API keys and pas...": info text
+- [x] Secrets / "No secrets have been added. Secrets are used to store information like API keys and pas...": info text
 
 ### Settings > Community plugins
 
-- [ ] "Community plugins, like any other software you install, could potentially cause data in...": info text
-- [ ] "Allow community plugins": button "Exit Restricted mode"
-- [ ] "Learn more about plugin security": info text
+- [x] "Community plugins, like any other software you install, could potentially cause data in...": info text
+- [x] "Allow community plugins": button "Exit Restricted mode"
+- [x] "Learn more about plugin security": info text
 
 ### Settings > Quick switcher
 
-- [ ] "Show existing only": toggle, off
-- [ ] "Show attachments": toggle, on
-- [ ] "Show all file types": toggle, off
+- [x] "Show existing only": toggle, off
+- [x] "Show attachments": toggle, on
+- [x] "Show all file types": toggle, off
 
 ### Settings > Sync
 
@@ -391,39 +391,39 @@ Legend: **[later]** = not needed for the first release. **[ours]** = Bedrock doe
 
 ### Settings > Daily notes
 
-- [ ] "Date format": dropdown, 2026-10-21 (options: 2026-10-21, 2026.10.21, 2026/10/21, 2026/10/2026-10-21, Custom)
-- [ ] "Custom format": text, YYYY-MM-DD (placeholder "YYYY-MM-DD")
-- [ ] "New file location": text, Daily (placeholder "Example: folder 1/folder 2")
-- [ ] "Template file location": file picker with clear button; default empty
+- [x] "Date format": dropdown, 2026-10-21 (options: 2026-10-21, 2026.10.21, 2026/10/21, 2026/10/2026-10-21, Custom)
+- [x] "Custom format": text, YYYY-MM-DD (placeholder "YYYY-MM-DD")
+- [x] "New file location": text, Daily (placeholder "Example: folder 1/folder 2")
+- [x] "Template file location": file picker with clear button; default empty
 
 ### Settings > Templates
 
-- [ ] "Template folder location": text, Templates (placeholder "Example: folder 1/folder 2")
-- [ ] "Date format": text, empty (placeholder "YYYY-MM-DD")
-- [ ] "Time format": text, empty (placeholder "HH:mm")
+- [x] "Template folder location": text, Templates (placeholder "Example: folder 1/folder 2")
+- [x] "Date format": text, empty (placeholder "YYYY-MM-DD")
+- [x] "Time format": text, empty (placeholder "HH:mm")
 
 ### Settings > Note composer
 
-- [ ] "Text after extraction": dropdown, Link to new file (options: Link to new file, Embed new file, None)
-- [ ] "Template file location": file picker with clear button; default empty
-- [ ] "Confirm file merge": toggle, on
+- [x] "Text after extraction": dropdown, Link to new file (options: Link to new file, Embed new file, None)
+- [x] "Template file location": file picker with clear button; default empty
+- [x] "Confirm file merge": toggle, on
 
 ### Settings > Command palette
 
-- [ ] Pinned commands / "No commands found.": info text
+- [x] Pinned commands / "No commands found.": info text
 
 ### Settings > File recovery
 
-- [ ] "Snapshot interval": text, 5
-- [ ] "History length": text, 7
-- [ ] "Snapshots": button "View"
-- [ ] "Clear history": button "Clear"
+- [x] "Snapshot interval": text, 5
+- [x] "History length": text, 7
+- [x] "Snapshots": button "View"
+- [x] "Clear history": button "Clear"
 
 ### Settings > Unique note creator
 
-- [ ] "New file location": text, empty (placeholder "Example: folder 1/folder 2")
-- [ ] "Template file location": file picker with clear button; default empty
-- [ ] "Unique prefix format": text, empty (placeholder "YYYYMMDDHHmm")
+- [x] "New file location": text, empty (placeholder "Example: folder 1/folder 2")
+- [x] "Template file location": file picker with clear button; default empty
+- [x] "Unique prefix format": text, empty (placeholder "YYYYMMDDHHmm")
 
 ### Settings > Web viewer
 
@@ -439,58 +439,58 @@ Legend: **[later]** = not needed for the first release. **[ours]** = Bedrock doe
 
 
 ### Settings > Hotkeys
-- [ ] List of every command with its current hotkeys; search box; filter "assigned only"
-- [ ] Add a hotkey by pressing keys; remove a hotkey; restore default; conflicts shown
-- [ ] Stored in `hotkeys.json`, only changes
+- [x] List of every command with its current hotkeys; search box; filter "assigned only"
+- [x] Add a hotkey by pressing keys; remove a hotkey; restore default; conflicts shown
+- [x] Stored in `hotkeys.json`, only changes
 
 ### Settings > Core plugins
-- [ ] One toggle per core plugin, with buttons for its options and hotkeys; defaults as listed in section 12
+- [x] One toggle per core plugin, with buttons for its options and hotkeys; defaults as listed in section 12
 
 ## 12. Plugins
 
 ### Core plugins (same ids; default state)
 - [ ] `file-explorer` Files (on)
 - [ ] `global-search` Search (on)
-- [ ] `switcher` Quick switcher (on)
+- [x] `switcher` Quick switcher (on)
 - [x] `graph` Graph view (on)
 - [ ] `backlink` Backlinks (on)
 - [x] `canvas` Canvas (on)
 - [ ] `outgoing-link` Outgoing links (on)
 - [ ] `tag-pane` Tags view (on)
-- [ ] `footnotes` Footnotes view (off) [later]
+- [x] `footnotes` Footnotes view (off) [later]
 - [ ] `properties` Properties view (on)
 - [ ] `page-preview` Page preview (on)
-- [ ] `daily-notes` Daily notes (on)
-- [ ] `templates` Templates (on)
-- [ ] `note-composer` Note composer (on)
-- [ ] `command-palette` Command palette (on)
-- [ ] `slash-command` Slash commands (off)
+- [x] `daily-notes` Daily notes (on)
+- [x] `templates` Templates (on)
+- [x] `note-composer` Note composer (on)
+- [x] `command-palette` Command palette (on)
+- [x] `slash-command` Slash commands (off)
 - [ ] `editor-status` editing mode in status bar (on, not listed)
 - [ ] `bookmarks` Bookmarks (on)
-- [ ] `zk-prefixer` Unique note creator (off) [later]
-- [ ] `random-note` Random note (off) [later]
+- [x] `zk-prefixer` Unique note creator (off) [later]
+- [x] `random-note` Random note (off) [later]
 - [ ] `outline` Outline (on)
 - [ ] `word-count` Word count (on)
 - [ ] `slides` Slides (off) [later]
 - [ ] `audio-recorder` Audio recorder (off) [later]
-- [ ] `workspaces` Workspaces (off) [later]
-- [ ] `file-recovery` File recovery (on)
+- [x] `workspaces` Workspaces (off) [later]
+- [x] `file-recovery` File recovery (on)
 - [ ] `publish` Publish (off) [ours: not planned]
 - [ ] `sync` Sync (on) [ours: Bedrock sync, always available]
-- [ ] `bases` Bases (on) [later]
+- [x] `bases` Bases (on) [later]
 - [ ] `webviewer` Web viewer (off) [later]
 
 ### Community plugins
 - [ ] Restricted mode on by default; "turn on community plugins" flow with a warning; per-vault trust prompt when a vault with plugins is opened the first time; stored outside the vault
 - [ ] Load each enabled id from `community-plugins.json`; read `manifest.json`; skip if `minAppVersion` is too new or the plugin is mobile-only on mobile
-- [ ] Run `main.js` as CommonJS with a `require` that gives `obsidian`, the shared `@codemirror/*` and `@lezer/*` packages, and falls through to Node for everything else; map old CodeMirror package names
+- [x] Run `main.js` as CommonJS with a `require` that gives `obsidian`, the shared `@codemirror/*` and `@lezer/*` packages, and falls through to Node for everything else; map old CodeMirror package names
 - [ ] Inject `styles.css`; `loadData` / `saveData` on `data.json`; notify the plugin when `data.json` changes on disk
 - [ ] Unload cleanly: everything registered through the plugin is removed
-- [ ] Installed plugins list in settings: toggle, options, hotkeys, uninstall, open folder, reload, check for updates
-- [ ] Plugin browser: public community list, downloads and update dates, search, sort, installed only, detail page with README, install / enable / update / uninstall
+- [x] Installed plugins list in settings: toggle, options, hotkeys, uninstall, open folder, reload, check for updates
+- [x] Plugin browser: public community list, downloads and update dates, search, sort, installed only, detail page with README, install / enable / update / uninstall
 - [ ] `obsidian` API implemented to match `obsidian.d.ts` (App, Vault, Workspace, MetadataCache, FileManager, Plugin, ItemView, MarkdownView, Editor, Modal, SuggestModal, FuzzySuggestModal, Setting, PluginSettingTab, Notice, Menu, MarkdownRenderer, requestUrl, moment, Platform, setIcon, addIcon, normalizePath, parseYaml, stringifyYaml, debounce, prepareFuzzySearch, ...)
 - [ ] Globals and DOM helpers plugins expect (`createEl`, `createDiv`, `createSpan`, `empty`, `setText`, `addClass`, `toggleClass`, `activeWindow`, `activeDocument`, `moment`, `Notice`, `requestUrl`)
-- [ ] Keychain: secrets store for plugins (settings tab lists secrets) [later]
+- [x] Keychain: secrets store for plugins (settings tab lists secrets) [later]
 
 ## 13. Commands
 
@@ -508,7 +508,7 @@ Every command id below must exist with the same id so `hotkeys.json`, plugins an
 - [ ] `app:open-file` Open file from outside the vault...
 - [ ] `app:open-help` Open help (F1)
 - [ ] `app:open-sandbox-vault` Open sandbox vault
-- [ ] `app:open-settings` Open settings (Ctrl + ,)
+- [x] `app:open-settings` Open settings (Ctrl + ,)
 - [ ] `app:open-vault` Manage vaults
 - [ ] `app:reload` Reload app without saving
 - [ ] `app:show-debug-info` Show debug info
@@ -532,12 +532,12 @@ Every command id below must exist with the same id so `hotkeys.json`, plugins an
 
 #### `bases` (6)
 
-- [ ] `bases:add-item` Bases: Add item
-- [ ] `bases:add-view` Bases: Add view
-- [ ] `bases:change-view` Bases: Switch view...
-- [ ] `bases:copy-table` Bases: Copy table to clipboard
-- [ ] `bases:insert` Bases: Insert new base [editor]
-- [ ] `bases:new-file` Bases: Create new base
+- [x] `bases:add-item` Bases: Add item
+- [x] `bases:add-view` Bases: Add view
+- [x] `bases:change-view` Bases: Switch view...
+- [x] `bases:copy-table` Bases: Copy table to clipboard
+- [x] `bases:insert` Bases: Insert new base [editor]
+- [x] `bases:new-file` Bases: Create new base
 
 #### `bookmarks` (7)
 
@@ -562,9 +562,9 @@ Every command id below must exist with the same id so `hotkeys.json`, plugins an
 
 #### `daily-notes` (3)
 
-- [ ] `daily-notes` Daily notes: Open today's daily note
-- [ ] `daily-notes:goto-next` Daily notes: Open next daily note
-- [ ] `daily-notes:goto-prev` Daily notes: Open previous daily note
+- [x] `daily-notes` Daily notes: Open today's daily note
+- [x] `daily-notes:goto-next` Daily notes: Open next daily note
+- [x] `daily-notes:goto-prev` Daily notes: Open previous daily note
 
 #### `editor` (85)
 
@@ -667,11 +667,11 @@ Every command id below must exist with the same id so `hotkeys.json`, plugins an
 
 #### `file-recovery` (1)
 
-- [ ] `file-recovery:open` File recovery: Open local history
+- [x] `file-recovery:open` File recovery: Open local history
 
 #### `footnotes` (1)
 
-- [ ] `footnotes:open` Footnotes view: Show footnotes
+- [x] `footnotes:open` Footnotes view: Show footnotes
 
 #### `global-search` (1)
 
@@ -685,19 +685,19 @@ Every command id below must exist with the same id so `hotkeys.json`, plugins an
 
 #### `insert-current-date` (1)
 
-- [ ] `insert-current-date` Templates: Insert current date [editor]
+- [x] `insert-current-date` Templates: Insert current date [editor]
 
 #### `insert-current-time` (1)
 
-- [ ] `insert-current-time` Templates: Insert current time [editor]
+- [x] `insert-current-time` Templates: Insert current time [editor]
 
 #### `insert-template` (1)
 
-- [ ] `insert-template` Templates: Insert template
+- [x] `insert-template` Templates: Insert template
 
 #### `insert-unique-link` (1)
 
-- [ ] `insert-unique-link` Unique note creator: Add unique internal link [editor]
+- [x] `insert-unique-link` Unique note creator: Add unique internal link [editor]
 
 #### `markdown` (4)
 
@@ -712,9 +712,9 @@ Every command id below must exist with the same id so `hotkeys.json`, plugins an
 
 #### `note-composer` (3)
 
-- [ ] `note-composer:extract-heading` Note composer: Extract this heading... [editor]
-- [ ] `note-composer:merge-file` Note composer: Merge current file with another file...
-- [ ] `note-composer:split-file` Note composer: Extract current selection... [editor]
+- [x] `note-composer:extract-heading` Note composer: Extract this heading... [editor]
+- [x] `note-composer:merge-file` Note composer: Merge current file with another file...
+- [x] `note-composer:split-file` Note composer: Extract current selection... [editor]
 
 #### `open-with-default-app` (2)
 
@@ -744,7 +744,7 @@ Every command id below must exist with the same id so `hotkeys.json`, plugins an
 
 #### `random-note` (1)
 
-- [ ] `random-note` Random note: Open random note
+- [x] `random-note` Random note: Open random note
 
 #### `slides` (1)
 
@@ -767,7 +767,7 @@ Every command id below must exist with the same id so `hotkeys.json`, plugins an
 
 #### `theme` (2)
 
-- [ ] `theme:switch` Change theme...
+- [x] `theme:switch` Change theme...
 - [ ] `theme:toggle-light-dark` Toggle light/dark mode
 
 #### `webviewer` (9)
@@ -784,10 +784,10 @@ Every command id below must exist with the same id so `hotkeys.json`, plugins an
 
 #### `window` (4)
 
-- [ ] `window:reset-zoom` Reset zoom
+- [x] `window:reset-zoom` Reset zoom
 - [ ] `window:toggle-always-on-top` Toggle window always on top
-- [ ] `window:zoom-in` Zoom in
-- [ ] `window:zoom-out` Zoom out
+- [x] `window:zoom-in` Zoom in
+- [x] `window:zoom-out` Zoom out
 
 #### `workspace` (31)
 
@@ -825,14 +825,14 @@ Every command id below must exist with the same id so `hotkeys.json`, plugins an
 
 #### `workspaces` (4)
 
-- [ ] `workspaces:load` Workspaces: Load workspace layout
-- [ ] `workspaces:open-modal` Workspaces: Manage workspace layouts
-- [ ] `workspaces:save` Workspaces: Save layout
-- [ ] `workspaces:save-and-load` Workspaces: Save and load another layout
+- [x] `workspaces:load` Workspaces: Load workspace layout
+- [x] `workspaces:open-modal` Workspaces: Manage workspace layouts
+- [x] `workspaces:save` Workspaces: Save layout
+- [x] `workspaces:save-and-load` Workspaces: Save and load another layout
 
 #### `zk-prefixer` (1)
 
-- [ ] `zk-prefixer` Unique note creator: Create new unique note
+- [x] `zk-prefixer` Unique note creator: Create new unique note
 
 
 ## 14. Default hotkeys
