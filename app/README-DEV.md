@@ -18,11 +18,14 @@ npm run dist -w app         installer (+ rewrites ../toolbay.json)
 node dist/cli.js help       the `bedrock` command in development (also: npx electron app --cli help)
 node test/e2e/agents-e2e.mjs   agent access end to end (MCP HTTP + stdio, REST, sync, settings)
 node scripts/agent-openapi.mjs regenerate the OpenAPI block in docs/AGENT-API.md
+node test/e2e/onboarding.mjs   first-run setup guide end to end (temp main vault, screenshots -> test/out)
 ```
 
 Env: `BEDROCK_USER_DATA=<dir>` (separate app data, used by tests), `BEDROCK_NO_UPDATE=1`,
 `BEDROCK_SYNC_URL` (sync server, default https://sync.toolbay.ai), `BEDROCK_KEYCHAIN_DIR` (tests: file keychain),
 `TOOLBAY_TOKEN` (hub token, memory only), `TOOLBAY_API_BASE` (defaults to https://toolbay.ai).
+The setup guide opens by itself once per computer on the main vault; test runs (`BEDROCK_USER_DATA` set)
+skip it unless `BEDROCK_ONBOARDING=1`, and `BEDROCK_NO_ONBOARDING=1` always skips it.
 
 ## Module map
 
@@ -57,6 +60,8 @@ src/core/              pure TS, no DOM/Electron (runs in workers, main, tests)
   scan.ts              scanVault, indexFiles (worker_threads pool, batch fallback)
   index-worker.ts      worker entry
   resolve.ts           resolvedLinks / unresolvedLinks for one file
+  onboarding.ts        setup guide texts: the two prompts for Claude (vault path filled in), the
+                       "Bedrock/Instructions for Claude.md" writer, areas, graph gradient schemes, presets
   agent-ops.ts         vault operations for agents (search, read/write, move with link updates, tags,
                        properties, daily note), path safety; used by MCP, REST and the CLI
 src/renderer/
@@ -141,6 +146,8 @@ src/renderer/
   sync-ui/             sync UI: index.ts (status bar icon + menu, commands, file menu, notices),
                        settings-tab.ts (Settings › Sync), modals.ts (version history + diff, deleted
                        files, activity log, excluded folders), client.ts (IPC), diff.ts, styles.ts
+  onboarding/          first-run setup guide (index.ts: modal, command "Open onboarding", applies graph
+                       colour groups / accent + light-dark / book theme snippet), themes.ts (book theme CSS)
   ui/                  Modal/SuggestModal/FuzzySuggestModal, Notice, Menu (sections, submenus, native),
                        Setting components, fuzzy search, title bar + status bar (editor mode item),
                        tooltip.ts (aria-label tooltips, setTooltip/displayTooltip)

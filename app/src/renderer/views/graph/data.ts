@@ -9,6 +9,8 @@ export interface GraphNodeData {
   type: NodeType;
   links: Record<string, true>;
   color?: GraphColor;
+  /** emoji from the note's `icon` property, drawn on the node */
+  icon?: string;
 }
 
 export interface GraphData {
@@ -34,6 +36,30 @@ export interface GraphSource {
   isUserIgnored(path: string): boolean;
   /** Creation time used to order the timelapse. */
   fileTime?(path: string): number;
+  /** The note's `icon` and `color` properties (frontmatter), if any. */
+  fileProps?(path: string): { icon?: unknown; color?: unknown } | null;
+}
+
+/** First emoji / grapheme of an `icon` property, or "" when it isn't a short string. */
+export function nodeIcon(v: unknown): string {
+  if (typeof v !== "string") return "";
+  const t = v.trim();
+  if (!t || t.length > 16) return "";
+  const Seg = (Intl as any).Segmenter;
+  if (Seg) {
+    for (const part of new Seg(undefined, { granularity: "grapheme" }).segment(t)) return part.segment;
+    return "";
+  }
+  return Array.from(t)[0] ?? "";
+}
+
+/** `color` property as a graph colour: "#rgb" / "#rrggbb" (with or without #). */
+export function propColor(v: unknown): GraphColor | null {
+  if (typeof v !== "string") return null;
+  const m = /^#?([0-9a-f]{3}|[0-9a-f]{6})$/i.exec(v.trim());
+  if (!m) return null;
+  const h = m[1].length === 3 ? m[1].split("").map((c) => c + c).join("") : m[1];
+  return { a: 1, rgb: parseInt(h, 16) };
 }
 
 const NON_ATTACHMENT = new Set(["md", "canvas", "base"]);
@@ -95,6 +121,16 @@ export function buildGraphData(src: GraphSource, o: BuildOptions, filter: NodeFi
       count++;
     }
     if (f !== true) node.color = f;
+    const props = src.fileProps?.(path);
+    if (props) {
+      const icon = nodeIcon(props.icon);
+      if (icon) node.icon = icon;
+      // a colour group wins; otherwise the note's own `color` property
+      if (f === true) {
+        const c = propColor(props.color);
+        if (c) node.color = c;
+      }
+    }
     const res = src.resolvedLinks[path];
     if (res) {
       for (const target of Object.keys(res)) {
@@ -147,6 +183,7 @@ function cloneNode(n: GraphNodeData | undefined): GraphNodeData {
   if (!n) return { type: "", links: {} };
   const c: GraphNodeData = { type: n.type, links: {} };
   if (n.color) c.color = n.color;
+  if (n.icon) c.icon = n.icon;
   return c;
 }
 
@@ -162,6 +199,7 @@ export function localGraph(data: GraphData, o: LocalOptions): GraphData {
     return { nodes: out, weights, numLinks: data.numLinks };
   }
   out[focus] = { type: all[focus].type, links: {} };
+  if (all[focus].icon) out[focus].icon = all[focus].icon;
   const jumps = Math.max(1, Math.round(o.localJumps));
   const stepW = 30 / jumps;
   for (let p = 0; p < jumps; p++) {
@@ -218,6 +256,8 @@ export interface FlatGraph {
   index: Map<string, number>;
   types: NodeType[];
   colors: (GraphColor | null)[];
+  /** emoji per node ("" = none) */
+  icons: string[];
   /** link i goes from src[i] to dst[i] */
   src: Uint32Array;
   dst: Uint32Array;
@@ -231,12 +271,14 @@ export function flatten(data: GraphData): FlatGraph {
   ids.forEach((id, i) => index.set(id, i));
   const types: NodeType[] = [];
   const colors: (GraphColor | null)[] = [];
+  const icons: string[] = [];
   const s: number[] = [];
   const d: number[] = [];
   for (let i = 0; i < ids.length; i++) {
     const n = data.nodes[ids[i]];
     types.push(n.type);
     colors.push(n.color ?? null);
+    icons.push(n.icon ?? "");
     for (const t of Object.keys(n.links)) {
       const j = index.get(t);
       if (j === undefined || j === i) continue;
@@ -256,7 +298,7 @@ export function flatten(data: GraphData): FlatGraph {
       weight[dst[k]]++;
     }
   }
-  return { ids, index, types, colors, src, dst, weight };
+  return { ids, index, types, colors, icons, src, dst, weight };
 }
 
 /** Node radius before zoom scaling: grows with the square root of its link count, 8..30. */

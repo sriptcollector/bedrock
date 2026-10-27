@@ -4,7 +4,7 @@
   "name": "Bedrock",
   "tagline": "Free notes app that works with your Obsidian vaults, with sync built in.",
   "description": "Bedrock notes app: write in plain Markdown files on your own computer with links, live preview, properties and plugins. Opens existing Obsidian vaults and plugins. Your vault syncs end-to-end encrypted to your other computers through your Toolbay account. No account needed to use it offline, no limits, no telemetry.",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "repo": "sriptcollector/bedrock",
   "identifier": "ai.toolbay.bedrock",
   "license": "MIT",
@@ -25,7 +25,7 @@
   ],
   "platforms": {
     "windows-x86_64": {
-      "asset": "Bedrock_0.1.0_x64-setup.exe",
+      "asset": "Bedrock_0.1.1_x64-setup.exe",
       "kind": "nsis",
       "silentArgs": [
         "/S"
@@ -34,12 +34,12 @@
       "uninstaller": "Uninstall Bedrock.exe"
     },
     "darwin-aarch64": {
-      "asset": "Bedrock_0.1.0_arm64.dmg",
+      "asset": "Bedrock_0.1.1_arm64.dmg",
       "kind": "dmg",
       "app": "Bedrock.app"
     },
     "darwin-x86_64": {
-      "asset": "Bedrock_0.1.0_x64.dmg",
+      "asset": "Bedrock_0.1.1_x64.dmg",
       "kind": "dmg",
       "app": "Bedrock.app"
     }

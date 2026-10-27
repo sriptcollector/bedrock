@@ -30,6 +30,7 @@ export function graphSourceFromApp(app: any): GraphSource {
     },
     vaultTags: () => Object.keys(mc.getTags()),
     isUserIgnored: (p: string) => mc.isUserIgnored(p),
+    fileProps: (p: string) => mc.getCache(p)?.frontmatter ?? null,
     fileTime: (p: string) => {
       const f = app.vault.getFileByPath(p);
       return f ? Math.min(f.stat.ctime || Infinity, f.stat.mtime || Infinity) : Infinity;
@@ -399,6 +400,15 @@ export class GraphView extends ItemView {
     this.engine.render();
   }
 
+  /** graph.json changed outside this view (setup guide, sync, Claude): show the stored options. */
+  reloadStored(stored: any): void {
+    if (!this.engine) return;
+    const o = mergeOptions(stored, false);
+    o.scale = this.engine.renderer.targetScale;
+    this.lastSaved = graphJsonText(o);
+    this.engine.applyOptions(o);
+  }
+
   /** Persist options to graph.json, only when something actually changed. */
   onOptionsChange(): void {
     if (!this.engine) return;
@@ -536,6 +546,21 @@ export class LocalGraphView extends ItemView {
 }
 
 /** Register both views and the graph commands. */
+/** Read graph.json, change it with `fn`, write it back and refresh open graph views. */
+export async function updateGraphJson(app: any, fn: (stored: any) => any): Promise<void> {
+  const path = `${app.vault.configDir}/${GRAPH_JSON}`;
+  const a = app.vault.adapter;
+  let stored: any = null;
+  try {
+    if (await a.exists(path)) stored = JSON.parse(await a.read(path));
+  } catch {
+    stored = null;
+  }
+  const next = fn(stored ?? {});
+  await a.write(path, graphJsonText(mergeOptions(next, false)));
+  for (const leaf of app.workspace.getLeavesOfType("graph")) (leaf.view as GraphView)?.reloadStored?.(next);
+}
+
 export function registerGraph(app: any): void {
   installGraphStyles();
   app.viewRegistry.registerView("graph", (leaf: WorkspaceLeaf) => new GraphView(leaf));

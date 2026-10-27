@@ -35,6 +35,7 @@ import { mountSyncUi } from "./sync-ui";
 import { InternalPlugins } from "./core-plugins/manager";
 import { applyConfigDirOverride, startSettingsFeatures, afterLayoutSettingsFeatures } from "./settings/bootstrap";
 import { mountAgentsUi } from "./settings/agents-tab";
+import { mountOnboarding } from "./onboarding";
 import { mountShell } from "./shell";
 import { scanVault } from "../core/scan";
 import type { WorkspaceLeaf } from "./workspace/leaf";
@@ -178,6 +179,7 @@ export class App {
     this.watcher.start();
     mountSyncUi(this);
     mountAgentsUi(this);
+    mountOnboarding(this); // first-run setup guide + "Open onboarding" (onboarding/)
 
     if (this.boot.openFile) this.openAbsolutePath(this.boot.openFile);
     this.native.on(IPC.openPath, (p: string) => this.openAbsolutePath(p));

@@ -1032,6 +1032,10 @@ export class GraphRenderer {
       const lh = fontPx * 1.25;
       for (let l = 0; l < wrapped.lines.length; l++) ctx.fillText(wrapped.lines[l], 0, l * lh);
     };
+    this.drawIcons(n, vl, vt, vr, vb);
+    ctx.fillStyle = fg;
+    ctx.textAlign = "center";
+    ctx.textBaseline = "top";
     if (baseAlpha > 0.001) {
       for (let i = 0; i < n; i++) {
         if (i === hl) continue;
@@ -1060,6 +1064,37 @@ export class GraphRenderer {
     }
     ctx.globalAlpha = 1;
     ctx.setTransform(1, 0, 0, 1, 0, 0);
+  }
+
+  /** Emoji from the notes' `icon` property, drawn just above their nodes (the node keeps its colour). */
+  private drawIcons(n: number, vl: number, vt: number, vr: number, vb: number): void {
+    const icons = this.graph.icons;
+    if (!icons || !icons.some(Boolean)) return;
+    const ctx = this.overlayCtx;
+    const dpr = window.devicePixelRatio || 1;
+    const s = this.scale;
+    ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+    ctx.textAlign = "center";
+    ctx.textBaseline = "middle";
+    let lastPx = -1;
+    for (let i = 0; i < n; i++) {
+      const icon = icons[i];
+      if (!icon) continue;
+      const x = this.x[i], y = this.y[i];
+      if (x + 60 < vl || x - 60 > vr || y + 60 < vt || y - 60 > vb) continue;
+      const r = this.size(i) * this.nodeScale * s; // node radius on screen
+      if (r < 3) continue; // zoomed far out: just the coloured dot
+      const a = this.fadeAlpha[i];
+      if (a <= 0.01) continue;
+      const px = Math.round(Math.max(12, Math.min(40, r * 1.6)));
+      if (px !== lastPx) {
+        ctx.font = `${px}px "Segoe UI Emoji", "Apple Color Emoji", "Noto Color Emoji", ${this.fontFamily}`;
+        lastPx = px;
+      }
+      ctx.globalAlpha = a;
+      ctx.fillText(icon, x * s + this.panX, y * s + this.panY - r - px * 0.55);
+    }
+    ctx.globalAlpha = 1;
   }
 
   /** Approximate frames per second over `ms` while the view is animating (for benchmarks). */

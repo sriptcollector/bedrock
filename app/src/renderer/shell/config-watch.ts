@@ -1,10 +1,11 @@
 // Reload settings when the config folder changes on disk (sync from another device, a text
-// editor, git): app.json / appearance.json, hotkeys.json, core-plugins.json, bookmarks.json and
-// types.json. Writes the app made itself are recognised by their content and ignored.
+// editor, git, an AI agent): app.json / appearance.json, hotkeys.json, core-plugins.json, bookmarks.json,
+// types.json and graph.json (open graph views pick up new colour groups). Writes the app made
+// itself are recognised by their content and ignored.
 import fs from "node:fs";
 import nodePath from "node:path";
 
-const WATCHED = ["app.json", "appearance.json", "hotkeys.json", "core-plugins.json", "bookmarks.json", "types.json"];
+const WATCHED = ["app.json", "appearance.json", "hotkeys.json", "core-plugins.json", "bookmarks.json", "types.json", "graph.json"];
 
 export function watchConfigFolder(app: any): () => void {
   const dir = app.vault.adapter.getFullPath(app.vault.configDir);
@@ -49,6 +50,7 @@ export function watchConfigFolder(app: any): () => void {
       }
     } else if (name === "bookmarks.json") await app.bookmarks?.load?.();
     else if (name === "types.json") await app.propertyTypes?.load?.();
+    else if (name === "graph.json") for (const leaf of app.workspace.getLeavesOfType("graph")) (leaf.view as any)?.reloadStored?.(parsed);
   };
   // Our own writes update `last` through this hook (so they don't look like outside changes).
   const origWrite = app.vault.adapter.write.bind(app.vault.adapter);

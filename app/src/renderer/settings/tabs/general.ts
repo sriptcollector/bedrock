@@ -121,6 +121,17 @@ export class GeneralTab extends BuiltinTab {
         render: (s: any) => s.addButton((b: any) => b.setButtonText("Open").onClick(() => openHelpWindow(app))),
       },
       {
+        name: "Setup guide",
+        desc: "Open the first-run guide again: the prompts for your Claude, graph colors, app colors and themes.",
+        render: (s: any) =>
+          s.addButton((b: any) =>
+            b.setButtonText("Open").onClick(() => {
+              app.setting.close();
+              app.commands.executeCommandById("bedrock:open-onboarding");
+            }),
+          ),
+      },
+      {
         type: "group",
         heading: "Account",
         items: [
