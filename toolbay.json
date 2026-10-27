@@ -2,8 +2,8 @@
   "schema": 1,
   "id": "bedrock",
   "name": "Bedrock",
-  "tagline": "Free notes app that works with your Obsidian vaults, with sync built in.",
-  "description": "Bedrock notes app: write in plain Markdown files on your own computer with links, live preview, properties and plugins. Opens existing Obsidian vaults and plugins. Your vault syncs end-to-end encrypted to your other computers through your Toolbay account. No account needed to use it offline, no limits, no telemetry.",
+  "tagline": "Obsidian was charging. So we made it free.",
+  "description": "Obsidian was charging, so we made it free too, sync included. Stop paying for dumb shit. Bedrock notes app: write in plain Markdown files on your own computer with links, live preview, properties and plugins. Opens existing Obsidian vaults and plugins. Your vault syncs end-to-end encrypted to your other computers through your Toolbay account. No account needed to use it offline, no limits, no telemetry.",
   "version": "0.1.1",
   "repo": "sriptcollector/bedrock",
   "identifier": "ai.toolbay.bedrock",
@@ -36,12 +36,12 @@
     "darwin-aarch64": {
       "asset": "Bedrock_0.1.1_arm64.dmg",
       "kind": "dmg",
-      "app": "Bedrock.app"
+      "app": "bedrock.app"
     },
     "darwin-x86_64": {
       "asset": "Bedrock_0.1.1_x64.dmg",
       "kind": "dmg",
-      "app": "Bedrock.app"
+      "app": "bedrock.app"
     }
   },
   "files": [],
