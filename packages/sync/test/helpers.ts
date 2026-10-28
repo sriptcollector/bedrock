@@ -14,7 +14,7 @@ export interface FakeToolbay {
   meCalls: number;
   /** Delay (ms) applied to settings PUTs, to provoke races. */
   putDelayMs: number;
-  store: Map<string, Map<string, { value: unknown; version: number; updatedAt: number }>>; // `${user}/${slug}` -> items
+  store: Map<string, Map<string, { value: unknown; version: number; updatedAt: number; deleted?: boolean }>>; // `${user}/${slug}` -> items
   close(): Promise<void>;
 }
 
@@ -63,7 +63,8 @@ export async function startFakeToolbay(): Promise<FakeToolbay> {
           conflicts[ch.key] = cur ? { ...cur } : null;
           continue;
         }
-        const item = { value: ch.value, version: curV + 1, updatedAt: Date.now() };
+        if (ch.deleted && !cur) continue;
+        const item = ch.deleted ? { value: null, version: curV + 1, updatedAt: Date.now(), deleted: true } : { value: ch.value, version: curV + 1, updatedAt: Date.now() };
         items.set(ch.key, item);
         applied[ch.key] = { version: item.version, updatedAt: item.updatedAt };
         rev++;

@@ -1,6 +1,17 @@
 export { SyncEngine, EMPTY_VAULT_MESSAGE, type SyncEngineOptions, type SyncStatus, type SyncState, type VersionInfo, type TrashItem } from './engine.js';
-export { obtainVaultKey, KeyEscrow, type Keychain, type ObtainKeyOptions } from './escrow.js';
-export { TOOL_SLUG, KEYCHAIN_SERVICE, KEYCHAIN_ACCOUNT, ESCROW_ITEM_KEY, CHUNK_SIZE, DEFAULT_SERVER_URL } from './constants.js';
+export { AccountKeyStore, type AccountWrappedKey, type Keychain } from './escrow.js';
+export { wrapVaultKey, unwrapVaultKey, isWrappedKey, passphraseProblem, WrongPassphraseError, MIN_PASSPHRASE_LENGTH, DEFAULT_KDF, type WrappedKey } from './keywrap.js';
+export { rotateVault, type RotateOptions, type RotateResult } from './rotate.js';
+export {
+  TOOL_SLUG,
+  KEYCHAIN_SERVICE,
+  KEYCHAIN_ACCOUNT,
+  LEGACY_KEYCHAIN_ACCOUNT,
+  ESCROW_ITEM_KEY,
+  WRAPPED_KEY_ITEM,
+  CHUNK_SIZE,
+  DEFAULT_SERVER_URL,
+} from './constants.js';
 export {
   generateVaultKey,
   deriveKeys,

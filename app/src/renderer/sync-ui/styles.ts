@@ -73,6 +73,14 @@ export const SYNC_CSS = `
 .sync-usage-bar.mod-warning .sync-usage-bar-fill { background: var(--text-error); }
 .bedrock-sync-settings .sync-config-note, .bedrock-sync-settings .sync-privacy-note { padding: 0 0 var(--size-4-3); }
 .notice .sync-notice-actions { display: flex; gap: var(--size-4-2); margin-top: var(--size-4-2); }
+.bedrock-sync-turn-on, .bedrock-sync-migration { max-width: 560px; }
+.bedrock-sync-turn-on .sync-passphrase-field { display: flex; flex-direction: column; gap: var(--size-4-1); margin: var(--size-4-3) 0; }
+.bedrock-sync-turn-on .sync-passphrase-field label { font-size: var(--font-ui-small); color: var(--text-muted); }
+.bedrock-sync-turn-on .sync-passphrase-field input { width: 100%; }
+.bedrock-sync-turn-on .sync-ack { display: flex; gap: var(--size-4-2); align-items: flex-start; margin-top: var(--size-4-3); font-size: var(--font-ui-small); }
+.bedrock-sync-turn-on .sync-ack input { margin-top: 2px; flex: none; }
+.bedrock-sync-turn-on .sync-forgot-link { display: inline-block; font-size: var(--font-ui-small); }
+.bedrock-sync-turn-on p.mod-warning { color: var(--text-warning); }
 `;
 
 let injected = false;

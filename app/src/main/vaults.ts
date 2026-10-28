@@ -49,8 +49,17 @@ A few things to try:
 - Add tags such as #ideas to group notes.
 - Open the command palette with **Ctrl/Cmd + P** to find every action.
 
-When you're signed in to Toolbay, this vault syncs to your other computers automatically.
+To keep this vault the same on your other computers, turn on sync in Settings › Sync. It's off until
+you do, and it's locked with a passphrase you choose, so Toolbay can't read your notes.
 ${INSPIRED_BY ? `\n---\n\n<small>Inspired by ${INSPIRED_BY.name}. ${INSPIRED_BY.notAffiliated}</small>\n` : ""}`;
+
+/** Welcome notes earlier versions wrote (an untouched one steps aside on a computer's first sync). */
+export const OLD_WELCOME_NOTES = [
+  WELCOME_NOTE.replace(
+    "To keep this vault the same on your other computers, turn on sync in Settings › Sync. It's off until\nyou do, and it's locked with a passphrase you choose, so Toolbay can't read your notes.\n",
+    "When you're signed in to Toolbay, this vault syncs to your other computers automatically.\n",
+  ),
+];
 
 /** Make sure the main vault exists. Returns its path. */
 export function ensureMainVault(): string {

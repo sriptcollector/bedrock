@@ -42,11 +42,13 @@ The sync service verifies a bearer token by calling `GET https://toolbay.ai/api/
 which returns `{user:{id,...}}`. One vault per user id. No vault picker.
 
 Encryption (end to end; storage never sees plaintext or file names):
-- Vault key K (32 random bytes) is created by the first device. It is escrowed in the account through the
-  existing tool settings sync API (`PUT toolbay.ai/api/v1/me/tools/<slug>/sync`, key `vault-key`), which is
-  encrypted at rest on toolbay.ai and never touches the storage service. Each device caches K in the OS keychain
-  (service `ai.toolbay.<slug>`, account `vault-key`). No password for users. Honest caveat for docs:
-  whoever controls the Toolbay account can get K; the storage service and its bucket alone cannot.
+- Sync is off until the person turns it on (Settings › Sync).
+- Vault key K (32 random bytes) is created by the first device that turns sync on. The account only holds K
+  wrapped with the person's sync passphrase (scrypt N=2^17,r=8,p=1 + AES-256-GCM; item `vault-key-wrapped` of
+  `PUT toolbay.ai/api/v1/me/tools/<slug>/sync`). Toolbay can't open it; a forgotten passphrase can't be
+  recovered (local files are untouched). Each device keeps the opened K in the OS keychain (service
+  `ai.toolbay.<slug>`, account `vault-key-2`). 0.1.2 and older stored K unprotected (item `vault-key`); 0.1.3
+  deletes it and rotates to a new key when sync is turned back on (docs/SYNC.md, "Upgrade from 0.1.2").
 - Subkeys via HKDF-SHA256: K_meta (file metadata), K_chunk (chunk contents), K_id (chunk ids).
 - Chunk id = HMAC-SHA256(K_id, plaintext chunk) hex (dedup inside the vault, reveals nothing across vaults).
 - Chunk blob = AES-256-GCM(K_chunk, random 12-byte nonce, chunk) => nonce||ciphertext||tag.

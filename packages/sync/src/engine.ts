@@ -485,7 +485,7 @@ export class SyncEngine extends EventEmitter {
     if (kc !== this.keys.keyCheck) {
       this.keys = null;
       throw new SyncError(
-        "This computer's vault key does not match your Toolbay account's vault. Sign out and back in to Toolbay to fetch the right key.",
+        'Your synced notes are locked with a different sync passphrase now (it was set or changed on another computer). Enter it in Settings › Sync.',
         'key',
       );
     }

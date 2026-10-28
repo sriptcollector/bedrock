@@ -1,10 +1,12 @@
 // Settings › Sync. Same order as Obsidian's Sync tab, minus what Bedrock doesn't need (no remote
-// vault picker, no encryption password, no region): account, status + pause, storage, device
-// name, deleted files, activity log, selective sync, vault configuration sync.
+// vault picker, no region): account, sync on/off (with the sync passphrase), status + pause,
+// storage, device name, deleted files, activity log, selective sync, vault configuration sync.
+// Sync is off until the person turns it on here.
 import { Setting, SettingTab } from "../ui/setting";
 import { Notice } from "../ui/notice";
 import { formatBytes, formatTime, type SyncClient } from "./client";
 import { ActivityLogModal, DeletedFilesModal, ExcludedFoldersModal } from "./modals";
+import { FORGET_WARNING, SYNC_EXPLAINER, TurnOnSyncModal } from "./turn-on";
 import type { SyncConfigCategories, SyncSettings, SyncSnapshot } from "../../shared/sync";
 
 const IMAGE = "bmp, png, jpg, jpeg, gif, svg, webp, avif";
@@ -43,7 +45,7 @@ export class SyncSettingTab extends SettingTab {
     this.last = "";
     this.off = this.client.onChange((s) => {
       // full re-render only when the layout changes; status changes update one line in place
-      const key = JSON.stringify([s.status === "disabled", s.signedIn, s.account, s.usage, s.settings, s.hubInstalled]);
+      const key = JSON.stringify([s.status === "disabled", s.status === "locked", s.signedIn, s.account, s.usage, s.settings, s.hubInstalled]);
       if (key !== this.last) {
         this.last = key;
         this.render(s);
@@ -73,11 +75,24 @@ export class SyncSettingTab extends SettingTab {
     const who = s.account ? `${s.account.name || s.account.handle || s.account.email}${s.account.handle ? ` (@${s.account.handle})` : ""}` : "your Toolbay account";
     new Setting(el)
       .setName("Account")
-      .setDesc(`Signed in as ${who}. This vault syncs through your Toolbay account. To sign out or switch accounts, use the Toolbay app.`);
+      .setDesc(`Signed in as ${who}. To sign out or switch accounts, use the Toolbay app.`);
+
+    if (!s.settings.enabled) return this.renderOff();
+
+    new Setting(el)
+      .setName("Sync")
+      .setDesc("On. This vault syncs through your Toolbay account, locked with your sync passphrase.")
+      .addButton((b) =>
+        b.setButtonText("Turn off").onClick(async () => {
+          b.setDisabled(true);
+          await this.client.turnOff().catch((e) => new Notice(e.message));
+        }),
+      );
 
     const status = new Setting(el).setName("Sync status").setDesc(statusLine(s));
     status.settingEl.addClass("sync-status-setting");
     this.statusEl = status.descEl;
+    if (s.status === "locked") status.addButton((b) => b.setButtonText("Enter passphrase").setCta().onClick(() => new TurnOnSyncModal(this.app, this.client).open()));
     status.addButton((b) =>
       b.setButtonText(s.settings.paused ? "Resume" : "Pause").onClick(async () => {
         b.setDisabled(true);
@@ -136,7 +151,8 @@ export class SyncSettingTab extends SettingTab {
     el.createDiv({
       cls: "setting-item-description sync-privacy-note",
       text:
-        "Your notes, file names and folder names are encrypted on this computer before they leave it. The sync service only stores scrambled data it can't read. The key lives in your Toolbay account and this computer's keychain, so there's no extra password to remember.",
+        "Your notes, file names and folder names are encrypted on this computer before they leave it, with a key only your sync passphrase opens. Toolbay stores the locked copy and can't read it. This computer keeps the opened key in its keychain, so you type the passphrase once per computer. " +
+        FORGET_WARNING,
     });
     el.scrollTop = scroll;
     if (focused) (el.querySelector(`[data-key="${focused}"] input`) as HTMLInputElement | null)?.focus();
@@ -149,23 +165,33 @@ export class SyncSettingTab extends SettingTab {
       .addToggle((t) => t.setValue(value).onChange((v) => void this.client.setSettings(patch(v)).catch((e) => new Notice(e.message))));
   }
 
+  private renderOff(): void {
+    const el = this.containerEl;
+    new Setting(el)
+      .setName("Sync")
+      .setDesc("Off. Nothing from this vault is uploaded. Your notes stay on this computer.")
+      .addButton((b) => b.setButtonText("Turn on sync").setCta().onClick(() => new TurnOnSyncModal(this.app, this.client).open()));
+    for (const t of SYNC_EXPLAINER) el.createEl("p", { cls: "setting-item-description sync-intro", text: t });
+    el.createEl("p", { cls: "setting-item-description sync-intro", text: FORGET_WARNING });
+  }
+
   private renderSignedOut(s: SyncSnapshot): void {
     const el = this.containerEl;
     el.createEl("p", {
       cls: "sync-intro",
-      text: "Sync keeps this vault the same on all your computers, with end-to-end encryption and version history. It's free and works through your Toolbay account. There's nothing to set up and no password to remember.",
+      text: "Sync keeps this vault the same on all your computers, with version history. It's free, goes through your Toolbay account, and stays off until you turn it on. You choose a sync passphrase that locks your notes, so Toolbay can't read them.",
     });
     el.createEl("p", {
       cls: "sync-intro",
       text: s.hubInstalled
-        ? "Sign in once in the Toolbay app and syncing starts by itself."
-        : "Sign-in happens in the Toolbay app. Install it, sign in there, and syncing starts by itself.",
+        ? "To use it, sign in in the Toolbay app, then come back here and turn sync on."
+        : "Sign-in happens in the Toolbay app. Install it and sign in there, then come back here and turn sync on.",
     });
     const btns = el.createDiv("sync-signin-buttons");
-    const b = btns.createEl("button", { cls: "mod-cta sync-signin-button", text: s.hubInstalled ? "Sign in to Toolbay to sync" : "Get the Toolbay app" });
+    const b = btns.createEl("button", { cls: "mod-cta sync-signin-button", text: s.hubInstalled ? "Sign in to Toolbay" : "Get the Toolbay app" });
     b.addEventListener("click", async () => {
       await this.client.signIn().catch((e) => new Notice(e.message));
-      new Notice(s.hubInstalled ? "Finish signing in in the Toolbay app. Sync starts by itself." : "Install the Toolbay app and sign in there. Sync starts by itself.");
+      new Notice(s.hubInstalled ? "Finish signing in in the Toolbay app, then turn sync on here." : "Install the Toolbay app and sign in there, then turn sync on here.");
     });
   }
 }

@@ -282,6 +282,22 @@ export function createSyncServer(o: ServerOptions): SyncServer {
       return send(res, 200, { keyCheck: db.setKeyCheck(vid, b.keyCheck) });
     }
 
+    // Start the vault over under a new key (key rotation, or "forgot my passphrase"): every file,
+    // version and chunk of the old vault is deleted and the vault gets a new id, so other computers
+    // see a different vault and re-match their files. `from` must name the current key check (null
+    // when none is set), so two computers can't wipe each other's fresh upload.
+    if (path === '/v1/vault/rekey' && method === 'POST') {
+      const b = await readJson(req);
+      const hex = /^[0-9a-f]{16,128}$/;
+      if (typeof b.to !== 'string' || !hex.test(b.to)) throw new HttpError(400, 'bad_key_check', 'Bad key check');
+      if (b.from !== null && (typeof b.from !== 'string' || !hex.test(b.from))) throw new HttpError(400, 'bad_key_check', 'Bad key check');
+      const r = db.rekeyVault(userId, b.from, b.to, now());
+      if (!r) throw new HttpError(409, 'key_changed', 'The vault key changed on another computer meanwhile.', { keyCheck: db.getVault(userId)?.key_check ?? null });
+      notify(r.oldVaultId, Number.MAX_SAFE_INTEGER); // computers still on the old vault re-check now
+      await runRetention(retentionCtx, { prune: false, vaultId: r.oldVaultId, graceMs: -1 });
+      return send(res, 200, vaultOut(r.vault));
+    }
+
     if (path === '/v1/chunks/check' && method === 'POST') {
       const b = await readJson(req);
       if (!Array.isArray(b.ids) || b.ids.length > 10000) throw new HttpError(400, 'bad_request', 'ids must be an array of at most 10000');

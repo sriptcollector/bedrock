@@ -154,6 +154,11 @@ export class SyncApi {
     return (await this.json<{ keyCheck: string }>('POST', '/v1/vault/key-check', { keyCheck })).keyCheck;
   }
 
+  /** Deletes the whole vault on the server and starts it over under key check `to` (see server rekey). */
+  rekey(from: string | null, to: string): Promise<VaultInfo> {
+    return this.json('POST', '/v1/vault/rekey', { from, to });
+  }
+
   async missingChunks(ids: string[]): Promise<Set<string>> {
     const missing = new Set<string>();
     for (let i = 0; i < ids.length; i += 5000) {

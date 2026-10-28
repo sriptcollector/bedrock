@@ -15,7 +15,7 @@ const manifest = {
   id: brand.slug,
   name: N,
   tagline: "Obsidian was charging. So we made it free.",
-  description: `Obsidian was charging, so we made it free too, sync included. Stop paying for dumb shit. ${brand.productTitle}: write in plain Markdown files on your own computer with links, live preview, properties and plugins. Opens existing Obsidian vaults and plugins. Your vault is encrypted on your computer before it syncs to your other computers through your Toolbay account. No account needed to use it offline, no limits, no telemetry.`,
+  description: `Obsidian was charging, so we made it free too, sync included. Stop paying for dumb shit. ${brand.productTitle}: write in plain Markdown files on your own computer with links, live preview, properties and plugins. Opens existing Obsidian vaults and plugins. Optional sync to your other computers through your Toolbay account: off until you turn it on, and locked with a passphrase you choose, so Toolbay can't read your notes. No account needed to use it offline, no limits, no telemetry.`,
   version,
   repo: brand.repo,
   identifier: brand.appId,

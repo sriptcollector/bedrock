@@ -141,6 +141,20 @@ export class Db {
     return this.getVault(userId)!;
   }
 
+  /**
+   * Deletes everything in the user's vault and gives it a new id and key check, if its key check is
+   * still `from`. Chunk rows of the old id stay until retention removes them with their blobs.
+   */
+  rekeyVault(userId: string, from: string | null, to: string, now: number): { oldVaultId: string; vault: VaultRow } | null {
+    return this.tx(() => {
+      const v = this.getOrCreateVault(userId, now);
+      if ((v.key_check ?? null) !== from) return null;
+      for (const t of ['versions', 'heads', 'version_chunks']) this.q(`DELETE FROM ${t} WHERE vault_id = ?`).run(v.vault_id);
+      this.q('UPDATE vaults SET vault_id = ?, seq = 0, used_bytes = 0, key_check = ? WHERE user_id = ?').run(randomUUID(), to, userId);
+      return { oldVaultId: v.vault_id, vault: this.getVault(userId)! };
+    });
+  }
+
   setKeyCheck(vaultId: string, keyCheck: string): string {
     this.q('UPDATE vaults SET key_check = ? WHERE vault_id = ? AND key_check IS NULL').run(keyCheck, vaultId);
     return this.getVaultById(vaultId)!.key_check!;

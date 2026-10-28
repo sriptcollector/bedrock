@@ -1,11 +1,16 @@
 // The sync host: runs packages/sync's SyncEngine for the one vault in the main process.
 //
-// - Starts by itself when a Toolbay sign-in exists (the hub's keychain session or the
-//   TOOLBAY_TOKEN it launched us with, see ../account.ts) and stops on sign-out. The token is
-//   re-read every few seconds, so a sign-in, sign-out or new token in the hub is picked up live.
-// - Vault key: obtainVaultKey (Toolbay account escrow + OS keychain ai.toolbay.bedrock/vault-key).
-//   Fetched only after the sync service answered, so nothing is written to the account while the
-//   service is unreachable.
+// - Off by default. Runs only after the person turns it on in Settings › Sync (settings.enabled)
+//   and only while they are signed in to Toolbay (the hub's keychain session or the TOOLBAY_TOKEN it
+//   launched us with, see ../account.ts). The token is re-read every few seconds while the app is
+//   open, so a sign-out in the hub stops sync live. Nothing runs once the app quits.
+// - Vault key: 32 random bytes made on the first computer that turns sync on. The Toolbay account
+//   only holds it wrapped with the person's sync passphrase (packages/sync keywrap.ts / escrow.ts);
+//   each computer keeps the opened key in its OS keychain (ai.toolbay.bedrock/vault-key-2).
+// - Upgrade from 0.1.2 and older (sync turned itself on and the raw key sat in the account): the
+//   one-time migration in the constructor turns sync off, the raw key is deleted from the account
+//   as soon as a sign-in is available, and the person is asked once whether to turn sync back on.
+//   Turning it back on makes a new key and re-encrypts the synced data (rotateVault).
 // - Per-computer settings (pause, device name, selective sync) live in <userData>/sync/settings.json,
 //   the activity log in <userData>/sync/log.json, the engine state in <userData>/sync/state-<id>/.
 // - The renderer talks to it over IPC.syncCall ({op, ...}) and listens to IPC.syncUpdate / syncEvent.
@@ -15,13 +20,21 @@ import fs from "node:fs";
 import os from "node:os";
 import path from "node:path";
 import {
+  AccountKeyStore,
   DEFAULT_SERVER_URL,
   EMPTY_VAULT_MESSAGE,
   KEYCHAIN_ACCOUNT,
   KEYCHAIN_SERVICE,
+  LEGACY_KEYCHAIN_ACCOUNT,
+  SyncApi,
   SyncEngine,
   SyncError,
-  obtainVaultKey,
+  deriveKeys,
+  generateVaultKey,
+  passphraseProblem,
+  rotateVault,
+  unwrapVaultKey,
+  wrapVaultKey,
   type SyncStatus,
 } from "../../../../packages/sync/src/index";
 import * as account from "../account";
@@ -30,6 +43,8 @@ import {
   DEFAULT_SYNC_SETTINGS,
   type SyncAccount,
   type SyncContent,
+  type SyncKeyInfo,
+  type SyncTurnOnMode,
   type SyncLogEntry,
   type SyncSettings,
   type SyncSnapshot,
@@ -38,8 +53,8 @@ import {
   type SyncUsage,
 } from "../../shared/sync";
 import { excludeRule } from "./selective";
-import { keychainGet, keychainSet } from "./keychain";
-import { WELCOME_NOTE } from "../vaults";
+import { keychainDelete, keychainGet, keychainSet } from "./keychain";
+import { OLD_WELCOME_NOTES, WELCOME_NOTE } from "../vaults";
 
 const TOKEN_POLL_MS = 4000;
 const LOG_MAX = 1000;
@@ -53,6 +68,25 @@ export interface SyncHostOptions {
 }
 
 type Result<T> = { ok: true; value: T } | { ok: false; error: string };
+
+/** One-time upgrade record (<userData>/sync/migration.json). */
+interface Migration {
+  /** 0.1.3 privacy migration ran on this computer. */
+  v013?: boolean;
+  /** This computer synced with 0.1.2 or older (sync had turned itself on). */
+  wasSyncing?: boolean;
+  /** Still to show the "sync is now off until you choose" message. */
+  noticePending?: boolean;
+  /** The raw key 0.1.2 kept in the Toolbay account still has to be deleted. */
+  rawKeyPending?: boolean;
+}
+
+const b64key = (v: string | null): Uint8Array | null => {
+  if (!v) return null;
+  const b = Buffer.from(v, "base64");
+  return b.length === 32 ? new Uint8Array(b) : null;
+};
+const keyCheckOf = (k: Uint8Array) => deriveKeys(k).keyCheck;
 
 export class SyncHost {
   readonly vaultPath: string;
@@ -78,6 +112,12 @@ export class SyncHost {
   private hubInstalledCache: boolean | null = null;
   private closed = false;
   private recent: Array<{ time: number; ev: SyncUiEvent }> = [];
+  private migration: Migration;
+  private rawKeyDeleting = false;
+  /** Keys this computer knew before a "start over", used to re-encrypt the old synced data. */
+  private previousKeys: Uint8Array[] = [];
+  /** Status line while the synced data moves to a new key. */
+  private rotating: string | null = null;
 
   constructor(o: SyncHostOptions) {
     this.vaultPath = path.resolve(o.vaultPath);
@@ -88,6 +128,58 @@ export class SyncHost {
     fs.mkdirSync(this.dir, { recursive: true });
     this.settings = this.readSettings();
     this.log = this.readJson<SyncLogEntry[]>("log.json", []).slice(-LOG_MAX);
+    this.migration = this.migrate();
+  }
+
+  /**
+   * 0.1.3 privacy migration, once per computer, before anything can sync: sync is off until the
+   * person turns it on. A computer that synced before (it has the old key in its keychain or sync
+   * state) gets a one-time message explaining the change, and the raw key 0.1.2 stored in the
+   * Toolbay account is deleted as soon as a sign-in is available.
+   */
+  private migrate(): Migration {
+    const m = this.readJson<Migration>("migration.json", {});
+    if (m.v013) return m;
+    let legacy = false;
+    try {
+      legacy = !!keychainGet(KEYCHAIN_SERVICE, LEGACY_KEYCHAIN_ACCOUNT);
+    } catch {
+      /* no keychain */
+    }
+    let hadState = false;
+    try {
+      hadState = fs.readdirSync(this.dir).some((n) => n.startsWith("state-"));
+    } catch {
+      /* first run */
+    }
+    const wasSyncing = legacy || hadState;
+    // (on macOS the old key sat in the Keychain, which we no longer read, so sync state counts too)
+    const next: Migration = { v013: true, wasSyncing, noticePending: wasSyncing, rawKeyPending: wasSyncing };
+    // settings.json from 0.1.2 has no "enabled", which reads as off; write it down explicitly
+    this.settings.enabled = false;
+    this.writeSettings();
+    this.writeJson("migration.json", next);
+    return next;
+  }
+
+  private saveMigration(patch: Partial<Migration>): void {
+    this.migration = { ...this.migration, ...patch };
+    this.writeJson("migration.json", this.migration);
+  }
+
+  /** Deletes the raw vault key 0.1.2 stored in the Toolbay account (once; tried again next start if it fails). */
+  private async deleteRawKey(t: string): Promise<void> {
+    if (!this.migration.rawKeyPending || this.rawKeyDeleting) return;
+    this.rawKeyDeleting = true;
+    try {
+      await new AccountKeyStore(this.toolbayApi, t).deleteRawKey();
+      this.saveMigration({ rawKeyPending: false });
+      this.addLog({ time: Date.now(), action: "info", path: "", message: "Deleted the unprotected vault key that earlier versions kept in your Toolbay account." });
+    } catch {
+      /* offline or signed out: tried again on the next start or sign-in */
+    } finally {
+      this.rawKeyDeleting = false;
+    }
   }
 
   // ------------------------------------------------------------------ lifecycle
@@ -124,6 +216,7 @@ export class SyncHost {
     this.acct = null;
     this.usage = null;
     if (t) void this.loadAccount(t);
+    if (t) void this.deleteRawKey(t);
     if (!t && hadToken) this.addLog({ time: Date.now(), action: "info", path: "", message: "Signed out of Toolbay. Sync stopped." });
     await this.serial(() => this.restartEngine());
   }
@@ -149,7 +242,7 @@ export class SyncHost {
 
   private async restartEngine(): Promise<void> {
     await this.stopEngine();
-    if (!this.enabled || !this.token || this.closed) return;
+    if (!this.enabled || !this.settings.enabled || !this.token || this.closed) return;
     const stateDir = path.join(this.dir, "state-" + crypto.createHash("sha256").update(this.vaultPath.toLowerCase()).digest("hex").slice(0, 16));
     const firstRun = !fs.existsSync(path.join(stateDir, "sync-state.json"));
     const e = new SyncEngine({
@@ -202,14 +295,14 @@ export class SyncHost {
       return; // offline: the engine copes (worst case a conflict copy of the welcome note)
     }
     if (seq === 0) return;
-    const pristine: Array<[string, string]> = [
-      ["Welcome.md", WELCOME_NOTE],
-      [path.join(".obsidian", "app.json"), "{}\n"],
+    const pristine: Array<[string, string[]]> = [
+      ["Welcome.md", [WELCOME_NOTE, ...OLD_WELCOME_NOTES]],
+      [path.join(".obsidian", "app.json"), ["{}\n"]],
     ];
-    for (const [rel, content] of pristine) {
+    for (const [rel, contents] of pristine) {
       const p = path.join(this.vaultPath, rel);
       try {
-        if (fs.readFileSync(p, "utf8") === content) fs.unlinkSync(p);
+        if (contents.includes(fs.readFileSync(p, "utf8"))) fs.unlinkSync(p);
       } catch {
         /* not there */
       }
@@ -228,20 +321,137 @@ export class SyncHost {
     }
   }
 
+  /**
+   * The vault key for the engine: this computer's opened key, if it is still the one the account's
+   * passphrase-protected key holds. Before handing it over, data the sync service still keeps under
+   * an older key is moved to this one (rotateVault).
+   */
   private async vaultKey(): Promise<Uint8Array> {
     if (this.key) return this.key;
     await this.probeServer();
     const t = account.token();
     if (!t) throw new SyncError("Sign in to Toolbay to sync.", "auth");
-    this.key = await obtainVaultKey({
-      toolbayApi: this.toolbayApi,
-      token: t,
-      keychain: {
-        get: async () => keychainGet(KEYCHAIN_SERVICE, KEYCHAIN_ACCOUNT),
-        set: async (v) => keychainSet(KEYCHAIN_SERVICE, KEYCHAIN_ACCOUNT, v),
-      },
-    });
-    return this.key;
+    const cached = b64key(keychainGet(KEYCHAIN_SERVICE, KEYCHAIN_ACCOUNT));
+    let wrappedCheck: string | null;
+    try {
+      wrappedCheck = (await new AccountKeyStore(this.toolbayApi, t).getWrapped())?.key.keyCheck ?? null;
+    } catch (e) {
+      if (cached && e instanceof SyncError && e.kind === "network") return (this.key = cached); // offline start
+      throw e;
+    }
+    if (!wrappedCheck) throw new SyncError("Sync needs a sync passphrase. Turn sync off and on again in Settings › Sync to set one.", "key");
+    if (!cached || keyCheckOf(cached) !== wrappedCheck)
+      throw new SyncError("Enter your sync passphrase in Settings › Sync. It was set or changed on another computer.", "key");
+    await this.moveToKey(cached);
+    this.key = cached;
+    return cached;
+  }
+
+  /** Re-encrypts what the sync service holds under an older key (if anything) with `key`. */
+  private async moveToKey(key: Uint8Array): Promise<void> {
+    const api = new SyncApi(this.serverUrl, async () => account.token());
+    const v = await api.vault();
+    const legacy = b64key(keychainGet(KEYCHAIN_SERVICE, LEGACY_KEYCHAIN_ACCOUNT));
+    if (v.keyCheck !== keyCheckOf(key) && !(v.keyCheck === null && v.seq === 0)) {
+      this.rotating = "Moving your synced notes to your new key…";
+      this.pushUpdate();
+      try {
+        const r = await rotateVault({
+          api,
+          newKey: key,
+          oldKeys: [...(legacy ? [legacy] : []), ...this.previousKeys],
+          stagingDir: path.join(this.dir, "rotate"),
+          deviceId: this.deviceId(),
+          log: process.env.BEDROCK_SYNC_DEBUG ? (m) => console.log("[sync]", m) : undefined,
+          onProgress: (done, total) => {
+            this.rotating = `Moving your synced notes to your new key (${done} of ${total})…`;
+            this.pushUpdate();
+          },
+        });
+        if (r.action !== "none")
+          this.addLog({
+            time: Date.now(),
+            action: "info",
+            path: "",
+            message:
+              r.action === "reencrypted"
+                ? `Re-encrypted ${r.files} synced files with your new key. The old key can't open anything in your Toolbay account any more. Version history and deleted files from before this change were removed.`
+                : "Your synced notes start over under your new key. Each computer uploads its own notes again when it syncs; nothing on any computer was deleted.",
+          });
+      } finally {
+        this.rotating = null;
+        this.pushUpdate();
+      }
+    }
+    // the vault is on the current key now: older keys are of no use any more
+    this.previousKeys = [];
+    if (legacy) keychainDelete(KEYCHAIN_SERVICE, LEGACY_KEYCHAIN_ACCOUNT);
+  }
+
+  // ------------------------------------------------------------------ turning sync on and off
+
+  private keyStore(): AccountKeyStore {
+    const t = account.token();
+    if (!t) throw new Error("Sign in to Toolbay first. Sync goes through your Toolbay account.");
+    return new AccountKeyStore(this.toolbayApi, t);
+  }
+
+  private async keyInfo(): Promise<SyncKeyInfo> {
+    const w = await this.keyStore().getWrapped();
+    const cached = b64key(keychainGet(KEYCHAIN_SERVICE, KEYCHAIN_ACCOUNT));
+    return { accountHasKey: !!w, thisComputerHasKey: !!(w && cached && keyCheckOf(cached) === w.key.keyCheck) };
+  }
+
+  /**
+   * Turns sync on. `create`: first computer, makes the key and protects it with `passphrase`.
+   * `unlock`: opens the account's key with `passphrase`. `resume`: this computer already has it.
+   * `reset`: forgot the passphrase; a new key and passphrase replace the old ones and the synced
+   * copy starts over (files on the computers are untouched).
+   */
+  private async turnOn(mode: SyncTurnOnMode, passphrase?: string): Promise<SyncSnapshot> {
+    const store = this.keyStore();
+    const current = await store.getWrapped();
+    const cached = b64key(keychainGet(KEYCHAIN_SERVICE, KEYCHAIN_ACCOUNT));
+    let key: Uint8Array;
+    if (mode === "resume") {
+      if (!current || !cached || keyCheckOf(cached) !== current.key.keyCheck) throw new Error("Enter your sync passphrase to turn sync on.");
+      key = cached;
+    } else if (mode === "unlock") {
+      if (!current) throw new Error("No sync passphrase is set for your account yet. Choose one to turn sync on.");
+      key = await unwrapVaultKey(current.key, passphrase ?? "");
+    } else {
+      const problem = passphraseProblem(passphrase ?? "");
+      if (problem) throw new Error(problem);
+      if (mode === "create" && current) throw new Error("Sync was already turned on from another computer. Enter the passphrase you chose there.");
+      key = generateVaultKey();
+      const theirs = await store.putWrapped(await wrapVaultKey(key, passphrase!), mode === "reset" ? current?.version ?? 0 : 0);
+      if (theirs)
+        throw new Error(
+          mode === "create"
+            ? "Sync was just turned on from another computer. Enter the passphrase you chose there."
+            : "Your sync passphrase was changed on another computer a moment ago. Try again.",
+        );
+      if (mode === "reset" && cached) this.previousKeys = [cached];
+      this.addLog({ time: Date.now(), action: "info", path: "", message: mode === "reset" ? "Set a new sync passphrase and a new vault key." : "Set a sync passphrase and created this vault's key." });
+    }
+    keychainSet(KEYCHAIN_SERVICE, KEYCHAIN_ACCOUNT, Buffer.from(key).toString("base64"));
+    this.key = null;
+    this.settings.enabled = true;
+    this.settings.paused = false;
+    this.writeSettings();
+    this.saveMigration({ noticePending: false });
+    this.addLog({ time: Date.now(), action: "info", path: "", message: "Sync turned on." });
+    await this.serial(() => this.restartEngine());
+    return this.snapshot();
+  }
+
+  private async turnOff(): Promise<SyncSnapshot> {
+    this.settings.enabled = false;
+    this.writeSettings();
+    this.key = null;
+    this.addLog({ time: Date.now(), action: "info", path: "", message: "Sync turned off. Nothing from this vault is uploaded until you turn it on again." });
+    await this.serial(() => this.restartEngine());
+    return this.snapshot();
   }
 
   private onStatus(s: SyncStatus): void {
@@ -284,12 +494,21 @@ export class SyncHost {
     if (!this.enabled) {
       status = "disabled";
       message = "Sync is off for this window.";
+    } else if (!this.settings.enabled) {
+      status = "off";
+      message = "Sync is off. Your notes stay on this computer.";
     } else if (!this.token) {
       status = "signed-out";
       message = "Not signed in. Sign in to Toolbay to sync this vault to your other computers.";
     } else if (this.settings.paused) {
       status = "paused";
       message = "Sync is paused. Changes are saved on this computer and sync when you resume.";
+    } else if (this.rotating) {
+      status = "syncing";
+      message = this.rotating;
+    } else if (s?.state === "error" && s.errorKind === "key") {
+      status = "locked";
+      message = cleanMessage(s.message).replace(/^Sync problem: /, "");
     } else if (!s || s.state === "off" || s.state === "connecting") {
       status = "connecting";
       message = "Connecting…";
@@ -317,6 +536,7 @@ export class SyncHost {
       vaultPath: this.vaultPath,
       usage: this.usage,
       settings: this.settings,
+      migrationNotice: !!this.migration.noticePending && this.enabled,
     };
   }
 
@@ -349,6 +569,7 @@ export class SyncHost {
   }
 
   private needEngine(): SyncEngine {
+    if (!this.settings.enabled) throw new Error("Sync is off. Turn it on in Settings › Sync.");
     if (!this.token) throw new Error("Sign in to Toolbay to use sync.");
     if (!this.engine) throw new Error("Sync is starting. Try again in a moment.");
     return this.engine;
@@ -360,7 +581,18 @@ export class SyncHost {
         return this.snapshot();
       case "signIn":
         return this.signIn();
+      case "keyInfo":
+        return this.keyInfo();
+      case "turnOn":
+        return this.turnOn(a[0] as SyncTurnOnMode, a[1] as string | undefined);
+      case "turnOff":
+        return this.turnOff();
+      case "dismissMigration":
+        this.saveMigration({ noticePending: false });
+        this.pushUpdate();
+        return this.snapshot();
       case "syncNow": {
+        if (!this.settings.enabled) throw new Error("Sync is off. Turn it on in Settings › Sync.");
         if (!this.engineStarted) throw new Error(this.snapshot().message);
         return cleanStatus(await this.needEngine().syncNow());
       }
@@ -429,6 +661,7 @@ export class SyncHost {
     const next: SyncSettings = {
       ...before,
       ...patch,
+      enabled: before.enabled, // only turnOn / turnOff change this
       config: { ...before.config, ...(patch.config ?? {}) },
       excludedFolders: patch.excludedFolders ? [...new Set(patch.excludedFolders.map((f) => f.replace(/\\/g, "/").replace(/^\/+|\/+$/g, "")).filter(Boolean))] : before.excludedFolders,
     };

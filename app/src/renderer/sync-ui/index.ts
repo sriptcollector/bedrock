@@ -8,6 +8,7 @@ import { SyncClient } from "./client";
 import { ActivityLogModal, DeletedFilesModal, VersionHistoryModal } from "./modals";
 import { SyncSettingTab, statusLine } from "./settings-tab";
 import { injectSyncCss } from "./styles";
+import { SyncMigrationModal, TurnOnSyncModal } from "./turn-on";
 import type { SyncSnapshot, SyncUiEvent, SyncUiStatus } from "../../shared/sync";
 
 export interface SyncUiState {
@@ -16,6 +17,8 @@ export interface SyncUiState {
 }
 
 const LOOK: Record<SyncUiStatus, [icon: string, mod: string, label: string]> = {
+  off: ["refresh-cw-off", "mod-muted", "Sync is off"],
+  locked: ["lock", "mod-error", "Sync needs your passphrase"],
   synced: ["refresh-cw", "mod-success", "Synced"],
   syncing: ["refresh-cw", "mod-working", "Syncing"],
   connecting: ["refresh-cw", "mod-working", "Connecting"],
@@ -59,9 +62,14 @@ export function mountSyncUi(app: any): SyncStatusItem {
   const client = new SyncClient();
   (app as any).sync = client; // used by tests and plugins that want to read the status
 
+  let migrationShown = false;
   client.onChange((s) => {
     if (!isMain) return item.set({ status: "disabled", detail: "This folder is opened as a separate vault and doesn't sync." });
     item.set({ status: s.status, detail: tooltip(s) });
+    if (s.migrationNotice && !migrationShown) {
+      migrationShown = true;
+      new SyncMigrationModal(app, client).open();
+    }
   });
 
   item.el.addEventListener("click", (e) => showMenu(app, client, e));
@@ -114,7 +122,14 @@ function showMenu(app: any, client: SyncClient, e: MouseEvent): void {
   });
   if (!isMain || !s) return void m.showAtMouseEvent(e);
   m.addSeparator();
-  if (!s.signedIn) {
+  if (!s.settings.enabled) {
+    m.addItem((i) =>
+      i
+        .setTitle("Turn on sync…")
+        .setIcon("refresh-cw")
+        .onClick(() => (s.signedIn ? new TurnOnSyncModal(app, client).open() : app.setting.openTabById("sync"))),
+    );
+  } else if (!s.signedIn) {
     m.addItem((i) =>
       i
         .setTitle(s.hubInstalled ? "Sign in to Toolbay to sync" : "Get the Toolbay app to sync")
@@ -122,6 +137,13 @@ function showMenu(app: any, client: SyncClient, e: MouseEvent): void {
         .onClick(() => void client.signIn()),
     );
   } else {
+    if (s.status === "locked")
+      m.addItem((i) =>
+        i
+          .setTitle("Enter sync passphrase…")
+          .setIcon("lock")
+          .onClick(() => new TurnOnSyncModal(app, client).open()),
+      );
     if (!s.settings.paused)
       m.addItem((i) =>
         i
@@ -192,7 +214,7 @@ function registerCommands(app: any, client: SyncClient): void {
     icon: "refresh-cw",
     checkCallback: (checking: boolean) => {
       const s = client.snapshot;
-      if (!s?.signedIn || s.settings.paused) return false;
+      if (!s?.signedIn || !s.settings.enabled || s.settings.paused) return false;
       if (!checking) void client.syncNow().catch((e) => new Notice(e.message));
       return true;
     },
@@ -203,7 +225,7 @@ function registerCommands(app: any, client: SyncClient): void {
     icon: "pause",
     checkCallback: (checking: boolean) => {
       const s = client.snapshot;
-      if (!s?.signedIn) return false;
+      if (!s?.signedIn || !s.settings.enabled) return false;
       if (!checking) void (s.settings.paused ? client.resume() : client.pause());
       return true;
     },

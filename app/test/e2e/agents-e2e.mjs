@@ -213,8 +213,12 @@ try {
   A = await launch("A");
   fs.writeFileSync(path.join(A.vault, "Hub.md"), "# Hub\nSee [[Old name]].\n");
   fs.writeFileSync(path.join(A.vault, "Old name.md"), "---\nstatus: active\n---\n# Old name\n");
+  // sync is off until turned on (0.1.3): A sets the passphrase, B unlocks with it
+  const turnOn = (i, mode) => i.win.evaluate((m) => window.app.sync.turnOn(m, "agents e2e passphrase").then(() => null, (e) => e.message), mode);
+  check("A turns sync on", (await turnOn(A, "create")) === null);
   check("A signed in and synced", !!(await waitSynced(A)));
   B = await launch("B");
+  check("B turns sync on", (await turnOn(B, "unlock")) === null);
   check("B signed in and synced", !!(await waitSynced(B)));
 
   // ---- discovery files + token

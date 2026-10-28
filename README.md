@@ -11,8 +11,11 @@ works with their themes, snippets and community plugins.
 - Links between notes (`[[like this]]`), embeds, tags, properties, callouts, math, diagrams.
 - Live preview while you type, a source mode, and a reading view.
 - Tabs, splits, stacked tabs, pinned tabs, a file explorer, a quick switcher and a command palette.
-- Your vault syncs end-to-end encrypted when you're signed in to Toolbay. Signed out, everything
-  works offline.
+- Optional sync between your computers through your Toolbay account. It's off until you turn it on
+  in Settings › Sync and choose a sync passphrase. Notes, file names and folder names are encrypted
+  on your computer with a key only that passphrase opens, so Toolbay can't read them. If you forget
+  the passphrase, the synced copy can't be recovered (your local files are never affected). With
+  sync off, everything works offline and nothing from your vault is uploaded.
 - Free. No plans, limits, trials or telemetry.
 
 ## Install

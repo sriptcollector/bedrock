@@ -1,18 +1,21 @@
-// Vault key escrow through the Toolbay tool settings sync API.
+// The protected vault key in the person's Toolbay account (tool settings sync API, tool "bedrock").
 //
-// The first device creates the key and stores it in the account (item "vault-key" of this tool's
-// settings). Every other device signed in to the same Toolbay account fetches it from there and
-// caches it in the OS keychain. No password for people to remember. Honest caveat: whoever controls
-// the Toolbay account can get the key; the sync server and its storage bucket alone cannot.
+// Since 0.1.3 the account only ever holds item "vault-key-wrapped": the vault key encrypted with a
+// key derived from the person's sync passphrase (keywrap.ts). Toolbay can't open it. A computer
+// that turns sync on either creates the vault key and stores it wrapped (first computer), or
+// downloads the wrapped key and opens it with the passphrase (every other computer). Each computer
+// then keeps the opened key in its OS keychain so the passphrase is asked only once per computer.
 //
-// Race: two brand-new devices may both find no key and both create one. Both PUT with
-// baseVersion 0; the server applies only the first, the second gets the first key back under
-// `conflicts` and uses it. Nothing was encrypted with the losing key because nobody syncs before
-// obtainVaultKey returns.
+// Bedrock 0.1.2 and older stored the raw key as item "vault-key". That item is deleted from the
+// account (deleteRawKey) and toolbay.ai no longer returns or accepts it. The old key counts as
+// exposed: turning sync back on makes a new vault key and re-encrypts the synced data (rotate.ts).
+//
+// Race: two computers setting up sync at the same moment both PUT with baseVersion 0; the server
+// applies only the first, the second gets a conflict and asks for the passphrase set first.
 
 import { SyncError, type FetchLike } from './api.js';
-import { ESCROW_ITEM_KEY, TOOL_SLUG } from './constants.js';
-import { generateVaultKey, KEY_BYTES } from './crypto.js';
+import { ESCROW_ITEM_KEY, TOOL_SLUG, WRAPPED_KEY_ITEM } from './constants.js';
+import { isWrappedKey, type WrappedKey } from './keywrap.js';
 
 export interface Keychain {
   /** Returns the stored base64 key, or null. */
@@ -20,30 +23,12 @@ export interface Keychain {
   set(value: string): Promise<void>;
 }
 
-export interface ObtainKeyOptions {
-  toolbayApi?: string;
-  token: string;
-  slug?: string;
-  keychain: Keychain;
-  fetch?: FetchLike;
+export interface AccountWrappedKey {
+  key: WrappedKey;
+  version: number;
 }
 
-interface EscrowValue {
-  v: 1;
-  key: string; // base64, 32 bytes
-  createdAt: number;
-}
-
-function decodeKey(value: unknown): Uint8Array | null {
-  const b64 = typeof value === 'string' ? value : (value as EscrowValue | null)?.key;
-  if (typeof b64 !== 'string') return null;
-  const buf = Buffer.from(b64, 'base64');
-  return buf.length === KEY_BYTES ? new Uint8Array(buf) : null;
-}
-
-const b64 = (k: Uint8Array) => Buffer.from(k).toString('base64');
-
-export class KeyEscrow {
+export class AccountKeyStore {
   private readonly base: string;
   private readonly fetchFn: FetchLike;
   constructor(
@@ -73,50 +58,49 @@ export class KeyEscrow {
       throw new SyncError(`Cannot reach Toolbay (${(e as Error).message})`, 'network');
     }
     if (res.status === 401 || res.status === 403) throw new SyncError('Your Toolbay sign-in has expired. Sign in to Toolbay again to keep syncing.', 'auth', res.status);
-    if (!res.ok) throw new SyncError(`Toolbay settings sync failed (${res.status})`, res.status >= 500 ? 'network' : 'client', res.status);
+    if (!res.ok) {
+      let msg = '';
+      try {
+        msg = (await res.json())?.error ?? '';
+      } catch {
+        /* not json */
+      }
+      throw new SyncError(msg || `Toolbay settings sync failed (${res.status})`, res.status >= 500 ? 'network' : 'client', res.status);
+    }
     return res.json();
   }
 
-  /** The escrowed key, or null if the account has none yet. */
-  async fetch(): Promise<Uint8Array | null> {
-    const r = await this.call('GET');
-    return decodeKey(r?.items?.[ESCROW_ITEM_KEY]?.value);
+  /** The account's wrapped vault key, or null if sync was never set up on this account. */
+  async getWrapped(): Promise<AccountWrappedKey | null> {
+    const it = (await this.call('GET'))?.items?.[WRAPPED_KEY_ITEM];
+    if (!it || it.deleted || !isWrappedKey(it.value)) return null;
+    return { key: it.value, version: it.version };
   }
 
-  /** Stores `key` if the account has none. Returns the key that won (ours, or the one already there). */
-  async create(key: Uint8Array): Promise<Uint8Array> {
-    const value: EscrowValue = { v: 1, key: b64(key), createdAt: Date.now() };
-    const r = await this.call('PUT', { changes: [{ key: ESCROW_ITEM_KEY, baseVersion: 0, value }] });
-    if (r?.applied?.[ESCROW_ITEM_KEY]) return key;
-    const theirs = decodeKey(r?.conflicts?.[ESCROW_ITEM_KEY]?.value);
-    if (theirs) return theirs;
-    const again = await this.fetch(); // conflict without a value (e.g. deleted meanwhile): read it back
+  /**
+   * Stores `key` if the account's wrapped key is still at `baseVersion` (0 = none yet). Returns
+   * null on success, else what the account has now (someone set up sync first).
+   */
+  async putWrapped(key: WrappedKey, baseVersion: number): Promise<AccountWrappedKey | null> {
+    const r = await this.call('PUT', { changes: [{ key: WRAPPED_KEY_ITEM, baseVersion, value: key }] });
+    if (r?.applied?.[WRAPPED_KEY_ITEM]) return null;
+    const theirs = r?.conflicts?.[WRAPPED_KEY_ITEM];
+    if (theirs && isWrappedKey(theirs.value)) return { key: theirs.value, version: theirs.version };
+    const again = await this.getWrapped();
     if (again) return again;
-    throw new SyncError('Could not store the vault key in your Toolbay account', 'client');
+    throw new SyncError('Could not save the protected vault key in your Toolbay account. Try again.', 'client');
   }
-}
 
-/**
- * Returns this account's vault key: from the account when reachable (so a stale keychain entry is
- * corrected), else from the keychain (offline start), else creates one.
- */
-export async function obtainVaultKey(o: ObtainKeyOptions): Promise<Uint8Array> {
-  const escrow = new KeyEscrow(o.toolbayApi ?? 'https://toolbay.ai', o.token, o.slug ?? TOOL_SLUG, o.fetch);
-  const cached = decodeKey(await o.keychain.get().catch(() => null));
-  let remote: Uint8Array | null;
-  try {
-    remote = await escrow.fetch();
-  } catch (e) {
-    if (cached && e instanceof SyncError && e.kind === 'network') return cached;
-    throw e;
+  /**
+   * Deletes the raw vault key Bedrock 0.1.2 and older kept in the account. Current toolbay.ai
+   * hides that item and deletes it whatever version we name; an older server still shows it, so we
+   * name its real version when we can see it. Never reads or keeps the key itself.
+   */
+  async deleteRawKey(): Promise<void> {
+    const it = (await this.call('GET'))?.items?.[ESCROW_ITEM_KEY];
+    const baseVersion = it && !it.deleted && Number.isInteger(it.version) ? it.version : 0;
+    await this.call('PUT', { changes: [{ key: ESCROW_ITEM_KEY, baseVersion, deleted: true }] });
+    const left = (await this.call('GET'))?.items?.[ESCROW_ITEM_KEY];
+    if (left && !left.deleted && left.value) throw new SyncError('Toolbay still has the old vault key; will try again.', 'network');
   }
-  if (remote) {
-    if (!cached || b64(cached) !== b64(remote)) await o.keychain.set(b64(remote));
-    return remote;
-  }
-  // No key in the account yet. If this device already has one (e.g. it created the vault before
-  // escrow existed), publish that one; otherwise make a new one.
-  const winner = await escrow.create(cached ?? generateVaultKey());
-  await o.keychain.set(b64(winner));
-  return winner;
 }

@@ -284,7 +284,7 @@ export class OnboardingModal extends Modal {
     const ul = this.bodyEl.createEl("ul", { cls: "bedrock-ob-notes" });
     ul.createEl("li", { text: "Everything stays on your computer. Nothing is uploaded unless you turn on sync." });
     ul.createEl("li", {
-      text: "Sync between your computers runs through Toolbay. Your notes are encrypted on your computer before they're sent, and our cloud only keeps that encrypted copy (plus 90 days of history) so your other computers can download it.",
+      text: "Sync between your computers is optional and off until you turn it on in Settings › Sync. It runs through Toolbay and is locked with a sync passphrase you choose: your notes are encrypted on your computer before they're sent, and Toolbay only keeps that locked copy (plus 90 days of history), which it can't read.",
     });
     this.buttons(true, "I'm done, next step", () => this.go(2));
   }

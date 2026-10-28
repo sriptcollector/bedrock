@@ -1,7 +1,7 @@
 // Renderer side of the sync IPC (the engine runs in the main process, see main/sync/host.ts).
 import { ipcRenderer } from "electron";
 import { IPC } from "../../shared/ipc";
-import type { SyncContent, SyncLogEntry, SyncSettings, SyncSnapshot, SyncTrashItem, SyncUiEvent, SyncUsage, SyncVersion } from "../../shared/sync";
+import type { SyncContent, SyncKeyInfo, SyncLogEntry, SyncSettings, SyncSnapshot, SyncTrashItem, SyncTurnOnMode, SyncUiEvent, SyncUsage, SyncVersion } from "../../shared/sync";
 
 type Listener = (s: SyncSnapshot) => void;
 
@@ -45,6 +45,10 @@ export class SyncClient {
   pause = () => this.call<SyncSnapshot>("pause");
   resume = () => this.call<SyncSnapshot>("resume");
   signIn = () => this.call<string>("signIn");
+  keyInfo = () => this.call<SyncKeyInfo>("keyInfo");
+  turnOn = (mode: SyncTurnOnMode, passphrase?: string) => this.call<SyncSnapshot>("turnOn", mode, passphrase);
+  turnOff = () => this.call<SyncSnapshot>("turnOff");
+  dismissMigration = () => this.call<SyncSnapshot>("dismissMigration");
   setSettings = (p: Partial<SyncSettings>) => this.call<SyncSnapshot>("setSettings", p);
   usage = () => this.call<SyncUsage>("usage");
   log = () => this.call<SyncLogEntry[]>("log");

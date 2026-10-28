@@ -3,6 +3,8 @@
 // (SyncSnapshot) and `IPC.syncEvent` (SyncUiEvent).
 
 export type SyncUiStatus =
+  | "off" // sync is off on this computer (the default; only the person turns it on)
+  | "locked" // sync is on but this computer needs the sync passphrase
   | "signed-out" // no Toolbay sign-in on this computer
   | "paused" // the person paused sync
   | "connecting"
@@ -32,6 +34,8 @@ export interface SyncConfigCategories {
 }
 
 export interface SyncSettings {
+  /** Sync runs only when the person turned it on (Settings › Sync). Off by default. */
+  enabled: boolean;
   paused: boolean;
   /** Shown in the activity log, version history and conflict copy names. Empty = computer name. */
   deviceName: string;
@@ -47,6 +51,7 @@ export interface SyncSettings {
 }
 
 export const DEFAULT_SYNC_SETTINGS: SyncSettings = {
+  enabled: false,
   paused: false,
   deviceName: "",
   images: true,
@@ -96,7 +101,22 @@ export interface SyncSnapshot {
   vaultPath: string;
   usage: SyncUsage | null;
   settings: SyncSettings;
+  /**
+   * Show the one-time "sync is now off until you choose" message (computers that synced with
+   * 0.1.2 or older, where sync turned itself on).
+   */
+  migrationNotice: boolean;
 }
+
+/** What turning sync on needs on this computer (Settings › Sync › Turn on sync). */
+export interface SyncKeyInfo {
+  /** The Toolbay account already has a sync passphrase (set on this or another computer). */
+  accountHasKey: boolean;
+  /** This computer already holds the current key: turning sync on needs no passphrase. */
+  thisComputerHasKey: boolean;
+}
+
+export type SyncTurnOnMode = "create" | "unlock" | "resume" | "reset";
 
 export type SyncLogAction = "upload" | "download" | "delete" | "rename" | "merge" | "kept" | "conflict" | "error" | "info";
 

@@ -33,26 +33,47 @@ reached, the server answers 503 (the app shows "offline" and retries) and caches
 toolbay.ai hiccup never looks like "you were signed out". One vault per user id, created on the
 first request. No vault picker.
 
-**The vault key.** 32 random bytes, made by the first computer that syncs. It is stored in the
-Toolbay account through the tool settings sync API (`PUT /api/v1/me/tools/bedrock/sync`, item
-`vault-key`) and cached on each computer in the OS keychain (service `ai.toolbay.bedrock`,
-account `vault-key`). People never see or type it.
+**Sync is off until the person turns it on** (0.1.3+): Settings › Sync › Turn on sync. Nothing
+from the vault is uploaded, and nothing is written to the Toolbay account, before that.
 
-- The app calls `obtainVaultKey({ toolbayApi, token, keychain })`. It asks the account first
-  (so a stale keychain entry is corrected), falls back to the keychain when offline, and creates
-  a key only when the account has none.
-- **Race:** two brand-new computers can both see "no key" and both make one. Both write it with
-  `baseVersion: 0`; the account accepts only the first, the second gets the first key back under
-  `conflicts` and uses it. Nothing was encrypted with the losing key, because syncing starts only
-  after `obtainVaultKey` returns. (Tested with three computers at once.)
-- **Wrong key guard (new):** the server keeps a public fingerprint of the key (`keyCheck`, an
-  HMAC that reveals nothing about the key). The first computer sets it; any computer whose key
-  does not match is stopped before it uploads anything, with the message "This computer's vault
-  key does not match your Toolbay account's vault. Sign out and back in to Toolbay to fetch the
-  right key." Without this, one computer with a wrong key would upload files nobody else can read.
-- **Honest caveat for the website / FAQ:** whoever controls the Toolbay account can get the key.
-  The sync server and the storage bucket alone cannot read anything: no file contents, no file
-  names, no folder names.
+**The vault key.** 32 random bytes, made by the first computer that turns sync on. Toolbay never
+receives it in usable form (true end-to-end since 0.1.3; `packages/sync/src/keywrap.ts`):
+
+- The person picks a **sync passphrase** (at least 10 characters). KEK = scrypt(passphrase NFKC,
+  16-byte random salt, N=2^17, r=8, p=1, 32 bytes). The key is wrapped with AES-256-GCM under the
+  KEK (random 12-byte nonce; the KDF parameters and salt are bound as associated data).
+- Only the wrapped object goes to the account: item `vault-key-wrapped` of the tool settings sync
+  API (`PUT /api/v1/me/tools/bedrock/sync`): `{v:2, alg:"A256GCM", kdf:{name:"scrypt",N,r,p,salt,dkLen},
+  nonce, ct, keyCheck, createdAt}`. toolbay.ai checks that shape strictly (a 48-byte ciphertext,
+  N >= 2^15), so a raw key can't be stored under that name (`src/lib/tool-sync-policy.ts` there).
+- Another computer downloads it and asks for the passphrase once; the opened key is kept in that
+  computer's OS keychain (service `ai.toolbay.bedrock`, account `vault-key-2`).
+- **Forgotten passphrase:** nobody can recover the synced copy, not Toolbay either. The files on
+  the person's computers are never affected. "Forgot your passphrase?" starts over: a new key and
+  passphrase, the synced copy is erased (`POST /v1/vault/rekey`) and refilled from the computers.
+- **Race:** two computers turning sync on at the same moment both write with `baseVersion: 0`; the
+  account accepts only the first, the second is told to enter the passphrase chosen there.
+- **Wrong key guard:** the server keeps a public fingerprint of the key (`keyCheck`, an HMAC that
+  reveals nothing about the key). Any computer whose key does not match is stopped before it
+  uploads anything and asked for the (new) passphrase.
+- No device-to-device key transfer exists; the passphrase is the only way to add a computer.
+
+**Upgrade from 0.1.2 and older.** Those versions turned sync on by themselves for anyone signed in
+to the hub and stored the raw key in the account (item `vault-key`), so Toolbay could have
+decrypted synced notes. 0.1.3:
+
+- turns sync off once per computer (`<userData>/sync/migration.json`) and shows a one-time choice
+  ("Turn on sync…" / "Keep sync off") on computers that had synced; nothing uploads before that;
+- deletes the raw `vault-key` item from the account as soon as a sign-in is available (toolbay.ai
+  also hides it, purges it on any read or write and refuses new copies, so old clients stop
+  syncing instead of re-uploading it);
+- treats the old key as exposed: turning sync back on always makes a **new** key, and
+  `rotateVault` (`packages/sync/src/rotate.ts`) re-encrypts the synced data under it. It downloads
+  the current version of every synced file with the old key (still in that computer's keychain,
+  account `vault-key`), has the server erase the old vault (`POST /v1/vault/rekey`, which also
+  drops version history and deleted files made under the old key), re-uploads everything under
+  the new key, then deletes the old key from the keychain. A journal makes it resumable. Without
+  the old key the vault restarts empty and each computer uploads its own files again.
 
 **Encryption.** From the vault key K, HKDF-SHA256 (salt `bedrock-vault-v1`) makes three subkeys:
 `meta` (file details), `chunk` (file contents), `chunk-id` (naming chunks), plus the key check.
@@ -134,9 +155,10 @@ sockets per user.
 ## 5. The client engine (`packages/sync`)
 
 ```ts
-import { SyncEngine, obtainVaultKey, TOOL_SLUG, KEYCHAIN_SERVICE } from '@bedrock/sync';
+import { SyncEngine, AccountKeyStore, unwrapVaultKey } from '@bedrock/sync';
 
-const key = await obtainVaultKey({ toolbayApi: 'https://toolbay.ai', token, keychain }); // keychain = {get, set} on the OS keychain
+const wrapped = await new AccountKeyStore('https://toolbay.ai', token).getWrapped(); // null: sync never set up
+const key = await unwrapVaultKey(wrapped!.key, passphrase); // then keep it in the OS keychain
 const engine = new SyncEngine({
   vaultPath, stateDir,              // stateDir in app data, NOT inside the vault
   serverUrl: 'https://sync.toolbay.ai',
@@ -478,13 +500,14 @@ Code: `app/src/main/sync/` (host, keychain, selective sync rule), `app/src/rende
 **Sync host (main process).** One `SyncEngine` for the one vault (`Documents\<displayName>`, or the
 `main` entry of `vaults.json`). Folders opened with "Open another folder as vault" never sync.
 
-- Starts by itself when a Toolbay sign-in exists and stops on sign-out. The token is re-read every
-  4 s: the hub's keychain session (`ai.toolbay.desktop` / `session`) first, the `TOOLBAY_TOKEN` the
+- Runs only after the person turned it on (settings.enabled) and while a Toolbay sign-in exists;
+  stops on sign-out and when the app quits. The token is re-read every 4 s: the hub's keychain session (`ai.toolbay.desktop` / `session`) first, the `TOOLBAY_TOKEN` the
   hub launched us with as a fallback. Once the keychain session has been seen and then disappears,
   the hub signed out, so the launch token is dropped too. A changed token restarts the engine.
-- Vault key: `obtainVaultKey` with the OS keychain (`ai.toolbay.bedrock` / `vault-key`) and the
-  toolbay.ai tool settings API (slug `bedrock`). The host first checks `GET /healthz` on the sync
-  service, so nothing is written to the account while the service is unreachable.
+- Vault key: the opened key from the OS keychain (`ai.toolbay.bedrock` / `vault-key-2`), used only
+  while it matches the account's `vault-key-wrapped`; otherwise the status is "locked" and Settings ›
+  Sync asks for the passphrase. Before the engine gets the key, data still held under an older key
+  is moved to it (`rotateVault`).
 - Server `https://sync.toolbay.ai`, or `BEDROCK_SYNC_URL`. Device id: a random UUID in
   `<userData>/sync/device.json`. Device name: the computer name, or the "Device name" setting.
 - While the service can't be reached (it isn't deployed yet), the status says "Can't reach the sync
@@ -515,10 +538,11 @@ Code: `app/src/main/sync/` (host, keychain, selective sync rule), `app/src/rende
   parameter), so a `bedrock://` callback is not possible without changing toolbay.ai. It would also
   mean Bedrock keeping its own token copy, which the tool rules forbid, and registering
   `toolbay://` ourselves would hijack the hub's scheme. So we don't.
-- Signed out: Settings › Sync and the status bar menu show **"Sign in to Toolbay to sync"**, which
+- Signed out: Settings › Sync shows **"Sign in to Toolbay"** (the status bar menu: "Sign in to
+  Toolbay to sync" once sync is on), which
   opens `toolbay://signin` when the hub is installed (`app.getApplicationNameForProtocol`). Without
-  the hub the button is **"Get the Toolbay app"** and opens `https://toolbay.ai/download`. Syncing
-  starts by itself within 4 s of the hub writing its session. The app works fully while signed out.
+  the hub the button is **"Get the Toolbay app"** and opens `https://toolbay.ai/download`. After
+  signing in, the person turns sync on in Settings › Sync. The app works fully while signed out.
 
 **Selective sync (engine change).** Excluding paths with the engine's plain `ignore` option would
 have made already-synced files look deleted and removed them on every other computer. The engine

@@ -21,9 +21,9 @@ export function pathFromNoteUri(uri: string): string {
 }
 
 export const SERVER_INSTRUCTIONS =
-  `Tools for the person's ${BRAND.productTitle} vault: a folder of Markdown notes (Obsidian-compatible) that syncs to their other computers. ` +
+  `Tools for the person's ${BRAND.productTitle} vault: a folder of Markdown notes (Obsidian-compatible) on their computer. ` +
   "Paths are relative to the vault, like \"Projects/Plan.md\". Notes link with [[Note name]], have #tags and may start with YAML properties. " +
-  "Search before creating a note so you don't make duplicates. Edits sync automatically and keep version history; delete_note moves notes to .trash, nothing is deleted permanently.";
+  "Search before creating a note so you don't make duplicates. If the person turned sync on, edits sync to their other computers and keep version history; delete_note moves notes to .trash, nothing is deleted permanently.";
 
 export function createMcpServer(o: { call: ToolCaller; version: string }): McpServer {
   const server = new McpServer({ name: BRAND.name, title: BRAND.productTitle, version: o.version }, { instructions: SERVER_INSTRUCTIONS, capabilities: { tools: {}, resources: {} } });

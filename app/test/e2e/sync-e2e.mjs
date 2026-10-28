@@ -109,14 +109,15 @@ function startFakeToolbay() {
         conflicts[ch.key] = cur ?? null;
         continue;
       }
-      const item = { value: ch.value, version: (cur?.version ?? 0) + 1, updatedAt: Date.now() };
+      if (ch.deleted && !cur) continue;
+      const item = ch.deleted ? { value: null, version: (cur?.version ?? 0) + 1, updatedAt: Date.now(), deleted: true } : { value: ch.value, version: (cur?.version ?? 0) + 1, updatedAt: Date.now() };
       items.set(ch.key, item);
       applied[ch.key] = { version: item.version, updatedAt: item.updatedAt };
       rev++;
     }
     send(200, { tool: m[1], rev, applied, conflicts });
   });
-  return new Promise((r) => server.listen(0, "127.0.0.1", () => r({ url: `http://127.0.0.1:${server.address().port}`, close: () => server.close() })));
+  return new Promise((r) => server.listen(0, "127.0.0.1", () => r({ url: `http://127.0.0.1:${server.address().port}`, store, close: () => server.close() })));
 }
 
 // ------------------------------------------------------------------ sync server (child process)
@@ -195,6 +196,9 @@ const waitSynced = async (i, timeout = 30000) =>
     return s?.status === "synced" && s.pendingUploads === 0 ? s : null;
   }, timeout, 100);
 const syncNow = (i) => i.win.evaluate(() => window.app.sync.syncNow().catch((e) => e.message));
+const PASS = "purple stone river lamp";
+/** Turns sync on the way the dialog does; returns null on success, else the error message. */
+const turnOn = (i, mode, pass = PASS) => i.win.evaluate(([m, p]) => window.app.sync.turnOn(m, p).then(() => null, (e) => e.message), [mode, pass]);
 async function shot(i, name) {
   await i.win.waitForTimeout(300);
   await i.win.screenshot({ path: path.join(outDir, `sync-${name}.png`) });
@@ -261,11 +265,41 @@ try {
   await startServer();
   check("sync server and fake toolbay.ai started", true, `server :${serverPort}, toolbay ${fake.url}`);
 
-  // ---- A: first computer
+  // ---- A: first computer. Sync is off until it is turned on, even when signed in.
   A = await launch("A");
   fs.mkdirSync(path.join(A.vault, "Projects"), { recursive: true });
   writeF(A, "Projects/Plan.md", "# Plan\n\nline 1\nline 2\nline 3\n");
   writeF(A, "Ideas.md", "# Ideas\n\n- one\n");
+  check("signed in, sync is off by default", !!(await waitStatus(A, "off", 10000)), await syncStatus(A));
+  await sleep(2500);
+  const seq0 = await fetch(`http://127.0.0.1:${serverPort}/v1/vault`, { headers: { authorization: "Bearer dev:u1" } }).then((r) => r.json());
+  check("nothing was uploaded while sync is off", seq0.seq === 0 && seq0.keyCheck === null, JSON.stringify(seq0));
+  check("nothing was written to the Toolbay account while sync is off", !(fake.store.get("u1/bedrock")?.size));
+  {
+    const SW0 = await openSettings(A, "sync");
+    const btn = await SW0.waitForSelector('.vertical-tab-content button:has-text("Turn on sync")', { timeout: 10000 }).catch(() => null);
+    check("Settings › Sync: off, with a Turn on sync button", !!btn);
+    await SW0.waitForTimeout(300);
+    await SW0.screenshot({ path: path.join(outDir, "sync-00-off.png") });
+    await btn?.click();
+    const dlg = await SW0.waitForSelector('.bedrock-sync-turn-on input[type="password"]', { timeout: 10000 }).catch(() => null);
+    const dlgText = await SW0.evaluate(() => document.querySelector(".bedrock-sync-turn-on")?.textContent ?? "");
+    check("the turn-on dialog asks for a passphrase and says Toolbay can't read the notes", !!dlg && dlgText.includes("can't read it") && dlgText.includes("can't be recovered"));
+    await SW0.waitForTimeout(300);
+    await SW0.screenshot({ path: path.join(outDir, "sync-00-turn-on.png") });
+    await SW0.keyboard.press("Escape");
+    await closeSettings(A);
+  }
+  check("a short passphrase is refused", /at least 10/.test((await turnOn(A, "create", "short")) ?? ""));
+  check("A turns sync on with a new passphrase", (await turnOn(A, "create")) === null);
+  const items = fake.store.get("u1/bedrock");
+  const wrapped = items?.get("vault-key-wrapped")?.value;
+  check(
+    "the account holds only the passphrase-wrapped key",
+    !!wrapped && [...items.keys()].join() === "vault-key-wrapped" && wrapped.kdf?.name === "scrypt" && wrapped.kdf.N >= 2 ** 17 && !("key" in wrapped),
+  );
+  const kcKey = fs.readFileSync(path.join(A.kc, "ai.toolbay.bedrock--vault-key-2"), "utf8");
+  check("the opened key is only in this computer's keychain, not in the account", !JSON.stringify(fake.store.get("u1/bedrock") ? [...fake.store.get("u1/bedrock").values()] : []).includes(kcKey));
   check("A connects and syncs", !!(await waitSynced(A, 30000)), JSON.stringify(await snapshot(A).then((s) => s?.message)));
   await A.win.evaluate(() => window.app.vault.setConfig("trashOption", "local"));
   await shot(A, "01-A-synced");
@@ -275,6 +309,10 @@ try {
   // B already has a vault with its own note before it ever signs in
   writeF({ vault: path.join(tmp, "B", "vault") }, "From B.md", "written on B before it ever synced\n");
   B = await launch("B");
+  check("B: sync is off until turned on", !!(await waitStatus(B, "off", 10000)));
+  check("B: a wrong passphrase is refused", /isn't right/.test((await turnOn(B, "unlock", "wrong passphrase here")) ?? ""));
+  check("B: creating a second passphrase is refused (one per account)", /already turned on/.test((await turnOn(B, "create", "another passphrase")) ?? ""));
+  check("B turns sync on with A's passphrase", (await turnOn(B, "unlock")) === null);
   const tB = Date.now();
   const bSynced = await waitSynced(B, 30000);
   check("B first sync", !!bSynced, `${Date.now() - tB} ms`);
@@ -520,7 +558,7 @@ try {
     check("sync stops after sign-out", !exists(B, "After sign-out.md"));
     SW = await openSettings(A, "sync");
     await SW.waitForSelector(".sync-signin-button", { timeout: 10000 });
-    check("signed-out settings show the sign-in button", (await SW.textContent(".sync-signin-button")) === "Sign in to Toolbay to sync");
+    check("signed-out settings show the sign-in button", (await SW.textContent(".sync-signin-button")) === "Sign in to Toolbay");
     await shot(A, "14-signed-out");
     await closeSettings(A);
     fs.writeFileSync(path.join(A.kc, "ai.toolbay.desktop--session"), "dev:u1");
@@ -531,6 +569,7 @@ try {
   if (step("third")) {
     const t0 = Date.now();
     C = await launch("C");
+    check("C turns sync on with the passphrase", (await turnOn(C, "unlock")) === null);
     const s = await waitSynced(C, 60000);
     const t3 = await converged([A, B, C], 60000);
     timings.thirdComputerFirstSync = Date.now() - t0;
@@ -544,6 +583,31 @@ try {
     await shot(C, "15-C-synced");
   }
 
+  // ---- upgrade from 0.1.2 (sync had turned itself on, raw key in the account): off + one-time choice, raw key deleted
+  if (step("upgrade")) {
+    const base = path.join(tmp, "M");
+    fs.mkdirSync(path.join(base, "keychain"), { recursive: true });
+    fs.mkdirSync(path.join(base, "userdata", "sync", "state-0123456789abcdef"), { recursive: true });
+    fs.writeFileSync(path.join(base, "userdata", "sync", "settings.json"), JSON.stringify({ paused: false, deviceName: "" }));
+    fs.writeFileSync(path.join(base, "keychain", "ai.toolbay.bedrock--vault-key"), crypto.randomBytes(32).toString("base64"));
+    fake.store.set("u3/bedrock", new Map([["vault-key", { value: { v: 1, key: crypto.randomBytes(32).toString("base64"), createdAt: 1 }, version: 1, updatedAt: 1 }]]));
+    const M = await launch("M", { user: "u3" });
+    check("upgrade: sync is off after the update", !!(await waitStatus(M, "off", 10000)));
+    const modal = await waitFor(() => M.win.evaluate(() => document.querySelector(".bedrock-sync-migration")?.textContent ?? null), 8000);
+    check("upgrade: the one-time choice is shown", !!modal && modal.includes("Keep sync off") && modal.includes("Turn on sync"), modal?.slice(0, 80) ?? "");
+    await shot(M, "16-upgrade-choice");
+    const gone = await waitFor(() => fake.store.get("u3/bedrock")?.get("vault-key")?.deleted === true, 10000);
+    check("upgrade: the raw key is deleted from the Toolbay account", !!gone);
+    const v3 = await fetch(`http://127.0.0.1:${serverPort}/v1/vault`, { headers: { authorization: "Bearer dev:u3" } }).then((r) => r.json());
+    check("upgrade: nothing uploaded before the person chooses", v3.seq === 0);
+    await M.win.click('.bedrock-sync-migration button:has-text("Keep sync off")');
+    await M.app.close();
+    const M2 = await launch("M", { user: "u3" });
+    await sleep(2000);
+    check("upgrade: the choice is shown only once", !(await M2.win.evaluate(() => !!document.querySelector(".bedrock-sync-migration"))));
+    check("upgrade: still off after a restart", (await syncStatus(M2)) === "off");
+  }
+
   // ---- real vault copy: import it on D, see it arrive on E (separate account u2)
   if (realVault && step("vault")) {
     const copy = path.join(tmp, "vault-source");
@@ -552,6 +616,8 @@ try {
     console.log(`copied ${realVault} -> ${copy} in ${Date.now() - t} ms`);
     const D = await launch("D", { user: "u2" });
     const E = await launch("E", { user: "u2" });
+    await turnOn(D, "create");
+    await turnOn(E, "unlock");
     await waitSynced(D, 30000);
     await waitSynced(E, 30000);
     t = Date.now();
