@@ -1,5 +1,5 @@
 // Living under the Toolbay hub.
-// Control: `bedrock --show | --hide | --quit` (a second launch forwards its args to the running
+// Control: `bedrock --show | --hide (minimizes) | --quit` (a second launch forwards its args to the running
 // instance via the single-instance lock). `--from-toolbay` marks a hub launch.
 // State: `<app data>/running.json` = {pid, version, visible, window, updatedAt, hub}, rewritten on
 // every show/hide and removed on quit. App data = %APPDATA%\<appId> (Windows),
@@ -17,7 +17,8 @@ export function statePath(): string {
 }
 
 export function writeState(win: BrowserWindow | null): void {
-  const visible = !!win && !win.isDestroyed() && win.isVisible();
+  // A minimized window counts as hidden (the hub's --hide minimizes instead of hiding).
+  const visible = !!win && !win.isDestroyed() && win.isVisible() && !win.isMinimized();
   const v = {
     pid: process.pid,
     version: app.getVersion(),

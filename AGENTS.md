@@ -43,9 +43,12 @@ Titles and marketing say "Bedrock notes app" or "Bedrock by Toolbay", never "Bed
     `--show`, `--hide`, `--quit`, single instance (a second launch forwards its arguments),
     `running.json` ({pid, version, visible, window, updatedAt, hub}) in the app data dir
     (`%APPDATA%\<appId>`, `~/Library/Application Support/<appId>`) rewritten on every show/hide and
-    removed on quit, a tray icon (Show / Hide / Quit), and the hub's `TOOLBAY_TOKEN` (read once,
+    removed on quit (`--hide` minimizes; a minimized window reports hidden), and the hub's `TOOLBAY_TOKEN` (read once,
     memory only, deleted from the environment so plugins never see it). The signed-in session is read
     from the hub's keychain entry (service `ai.toolbay.desktop`, account `session`); we never write it.
+    **Nothing runs in the background** (Orion, 2026-10-27): no tray icon, no launch at login (startup
+    clears any login item), closing the last window quits on every OS including macOS, hidden-start
+    flags are ignored, and sync + agent access stop when the app quits.
 12. **Account sync.** The vault syncs through the user's Toolbay account (design in
     `docs/ARCHITECTURE.md` and `docs/SYNC.md`). Signed out, the app works fully on its own.
 13. **Reverse-engineering tools during the build.** Use REA (`mcp__rea__*`) while building, not only

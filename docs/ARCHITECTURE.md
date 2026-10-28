@@ -14,7 +14,7 @@ We DO match its public interfaces so existing vaults, themes, CSS snippets and c
 
 ```
 app/                    Electron app (the product)
-  src/main/             main process: windows, single instance, tray, hub contract, keychain, sync host
+  src/main/             main process: windows, single instance, hub contract, keychain, sync host
   src/preload/          preload (exposes the small native bridge; renderer runs with nodeIntegration
                         like Obsidian so community plugins can `require('fs')`/`require('electron')`)
   src/renderer/         the UI, vanilla TypeScript + DOM (no React: plugins manipulate the DOM directly)
@@ -96,5 +96,5 @@ Client algorithm (packages/sync):
 
 ## Hub contract (same as every Toolbay tool, see code/toolbay-flow/AGENTS.md)
 toolbay.json with each release; `--from-toolbay --show --hide --quit`; single instance; `running.json`
-{pid, visible, window, updatedAt} in the app data dir rewritten on every show/hide; tray; `TOOLBAY_TOKEN`
+{pid, visible, window, updatedAt} in the app data dir rewritten on every show/hide (`--hide` minimizes); no tray, no login item, last window closed = quit; `TOOLBAY_TOKEN`
 memory only; per-user NSIS install (`/S`), DMG on Mac; self-update from GitHub releases; no telemetry.

@@ -1,4 +1,5 @@
-// Main process entry: single instance, the one vault window, tray, hub contract, IPC, updates.
+// Main process entry: single instance, the one vault window, hub contract, IPC, updates.
+// Nothing runs in the background: no tray, no launch at login, closing the last window quits.
 import { app, BrowserWindow, dialog, ipcMain, Menu, shell } from "electron";
 import path from "node:path";
 import fs from "node:fs";
@@ -6,7 +7,6 @@ import { BRAND } from "../shared/brand";
 import { IPC, type BootInfo } from "../shared/ipc";
 import * as account from "./account";
 import * as hub from "./hub";
-import { createTray, refreshTray } from "./tray";
 import { startAutoUpdate, checkNow, registerUpdaterIpc } from "./updater";
 import { ensureMainVault, importIntoMain, isVaultFolder, readRegistry, rememberOther } from "./vaults";
 import { createVaultWindow, iconPath, vaultWindows } from "./windows";
@@ -99,12 +99,11 @@ function startApp(): void {
     mainWin.show();
     mainWin.focus();
     hub.writeState(mainWin);
-    refreshTray();
   };
+  // The hub's "hide" minimizes: the app never hides itself away and keeps running unseen.
   const hide = () => {
-    for (const w of BrowserWindow.getAllWindows()) w.hide();
+    for (const w of BrowserWindow.getAllWindows()) if (!w.isDestroyed() && w.isMinimizable()) w.minimize();
     hub.writeState(mainWin);
-    refreshTray();
   };
   const quit = () => {
     quitting = true;
@@ -115,17 +114,8 @@ function startApp(): void {
   function openMain(visible: boolean): BrowserWindow {
     const vaultPath = devVault ? path.resolve(devVault) : ensureMainVault();
     const win = createVaultWindow({ vaultPath, isMain: true, show: visible, openFile: hub.pathArg(process.argv) ?? undefined, smokeTest });
-    win.on("close", (e) => {
-      // Closing the main window hides it to the tray so sync keeps running; Quit is in the tray.
-      if (!quitting && !smokeTest) {
-        e.preventDefault();
-        win.hide();
-        hub.writeState(win);
-        refreshTray();
-      }
-    });
-    win.on("show", () => hub.writeState(win));
-    win.on("hide", () => hub.writeState(win));
+    // Closing the window really closes it; when it was the last one the app quits (window-all-closed).
+    for (const ev of ["show", "hide", "minimize", "restore"] as const) win.on(ev as any, () => hub.writeState(win));
     return win;
   }
 
@@ -176,10 +166,9 @@ function startApp(): void {
       Promise.race([Promise.all([stopSync(), stopAgents()]), new Promise((r) => setTimeout(r, 3000))]).then(done, done);
     }
   });
+  // Every OS, macOS included: no windows left means the app quits (sync and agent access stop in before-quit).
   app.on("window-all-closed", () => {
-    if (smokeTest || process.platform !== "darwin") {
-      if (smokeTest) app.quit();
-    }
+    if (!quitting) quit();
   });
   app.on("activate", () => show());
 
@@ -206,20 +195,25 @@ function startApp(): void {
     if (process.platform !== "darwin") Menu.setApplicationMenu(null);
     else Menu.setApplicationMenu(macMenu());
     if (process.argv.includes("--quit")) return quit(); // nothing running: nothing to quit
-    const startHidden = process.argv.includes("--hide");
-    mainWin = openMain(!startHidden);
+    // Never launched at login: clear any login item an earlier version (or the OS) left behind.
+    if (!smokeTest && (process.platform === "darwin" || process.platform === "win32")) {
+      try {
+        app.setLoginItemSettings({ openAtLogin: false });
+      } catch (e) {
+        log("warn", `login item: ${(e as Error)?.message ?? e}`);
+      }
+    }
+    // Hidden-start flags (--hide, --hidden) are ignored: the app always opens with its window shown.
+    mainWin = openMain(true);
     hub.writeState(mainWin);
     if (!smokeTest) registerProtocols();
     const firstUri = uriArg(process.argv);
     if (firstUri) handleUri(firstUri, mainWin);
-    // Sync runs in the main process for the one vault, whether or not the window is visible.
+    // Sync runs in the main process for the one vault while the app is open; it stops when the app quits.
     startSync({ vaultPath: devVault ? path.resolve(devVault) : ensureMainVault(), smokeTest });
     // Agent access (MCP over HTTP + REST on 127.0.0.1, token-protected) for the same vault.
     void startAgents({ vaultPath: devVault ? path.resolve(devVault) : ensureMainVault(), showMain: show });
-    if (!smokeTest) {
-      createTray({ show, hide, quit, isVisible: () => !!mainWin && !mainWin.isDestroyed() && mainWin.isVisible() });
-      startAutoUpdate();
-    }
+    if (!smokeTest) startAutoUpdate();
   });
 }
 

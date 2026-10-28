@@ -33,7 +33,7 @@ try {
   Check "starts from the hub and writes running.json (visible)" (WaitFor { $s = State; $s -and $s.visible -eq $true -and $s.pid }) "$([int]$t.ElapsedMilliseconds) ms"
   Check "welcome note created in the one vault (also after an interrupted first run)" (WaitFor { Test-Path "$tmp\vault\*.md" })
   Start-Process "$dir\bedrock.exe" -ArgumentList "--hide" -Wait
-  Check "--hide (second launch) hides the window" (WaitFor { (State).visible -eq $false })
+  Check "--hide (second launch) minimizes the window" (WaitFor { (State).visible -eq $false })
   Start-Process "$dir\bedrock.exe" -ArgumentList "--show" -Wait
   Check "--show brings it back" (WaitFor { (State).visible -eq $true })
   Check "still one app instance" (@(Get-CimInstance Win32_Process | Where-Object { $_.ExecutablePath -like "$dir*" -and $_.CommandLine -notmatch "--type=" }).Count -eq 1)

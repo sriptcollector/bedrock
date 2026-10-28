@@ -37,7 +37,6 @@ src/main/              Electron main process
   account.ts           TOOLBAY_TOKEN (memory only) + hub keychain session (ai.toolbay.desktop/session)
   vaults.ts            the one vault (Documents\<DisplayName>), welcome note, vaults.json, import-into-main
   windows.ts           vault windows (frameless on Win/Linux, hiddenInset on mac), bounds memory
-  tray.ts              tray Show/Hide/Quit
   updater.ts           electron-updater against GitHub releases (packaged builds only)
   selftest.ts          --selftest: core index in main process + real UI in a hidden window
   webviewer.ts         Web viewer core plugin, main side: every <webview> forced into a locked-down
