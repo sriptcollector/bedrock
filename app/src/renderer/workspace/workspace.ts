@@ -676,6 +676,13 @@ export class Workspace extends Events {
     }
     while (item instanceof WorkspaceSplit) item = item.children[0];
     if (item instanceof WorkspaceTabs) item.containerEl.addClass("is-top-right");
+
+    // macOS: the tab group in the top-left corner sits under the red/yellow/green buttons, so its
+    // tab bar starts after them (shell.css, .is-top-left).
+    document.querySelectorAll(".workspace-tabs.is-top-left").forEach((e) => e.removeClass("is-top-left"));
+    let left: WorkspaceItem | undefined = !this.leftSplit.collapsed && this.leftSplit.children.length ? this.leftSplit.children[0] : this.rootSplit;
+    while (left instanceof WorkspaceSplit) left = left.children[0];
+    if (left instanceof WorkspaceTabs) left.containerEl.addClass("is-top-left");
   }
 
   onSidedockToggled(dock: WorkspaceSidedock): void {

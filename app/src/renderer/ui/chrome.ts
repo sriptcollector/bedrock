@@ -10,13 +10,15 @@ export class TitleBar {
     this.containerEl = createDiv("titlebar");
     const inner = this.containerEl.createDiv("titlebar-inner");
     inner.createDiv("titlebar-text");
+    // Every platform: is-fullscreen etc. (on macOS the window buttons hide in full screen, so the
+    // top-left tab bar drops the room it keeps for them).
+    native.on(IPC.windowStateChanged, (s: any) => this.setState(s));
+    native.invoke(IPC.windowState).then((s: any) => this.setState(s));
     if (platform === "darwin") return;
     // Windows/Linux: the minimize/maximize/close buttons are the system's own (titleBarOverlay in
     // the main process). This container only reserves their space, like the original app.
     inner.createDiv("titlebar-button-container mod-right");
     document.body.addClass("is-frameless", "is-hidden-frameless");
-    native.on(IPC.windowStateChanged, (s: any) => this.setState(s));
-    native.invoke(IPC.windowState).then((s: any) => this.setState(s));
   }
 
   /** Give the system caption buttons our theme's colours (call after every theme/CSS change). */

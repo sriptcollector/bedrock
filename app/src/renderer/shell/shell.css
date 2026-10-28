@@ -281,3 +281,10 @@ body[data-frame="native"] .workspace-tabs.is-top-right > .workspace-tab-header-c
 body:not(.mod-macos) .workspace-tabs.is-top-right > .workspace-tab-header-container:has(> .sidebar-toggle-button.mod-right) {
   padding-right: var(--frame-right-space);
 }
+
+/* macOS: the red/yellow/green window buttons sit over the top-left corner (trafficLightPosition
+   12,12 in main/windows.ts; they end about 70px in). The tab bar under them starts after them, so
+   the sidebar's search/bookmark icons aren't covered. Not in full screen, where the buttons hide. */
+body.mod-macos:not(.is-fullscreen) .workspace-tabs.is-top-left > .workspace-tab-header-container {
+  padding-left: max(0px, calc(80px - var(--ribbon-width)));
+}
