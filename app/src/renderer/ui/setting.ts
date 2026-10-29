@@ -455,6 +455,16 @@ export abstract class SettingTab {
   getSettingDefinitions(): any[] {
     return [];
   }
+  /**
+   * What settings search finds in a tab drawn by hand in display() (no definitions). Names must
+   * match the rows' names so a result can scroll to its row. Tabs without either are searched by
+   * the rows they showed the last time they were open.
+   */
+  getSearchIndex(): { name: string; desc?: string; aliases?: string[]; group?: string | null }[] {
+    return [];
+  }
+  /** Rows seen the last time this tab was on screen (settings search fallback). */
+  renderedIndex: { name: string; desc: string; group: string | null }[] = [];
   update(): void {
     try {
       this.settingItems = this.getSettingDefinitions() ?? [];

@@ -200,6 +200,7 @@ export class SettingsModal extends Modal {
     this.clearPageStack();
     if (this.activeTab) {
       this.lastTabId = this.activeTab.id;
+      rememberRows(this.activeTab);
       this.activeTab.hide();
       this.activeTab.containerEl.detach();
       this.activeTab = null;
@@ -264,6 +265,7 @@ export class SettingsModal extends Modal {
     if (!tab) return;
     this.clearPageStack();
     if (this.activeTab && this.activeTab !== tab) {
+      rememberRows(this.activeTab);
       this.activeTab.hide();
       this.activeTab.containerEl.detach();
     }
@@ -363,10 +365,24 @@ export class SettingsModal extends Modal {
       } catch {
         defs = [];
       }
-      const entries = indexDefinitions(defs);
+      // "sync passphrase" finds Passphrase in the Sync tab: words naming the tab narrow to it.
+      const words = q.split(/\s+/);
+      const rest = words.filter((w) => !tab.name.toLowerCase().includes(w));
+      const need = rest.length ? rest : words;
+      let entries = indexDefinitions(defs);
+      if (!entries.length) {
+        let own: ReturnType<SettingTab["getSearchIndex"]> = [];
+        try {
+          own = tab.getSearchIndex?.() ?? [];
+        } catch {
+          own = [];
+        }
+        const list = own.length ? own : tab.renderedIndex ?? [];
+        entries = list.map((e: any) => ({ name: e.name, desc: e.desc ?? "", aliases: e.aliases ?? [], group: e.group ?? null, pages: [] }));
+      }
       for (const e of entries) {
         const hay = [e.name, e.desc, ...e.aliases].join(" ").toLowerCase();
-        if (q.split(/\s+/).every((w) => hay.includes(w))) results.push({ tab, name: e.name, group: e.group, pages: e.pages });
+        if (need.every((w) => hay.includes(w))) results.push({ tab, name: e.name, group: e.group, pages: e.pages });
       }
       if (!entries.length && tab.name.toLowerCase().includes(q)) results.push({ tab, name: tab.name, group: null, pages: [] });
     }
@@ -402,6 +418,24 @@ export class SettingsModal extends Modal {
       setTimeout(() => target.removeClass("is-highlighted"), 1500);
     }
   }
+}
+
+/** Keeps the rows a hand-drawn tab showed, so settings search can find them next time. */
+function rememberRows(tab: SettingTab): void {
+  if (tab.settingItems?.length) return;
+  const rows: SettingTab["renderedIndex"] = [];
+  let group: string | null = null;
+  for (const el of Array.from(tab.containerEl.querySelectorAll(".setting-item"))) {
+    const name = el.querySelector(":scope > .setting-item-info > .setting-item-name")?.textContent?.trim() ?? "";
+    if (!name) continue;
+    if (el.classList.contains("setting-item-heading")) {
+      group = name;
+      continue;
+    }
+    const desc = el.querySelector(":scope > .setting-item-info > .setting-item-description")?.textContent?.trim() ?? "";
+    rows.push({ name, desc, group });
+  }
+  if (rows.length) tab.renderedIndex = rows;
 }
 
 export { renderCredit } from "./credit";

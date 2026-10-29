@@ -84,6 +84,13 @@ try {
   check("settings search finds results", hits > 0, `${hits} results`);
   await pop.screenshot({ path: path.join(outDir, "settings-search-light.png") });
 
+  // Hand-drawn tabs (Sync) are searchable too.
+  await pop.fill(".setting-search-container input", "passphrase");
+  await pop.waitForTimeout(300);
+  const pass = await pop.locator(".setting-search-result-name", { hasText: "Sync passphrase" }).count();
+  check("settings search finds the sync passphrase", pass > 0, `${pass} results`);
+  await pop.screenshot({ path: path.join(outDir, "settings-search-passphrase.png") });
+
   await win.evaluate(() => window.app.setting.close());
   await win.waitForTimeout(500);
   check("closing settings closes its window", app.windows().length === 1, `${app.windows().length} windows`);

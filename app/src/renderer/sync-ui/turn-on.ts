@@ -159,6 +159,27 @@ export class ChangePassphraseModal extends Modal {
 
   onOpen(): void {
     this.setTitle("Change sync passphrase");
+    this.contentEl.createEl("p", { cls: "setting-item-description", text: "Checking your Toolbay account…" });
+    this.client.keyInfo().then(
+      (info) => {
+        this.contentEl.empty();
+        if (info.thisComputerHasKey) return this.renderForm();
+        this.contentEl.createEl("p", {
+          text: info.accountHasKey
+            ? "This computer doesn't have your sync key, so it can't change the passphrase. Open Bedrock on a computer where sync is working and use Settings › Sync › Change passphrase there. Your synced notes stay as they are."
+            : "Sync hasn't been set up on your account yet, so there's no passphrase to change. Turn on sync to choose one.",
+        });
+        const btns = this.modalEl.createDiv("modal-button-container");
+        btns.createEl("button", { cls: "mod-cta", text: "OK" }).addEventListener("click", () => this.close());
+      },
+      (e) => {
+        this.contentEl.empty();
+        this.contentEl.createEl("p", { text: `Couldn't reach your Toolbay account: ${e.message}` });
+      },
+    );
+  }
+
+  private renderForm(): void {
     const el = this.contentEl;
     el.createEl("p", {
       text: "This computer already has your sync key, so you don't need the old passphrase. Your synced notes stay exactly as they are; only the passphrase that unlocks them changes.",

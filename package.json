@@ -1,7 +1,7 @@
 {
   "name": "bedrock-monorepo",
   "private": true,
-  "version": "0.1.7",
+  "version": "0.1.8",
   "description": "Bedrock notes app: a free, open-source notes app compatible with Obsidian vaults and plugins, with sync built in. Bedrock by Toolbay.",
   "license": "MIT",
   "workspaces": [

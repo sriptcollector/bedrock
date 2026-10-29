@@ -60,6 +60,28 @@ export class SyncSettingTab extends SettingTab {
     this.off = null;
   }
 
+  /** Settings search: this tab is drawn by hand, so list its rows here (names match the rows). */
+  getSearchIndex() {
+    const rows: { name: string; desc?: string; aliases?: string[]; group?: string | null }[] = [
+      { name: "Sync", desc: "Turn sync on or off.", aliases: ["turn on", "turn off", "enable", "disable"] },
+      { name: "Sync passphrase", desc: "Change your sync passphrase.", aliases: ["change passphrase", "forgot passphrase", "reset", "password", "key", "encryption", "unlock"] },
+      { name: "Account", desc: "Your Toolbay account.", aliases: ["sign in", "sign out", "toolbay"] },
+      { name: "Sync status", desc: "Pause or resume sync.", aliases: ["pause", "resume"] },
+      { name: "Storage used", aliases: ["quota", "space", "usage"] },
+      { name: "Device name", aliases: ["computer name"] },
+      { name: "Deleted files", aliases: ["trash", "restore"] },
+      { name: "Activity log", aliases: ["history", "log"] },
+      { name: "Excluded folders", group: "Selective sync", aliases: ["exclude", "ignore"] },
+      { name: "Sync images", group: "Selective sync" },
+      { name: "Sync audio", group: "Selective sync" },
+      { name: "Sync videos", group: "Selective sync" },
+      { name: "Sync PDFs", group: "Selective sync" },
+      { name: "Sync all other types", group: "Selective sync" },
+    ];
+    for (const [, name, desc] of CONFIG) rows.push({ name, desc, group: "Vault configuration sync" });
+    return rows;
+  }
+
   private render(s: SyncSnapshot): void {
     const el = this.containerEl;
     const scroll = el.scrollTop;
@@ -89,11 +111,10 @@ export class SyncSettingTab extends SettingTab {
         }),
       );
 
-    if (s.status !== "locked")
-      new Setting(el)
-        .setName("Sync passphrase")
-        .setDesc("Forgot it or want a new one? Change it here. This computer has your key, so you don't need the old passphrase and your synced notes stay as they are.")
-        .addButton((b) => b.setButtonText("Change passphrase").onClick(() => new ChangePassphraseModal(this.app, this.client).open()));
+    new Setting(el)
+      .setName("Sync passphrase")
+      .setDesc("Forgot it or want a new one? Change it here without the old one. Your synced notes stay as they are.")
+      .addButton((b) => b.setButtonText("Change passphrase").onClick(() => new ChangePassphraseModal(this.app, this.client).open()));
 
     const status = new Setting(el).setName("Sync status").setDesc(statusLine(s));
     status.settingEl.addClass("sync-status-setting");
@@ -177,6 +198,10 @@ export class SyncSettingTab extends SettingTab {
       .setName("Sync")
       .setDesc("Off. Nothing from this vault is uploaded. Your notes stay on this computer.")
       .addButton((b) => b.setButtonText("Turn on sync").setCta().onClick(() => new TurnOnSyncModal(this.app, this.client).open()));
+    new Setting(el)
+      .setName("Sync passphrase")
+      .setDesc("Forgot it or want a new one? Change it without the old one on a computer that has your sync key.")
+      .addButton((b) => b.setButtonText("Change passphrase").onClick(() => new ChangePassphraseModal(this.app, this.client).open()));
     for (const t of SYNC_EXPLAINER) el.createEl("p", { cls: "setting-item-description sync-intro", text: t });
     el.createEl("p", { cls: "setting-item-description sync-intro", text: FORGET_WARNING });
   }
