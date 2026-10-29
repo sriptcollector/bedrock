@@ -6,7 +6,8 @@ export const IMAGE_EXTS = ["bmp", "png", "jpg", "jpeg", "gif", "svg", "webp", "a
 export const AUDIO_EXTS = ["mp3", "wav", "m4a", "3gp", "flac", "ogg", "oga", "opus"];
 export const VIDEO_EXTS = ["mp4", "webm", "ogv", "mov", "mkv"];
 const ALWAYS = new Set(["md", "canvas", "base"]);
-const CONFIG = ".obsidian";
+/** Obsidian's default config folder; a vault can use another (Settings › Files › Override config folder). */
+export const DEFAULT_CONFIG_DIR = ".obsidian";
 
 function ext(p: string): string {
   const name = p.slice(p.lastIndexOf("/") + 1);
@@ -18,11 +19,12 @@ function normFolder(f: string): string {
   return f.replace(/\\/g, "/").replace(/^\/+|\/+$/g, "").toLowerCase();
 }
 
-/** Which settings category a path inside .obsidian/ belongs to (null = not a config path). */
-export function configCategory(p: string): keyof SyncSettings["config"] | null {
+/** Which settings category a path inside the config folder belongs to (null = not a config path). */
+export function configCategory(p: string, configDir = DEFAULT_CONFIG_DIR): keyof SyncSettings["config"] | null {
   const low = p.toLowerCase();
-  if (low !== CONFIG && !low.startsWith(CONFIG + "/")) return null;
-  const rest = low.slice(CONFIG.length + 1);
+  const dir = configDir.toLowerCase();
+  if (low !== dir && !low.startsWith(dir + "/")) return null;
+  const rest = low.slice(dir.length + 1);
   if (!rest) return null; // the folder itself
   if (rest === "app.json" || rest === "types.json") return "app";
   if (rest === "appearance.json") return "appearance";
@@ -35,7 +37,7 @@ export function configCategory(p: string): keyof SyncSettings["config"] | null {
 }
 
 /** Returns the exclude rule for the engine, or undefined when everything syncs. */
-export function excludeRule(s: SyncSettings): ((path: string) => boolean) | undefined {
+export function excludeRule(s: SyncSettings, configDir = DEFAULT_CONFIG_DIR): ((path: string) => boolean) | undefined {
   const folders = s.excludedFolders.map(normFolder).filter(Boolean);
   const off = new Set<string>();
   if (!s.images) IMAGE_EXTS.forEach((e) => off.add(e));
@@ -48,7 +50,7 @@ export function excludeRule(s: SyncSettings): ((path: string) => boolean) | unde
   return (p: string) => {
     const low = p.toLowerCase();
     for (const f of folders) if (low === f || low.startsWith(f + "/")) return true;
-    const cat = configCategory(p);
+    const cat = configCategory(p, configDir);
     if (cat) return !s.config[cat];
     const e = ext(p);
     if (!e) {

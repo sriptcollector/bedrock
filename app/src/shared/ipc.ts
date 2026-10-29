@@ -23,6 +23,7 @@ export const IPC = {
   appIcon: "bedrock:app-icon", // "get" | "choose" | "reset" -> has custom icon (Settings › Appearance › Custom app icon)
   webviewerCall: "bedrock:webviewer-call", // (op, arg): web viewer settings shared by all vaults, ad blocker, clear data
   agentResponse: "bedrock:agent-response", // renderer -> main (send): {id, ok, value | error}
+  flushedPendingSaves: "bedrock:flushed-pending-saves", // renderer -> main (send): answer to flushPendingSaves
   // main -> renderer (send)
   windowStateChanged: "bedrock:window-state-changed",
   openPath: "bedrock:open-path",
@@ -31,6 +32,7 @@ export const IPC = {
   syncEvent: "bedrock:sync-event", // SyncUiEvent
   webviewerOpenUrl: "bedrock:webviewer-open-url", // a page in a web viewer opened a pop-up: open it in a new tab
   agentRequest: "bedrock:agent-request", // {id, op, args}: an agent write/open in the main vault window
+  flushPendingSaves: "bedrock:flush-pending-saves", // window closing / app quitting: write unsaved edits now
 } as const;
 
 export interface BootInfo {

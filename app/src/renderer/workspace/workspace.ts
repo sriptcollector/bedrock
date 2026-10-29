@@ -19,6 +19,7 @@ import type { View, ViewState } from "./view";
 import { PlaceholderView } from "../views/placeholder";
 import { WorkspaceFloating, WorkspaceWindow, type WindowGeometry } from "./popout";
 import { parseLinktext } from "../../core/links";
+import { isAccessError, VaultAccessError } from "../../core/scan";
 
 export type PaneType = "tab" | "split" | "window";
 
@@ -42,6 +43,7 @@ export class Workspace extends Events {
   private lastActiveFile: TFile | null = null;
   private saving = false;
   private loadingLayout = false;
+  private layoutUnreadable = false;
   disableSave = false;
 
   constructor(app: any, public viewRegistry: ViewRegistry) {
@@ -459,7 +461,7 @@ export class Workspace extends Events {
   }
 
   async saveLayout(): Promise<void> {
-    if (this.saving || this.disableSave || !this.layoutReady) return;
+    if (this.saving || this.disableSave || this.layoutUnreadable || !this.layoutReady) return;
     this.saving = true;
     try {
       await this.app.vault.adapter.write(this.layoutPath(), JSON.stringify(this.getLayout(), null, 2));
@@ -472,10 +474,25 @@ export class Workspace extends Events {
 
   async loadLayout(): Promise<void> {
     let layout: any = null;
+    let text: string | null = null;
     try {
-      layout = JSON.parse(await this.app.vault.adapter.read(this.layoutPath()));
-    } catch {
-      layout = null;
+      text = await this.app.vault.adapter.read(this.layoutPath());
+    } catch (e: any) {
+      // Not allowed to read the vault: a blocking screen, not an empty default layout.
+      if (isAccessError(e)) throw new VaultAccessError(e);
+      if (e?.code !== "ENOENT") {
+        console.error("Could not read workspace layout", e);
+        this.layoutUnreadable = true; // never overwrite a layout we couldn't read
+      }
+    }
+    if (text !== null) {
+      try {
+        layout = JSON.parse(text);
+      } catch (e) {
+        // Keep the broken file next to the new one before the default layout replaces it.
+        console.error("Workspace layout isn't valid JSON", e);
+        await this.app.vault.adapter.write(this.layoutPath() + ".bak", text).catch(console.error);
+      }
     }
     await this.changeLayout(layout ?? this.defaultLayout());
   }

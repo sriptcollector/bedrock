@@ -1,22 +1,61 @@
 // Vault windows. The main window shows the one vault; "Open another folder as vault" opens extra
 // windows. Frame: frameless on Windows/Linux (our own title bar with min/max/close, drawn by the
 // renderer), hidden-inset traffic lights on macOS.
-import { app, BrowserWindow, screen, shell } from "electron";
+import { app, BrowserWindow, ipcMain, screen, shell } from "electron";
 import fs from "node:fs";
 import path from "node:path";
 import { IPC } from "../shared/ipc";
 import { BRAND } from "../shared/brand";
-import { popoutWindowOptions, registerPopout, readAppSettings } from "./settings-host";
+import { closePopoutsOf, popoutWindowOptions, registerPopout, readAppSettings } from "./settings-host";
 
 export interface VaultWindow {
   win: BrowserWindow;
   vaultPath: string;
   isMain: boolean;
   openFile?: string;
+  /** Pending saves were written (closing / quitting); the next close goes through. */
+  flushed?: boolean;
 }
 
 export const vaultWindows = new Map<number, VaultWindow>();
 const isMac = process.platform === "darwin";
+const FLUSH_TIMEOUT_MS = 3000;
+const flushes = new Map<VaultWindow, Promise<void>>();
+
+/** Ask a vault window to write its pending saves; resolves on its answer or after 3 s. */
+export function flushWindow(v: VaultWindow): Promise<void> {
+  if (v.flushed || v.win.isDestroyed()) return Promise.resolve();
+  let p = flushes.get(v);
+  if (!p) {
+    p = new Promise<void>((resolve) => {
+      const wc = v.win.webContents;
+      const done = () => {
+        clearTimeout(timer);
+        ipcMain.removeListener(IPC.flushedPendingSaves, onAnswer);
+        flushes.delete(v);
+        v.flushed = true;
+        resolve();
+      };
+      const onAnswer = (e: Electron.IpcMainEvent) => {
+        if (e.sender === wc) done();
+      };
+      const timer = setTimeout(done, FLUSH_TIMEOUT_MS);
+      ipcMain.on(IPC.flushedPendingSaves, onAnswer);
+      try {
+        wc.send(IPC.flushPendingSaves);
+      } catch {
+        done();
+      }
+    });
+    flushes.set(v, p);
+  }
+  return p;
+}
+
+/** Before quitting or relaunching: every vault window writes its pending saves. */
+export function flushAllWindows(): Promise<void> {
+  return Promise.all([...vaultWindows.values()].map(flushWindow)).then(() => undefined);
+}
 
 interface Bounds {
   x?: number;
@@ -120,9 +159,20 @@ export function createVaultWindow(opts: { vaultPath: string; isMain: boolean; sh
     win.webContents.send(IPC.windowStateChanged, { maximized: win.isMaximized(), fullscreen: win.isFullScreen(), focused: win.isFocused() });
   };
   for (const ev of ["maximize", "unmaximize", "enter-full-screen", "leave-full-screen", "focus", "blur"] as const) win.on(ev as any, sendState);
-  win.on("close", () => saveBounds(key, win));
+  // Unsaved edits are written before the window goes: hold the close until the renderer answers.
+  win.on("close", (e) => {
+    saveBounds(key, win);
+    if (entry.flushed || win.webContents.isCrashed()) return;
+    e.preventDefault();
+    void flushWindow(entry).then(() => {
+      if (!win.isDestroyed()) win.close();
+    });
+  });
   const id = win.webContents.id;
-  win.on("closed", () => vaultWindows.delete(id));
+  win.on("closed", () => {
+    vaultWindows.delete(id);
+    closePopoutsOf(id); // its settings windows go too, so the app can quit
+  });
 
   // Links open in the browser, never inside the app window.
   win.webContents.setWindowOpenHandler(({ url, frameName, features }) => {

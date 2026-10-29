@@ -4,6 +4,7 @@ import path from "node:path";
 import os from "node:os";
 import type { CachedMetadata } from "obsidian";
 import { parseMetadata } from "./parse";
+import { isAccessErrorCode } from "../shared/vault-access";
 
 export interface ScannedEntry {
   path: string; // vault-relative, forward slashes
@@ -23,6 +24,17 @@ export interface IndexedFile {
   error?: string;
 }
 
+/** The OS refused access (macOS privacy settings, file permissions), as opposed to "not there". */
+export const isAccessError = isAccessErrorCode;
+
+/** The vault folder can't be read at all: the app shows a blocking screen instead of an empty vault. */
+export class VaultAccessError extends Error {
+  code = "VAULT_ACCESS";
+  constructor(public reason?: any) {
+    super("The app isn't allowed to read the vault folder.");
+  }
+}
+
 /** Files and folders in a vault, skipping dot-files/folders (.obsidian, .git, .trash). */
 export async function scanVault(root: string): Promise<ScannedEntry[]> {
   const out: ScannedEntry[] = [];
@@ -30,7 +42,9 @@ export async function scanVault(root: string): Promise<ScannedEntry[]> {
     let ents: fs.Dirent[];
     try {
       ents = await fs.promises.readdir(rel ? path.join(root, rel) : root, { withFileTypes: true });
-    } catch {
+    } catch (e) {
+      // An unreadable vault root must not look like an empty vault.
+      if (!rel && isAccessError(e)) throw new VaultAccessError(e);
       return;
     }
     const subs: Promise<void>[] = [];

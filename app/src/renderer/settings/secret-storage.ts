@@ -11,6 +11,8 @@ export class SecretStorage extends Events {
   private secrets: Record<string, string> = {};
   private meta: Record<string, { lastAccess?: number }> = {};
   available = false;
+  /** Saved secrets exist but couldn't be decrypted: the stored blob is kept as it is, never replaced. */
+  locked = false;
   private saving: Promise<void> = Promise.resolve();
 
   constructor(private app: any) {
@@ -28,11 +30,15 @@ export class SecretStorage extends Events {
       const blob = this.app.loadLocalStorage("secrets");
       if (this.available && blob) {
         const plain = await ipcRenderer.invoke(SETTINGS_IPC.secretsDecrypt, blob);
-        this.secrets = plain ? JSON.parse(plain) : {};
+        if (!plain) throw new Error("decryption failed");
+        this.secrets = JSON.parse(plain);
       }
     } catch (e) {
+      // Keep the blob: the OS key store may be unavailable right now (a new signature after an
+      // update asks again), and overwriting it would lose every saved secret for good.
       console.error("Couldn't read saved secrets", e);
       this.secrets = {};
+      this.locked = !!this.app.loadLocalStorage("secrets");
     }
   }
 
@@ -42,6 +48,10 @@ export class SecretStorage extends Events {
 
   validateId(id: string): boolean {
     return typeof id === "string" && ID_RE.test(id);
+  }
+
+  private assertUnlocked(): void {
+    if (this.locked) throw new Error("Saved secrets couldn't be unlocked on this computer, so they can't be changed right now. Restart the app and allow access to the keychain if asked.");
   }
 
   private persist(): void {
@@ -56,6 +66,7 @@ export class SecretStorage extends Events {
   setSecret(id: string, secret: string): void {
     if (!this.available) throw new Error("Secure storage isn't available on this computer.");
     if (!this.validateId(id)) throw new Error("Secret names can only use lowercase letters, numbers and dashes.");
+    this.assertUnlocked();
     this.secrets[id] = String(secret);
     this.meta[id] = this.meta[id] ?? {};
     this.persist();
@@ -79,6 +90,7 @@ export class SecretStorage extends Events {
     return Object.keys(this.secrets).sort();
   }
   deleteSecret(id: string): void {
+    this.assertUnlocked();
     delete this.secrets[id];
     delete this.meta[id];
     this.persist();

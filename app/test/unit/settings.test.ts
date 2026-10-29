@@ -86,6 +86,63 @@ describe("vault config (app.json / appearance.json)", () => {
   });
 });
 
+describe("vault config read errors", () => {
+  // An adapter whose reads fail the way macOS fails them when Documents access is denied.
+  const failingAdapter = (files: Record<string, string | Error>) => {
+    const writes: Record<string, string> = {};
+    const adapter: any = {
+      getName: () => "T",
+      read: async (p: string) => {
+        const f = files[p];
+        if (f === undefined) throw Object.assign(new Error("ENOENT"), { code: "ENOENT" });
+        if (f instanceof Error) throw f;
+        return f;
+      },
+      write: async (p: string, d: string) => void (writes[p] = d),
+      exists: async (p: string) => p in files,
+    };
+    return { adapter, writes };
+  };
+  const eperm = () => Object.assign(new Error("operation not permitted"), { code: "EPERM" });
+
+  it("treats only a missing file as empty", async () => {
+    const { adapter, writes } = failingAdapter({});
+    const v = new Vault(adapter);
+    await v.loadConfig();
+    expect(v.unreadableConfig.size).toBe(0);
+    v.setConfig("showLineNumber", true);
+    await v.flushConfig();
+    expect(JSON.parse(writes[".obsidian/app.json"])).toEqual({ showLineNumber: true });
+  });
+
+  it("never writes back a config file it wasn't allowed to read", async () => {
+    const { adapter, writes } = failingAdapter({ ".obsidian/app.json": eperm(), ".obsidian/appearance.json": eperm(), ".obsidian/hotkeys.json": eperm() });
+    const v = new Vault(adapter);
+    await v.loadConfig();
+    expect([...v.unreadableConfig].sort()).toEqual(["app", "appearance"]);
+    v.setConfig("accentColor", "#ff0000");
+    v.setConfig("showLineNumber", true);
+    await v.flushConfig();
+    expect(v.getConfig("accentColor")).toBe("#ff0000"); // works for this session
+    expect(await v.readConfigJson("hotkeys")).toBeNull();
+    await v.writeConfigJson("hotkeys", {});
+    expect(writes).toEqual({});
+  });
+
+  it("keeps a copy of an invalid file and doesn't overwrite it", async () => {
+    const { adapter, writes } = failingAdapter({ ".obsidian/appearance.json": '{"accentColor": "#ff0000",' });
+    const v = new Vault(adapter);
+    await v.loadConfig();
+    expect(v.unreadableConfig.has("appearance")).toBe(true);
+    expect(writes[".obsidian/appearance.json.bak"]).toBe('{"accentColor": "#ff0000",');
+    v.setConfig("theme", "obsidian");
+    v.setConfig("showLineNumber", true);
+    await v.flushConfig();
+    expect(writes[".obsidian/appearance.json"]).toBeUndefined();
+    expect(JSON.parse(writes[".obsidian/app.json"])).toEqual({ showLineNumber: true });
+  });
+});
+
 describe("core plugins (core-plugins.json)", () => {
   const fakeApp = (d: string) => {
     const vault = new Vault(new FileSystemAdapter(d));
@@ -236,6 +293,17 @@ describe("appearance helpers", () => {
   it("derives accent HSL and quotes font names", () => {
     expect(hexToHsl("#8a5cf5")).toEqual({ h: 258, s: 88, l: 66 });
     expect(hexToHsl("nope")).toBeNull();
+    // Every way an accent can be written gives the same color (never falls back to the default).
+    expect(hexToHsl("#ff0000")).toEqual({ h: 0, s: 100, l: 50 });
+    expect(hexToHsl("#f00")).toEqual({ h: 0, s: 100, l: 50 });
+    expect(hexToHsl("#ff0000cc")).toEqual({ h: 0, s: 100, l: 50 });
+    expect(hexToHsl("rgb(255, 0, 0)")).toEqual({ h: 0, s: 100, l: 50 });
+    expect(hexToHsl("rgba(255,0,0,0.5)")).toEqual({ h: 0, s: 100, l: 50 });
+    expect(hexToHsl("rgb(255 0 0 / 50%)")).toEqual({ h: 0, s: 100, l: 50 });
+    expect(hexToHsl("RGB(100%, 0%, 0%)")).toEqual({ h: 0, s: 100, l: 50 });
+    expect(hexToHsl("#f00f")).toEqual({ h: 0, s: 100, l: 50 });
+    expect(hexToHsl("#ff000")).toBeNull();
+    expect(hexToHsl("rgb(255, 0)")).toBeNull();
     expect(quoteFonts("Segoe UI, Arial, 'My Font'")).toBe('"Segoe UI", Arial, \'My Font\'');
   });
   it("maps the attachment folder setting", () => {

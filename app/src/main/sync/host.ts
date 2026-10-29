@@ -52,7 +52,7 @@ import {
   type SyncUiStatus,
   type SyncUsage,
 } from "../../shared/sync";
-import { excludeRule } from "./selective";
+import { DEFAULT_CONFIG_DIR, excludeRule } from "./selective";
 import { keychainDelete, keychainGet, keychainSet } from "./keychain";
 import { OLD_WELCOME_NOTES, WELCOME_NOTE } from "../vaults";
 
@@ -118,6 +118,7 @@ export class SyncHost {
   private previousKeys: Uint8Array[] = [];
   /** Status line while the synced data moves to a new key. */
   private rotating: string | null = null;
+  private configDir = DEFAULT_CONFIG_DIR;
 
   constructor(o: SyncHostOptions) {
     this.vaultPath = path.resolve(o.vaultPath);
@@ -253,7 +254,7 @@ export class SyncHost {
       getVaultKey: () => this.vaultKey(),
       deviceId: this.deviceId(),
       deviceName: this.deviceName(),
-      exclude: excludeRule(this.settings),
+      exclude: excludeRule(this.settings, this.configDir),
       // The editor already waits for 2 s of quiet before it saves, so the engine needs only a short
       // pause after a save (versions still can't pile up faster than the editor saves).
       debounceMs: process.env.BEDROCK_SYNC_DEBOUNCE_MS ? Number(process.env.BEDROCK_SYNC_DEBOUNCE_MS) : 400,
@@ -605,6 +606,15 @@ export class SyncHost {
         return this.snapshot();
       case "setSettings":
         return this.setSettings(a[0] as Partial<SyncSettings>);
+      case "setConfigDir": {
+        // The vault's config folder (".obsidian" unless overridden), for the settings toggles.
+        const dir = String(a[0] ?? "");
+        if (/^\.[^/\\]+$/.test(dir) && dir !== this.configDir) {
+          this.configDir = dir;
+          this.engine?.setExclude(excludeRule(this.settings, dir));
+        }
+        return true;
+      }
       case "usage": {
         this.usage = await this.needEngine().usage();
         this.pushUpdate();
@@ -672,7 +682,7 @@ export class SyncHost {
     } else if (patch.deviceName !== undefined && patch.deviceName !== before.deviceName) {
       await this.serial(() => this.restartEngine());
     } else {
-      this.engine?.setExclude(excludeRule(next));
+      this.engine?.setExclude(excludeRule(next, this.configDir));
     }
     this.pushUpdate();
     return this.snapshot();

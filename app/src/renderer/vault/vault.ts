@@ -51,14 +51,39 @@ export class Vault extends Events {
   /** Raw contents of the two files (unknown keys are kept and written back untouched). */
   private configFiles: { app: Record<string, any>; appearance: Record<string, any> } = { app: {}, appearance: {} };
 
+  /**
+   * Config files (`app`, `appearance`, `hotkeys`...) that exist but couldn't be read or parsed.
+   * They are never written back this session, so a permission problem or a half-written file can't
+   * be replaced by defaults. A file that didn't parse is also copied to `<name>.json.bak` first.
+   */
+  unreadableConfig = new Set<string>();
+
+  /** Read `.obsidian/<name>.json`: the parsed value, undefined when the file doesn't exist, null when unreadable. */
+  private async readConfigFile(name: string): Promise<any> {
+    const p = `${this.configDir}/${name}.json`;
+    let text: string;
+    try {
+      text = await this.adapter.read(p);
+    } catch (e: any) {
+      if (e?.code === "ENOENT") return undefined;
+      console.error(`Couldn't read ${p}`, e);
+      this.unreadableConfig.add(name);
+      return null;
+    }
+    try {
+      return JSON.parse(text);
+    } catch (e) {
+      console.error(`${p} isn't valid JSON`, e);
+      this.unreadableConfig.add(name);
+      await this.adapter.write(`${p}.bak`, text).catch(console.error);
+      return null;
+    }
+  }
+
   async loadConfig(): Promise<void> {
-    const read = async (name: string) => {
-      try {
-        const j = JSON.parse(await this.adapter.read(`${this.configDir}/${name}.json`));
-        return j && typeof j === "object" && !Array.isArray(j) ? j : {};
-      } catch {
-        return {};
-      }
+    const read = async (name: "app" | "appearance") => {
+      const j = await this.readConfigFile(name);
+      return j && typeof j === "object" && !Array.isArray(j) ? j : {};
     };
     this.configFiles = { app: await read("app"), appearance: await read("appearance") };
     this.config = { ...this.configFiles.app, ...this.configFiles.appearance };
@@ -66,13 +91,10 @@ export class Vault extends Events {
 
   /** Read a JSON file in the config folder (`.obsidian/<name>.json`); null when missing or invalid. */
   async readConfigJson(name: string): Promise<any> {
-    try {
-      return JSON.parse(await this.adapter.read(`${this.configDir}/${name}.json`));
-    } catch {
-      return null;
-    }
+    return (await this.readConfigFile(name)) ?? null;
   }
   async writeConfigJson(name: string, data: any): Promise<void> {
+    if (this.unreadableConfig.has(name)) return console.warn(`Not writing ${this.configDir}/${name}.json: it couldn't be read.`);
     await this.adapter.write(`${this.configDir}/${name}.json`, JSON.stringify(data, null, 2));
   }
 
@@ -154,6 +176,7 @@ export class Vault extends Events {
     }
     this.trigger("config-changed", key, value);
     if (JSON.stringify(file) === before) return; // nothing changed on disk
+    if (this.unreadableConfig.has(which)) return; // this session only: never overwrite a file we couldn't read
     this.dirtyConfig.add(which);
     clearTimeout(this.configSaveTimer);
     this.configSaveTimer = setTimeout(() => this.flushConfig(), 300);
@@ -165,7 +188,7 @@ export class Vault extends Events {
     clearTimeout(this.configSaveTimer);
     const files = [...this.dirtyConfig];
     this.dirtyConfig.clear();
-    for (const f of files) await this.adapter.write(`${this.configDir}/${f}.json`, JSON.stringify(this.configFiles[f], null, 2)).catch(console.error);
+    for (const f of files) if (!this.unreadableConfig.has(f)) await this.adapter.write(`${this.configDir}/${f}.json`, JSON.stringify(this.configFiles[f], null, 2)).catch(console.error);
   }
 
   // ---------- tree ----------

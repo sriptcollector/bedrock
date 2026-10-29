@@ -87,5 +87,9 @@ describe("selective sync rule", () => {
     expect(excludeRule(s({ config: { communityPlugins: true, communityPluginData: true } as any }))).toBeUndefined();
     expect(configCategory(".obsidian/daily-notes.json")).toBe("corePluginSettings");
     expect(configCategory("Notes/.obsidian.md")).toBe(null);
+    // A vault with its own config folder (Settings › Files › Override config folder).
+    expect(configCategory(".config/hotkeys.json", ".config")).toBe("hotkeys");
+    expect(configCategory(".obsidian/hotkeys.json", ".config")).toBe(null);
+    expect(excludeRule(s({ config: { hotkeys: false } as any }), ".config")!(".config/hotkeys.json")).toBe(true);
   });
 });

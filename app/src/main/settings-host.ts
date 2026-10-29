@@ -106,6 +106,11 @@ export function registerPopout(opener: WebContents, frameName: string, win: Brow
   win.webContents.on("will-navigate", (e) => e.preventDefault());
 }
 
+/** The vault window closed: close its popouts too (they would keep the app from quitting). */
+export function closePopoutsOf(openerId: number): void {
+  for (const [key, w] of popouts) if (key.startsWith(`${openerId}:`) && !w.isDestroyed()) w.close();
+}
+
 export function registerSettingsIpc(): void {
   ipcMain.handle(SETTINGS_IPC.popoutControl, (e, frameName: string, action: string) => {
     const w = popouts.get(`${e.sender.id}:${frameName}`);
@@ -134,7 +139,10 @@ export function registerSettingsIpc(): void {
     writeAppSettings(s);
     return readAppSettings();
   });
-  ipcMain.handle(SETTINGS_IPC.relaunch, () => {
+  ipcMain.handle(SETTINGS_IPC.relaunch, async () => {
+    // app.exit skips before-quit, so write unsaved edits here first.
+    const { flushAllWindows } = await import("./windows");
+    await flushAllWindows();
     app.relaunch();
     app.exit(0);
   });

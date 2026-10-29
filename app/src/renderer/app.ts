@@ -39,7 +39,7 @@ import { mountOnboarding } from "./onboarding";
 import { mountShell } from "./shell";
 import { scanVault } from "../core/scan";
 import type { WorkspaceLeaf } from "./workspace/leaf";
-import type { ViewState } from "./workspace/view";
+import { TextFileView, type ViewState } from "./workspace/view";
 
 export interface NativeBridge {
   invoke(channel: string, ...args: any[]): Promise<any>;
@@ -175,6 +175,11 @@ export class App {
     await this.workspace.loadLayout();
     this.workspace.markLayoutReady();
     const tLayout = performance.now();
+    const unreadable = [...this.vault.unreadableConfig];
+    if (unreadable.length) {
+      const files = unreadable.map((n) => `${this.vault.configDir}/${n}.json`).join(", ");
+      new Notice(`Couldn't read ${files}. Those settings are at their defaults for now, and ${BRAND.displayName} won't save over the file${unreadable.length > 1 ? "s" : ""}.`, 0);
+    }
     void afterLayoutSettingsFeatures(this);
     this.watcher.start();
     mountSyncUi(this);
@@ -208,6 +213,17 @@ export class App {
         })(),
       });
     }
+  }
+
+  /** Write everything still waiting to be saved: open notes, app.json/appearance.json, the layout. */
+  async flushPendingSaves(): Promise<void> {
+    const saves: Promise<void>[] = [];
+    this.workspace.iterateAllLeaves((leaf) => {
+      if (leaf.view instanceof TextFileView) saves.push(leaf.view.save().catch(console.error));
+    });
+    await Promise.all(saves);
+    await this.vault.flushConfig().catch(console.error);
+    await this.workspace.saveLayout().catch(console.error);
   }
 
   distDir(): string {

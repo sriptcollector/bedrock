@@ -66,7 +66,16 @@ export function ensureMainVault(): string {
   const reg = readRegistry();
   const dir = reg.main;
   // Fresh = no folder yet, or a first run that was stopped half-way (only an empty .obsidian).
-  const fresh = !fs.existsSync(dir) || isUnfinishedFirstRun(dir);
+  // Only "not there" counts as no folder: a folder we may not read (macOS privacy settings) throws,
+  // so a welcome note is never written over a vault that exists.
+  let exists = true;
+  try {
+    fs.statSync(dir);
+  } catch (e: any) {
+    if (e?.code !== "ENOENT") throw e;
+    exists = false;
+  }
+  const fresh = !exists || isUnfinishedFirstRun(dir);
   fs.mkdirSync(path.join(dir, ".obsidian"), { recursive: true });
   if (fresh) {
     fs.writeFileSync(path.join(dir, "Welcome.md"), WELCOME_NOTE);

@@ -9,7 +9,8 @@ import * as account from "./account";
 import * as hub from "./hub";
 import { startAutoUpdate, checkNow, registerUpdaterIpc } from "./updater";
 import { ensureMainVault, importIntoMain, isVaultFolder, readRegistry, rememberOther } from "./vaults";
-import { createVaultWindow, iconPath, vaultWindows } from "./windows";
+import { isAccessErrorCode, vaultAccessMessage } from "../shared/vault-access";
+import { createVaultWindow, flushAllWindows, iconPath, vaultWindows } from "./windows";
 import { runSelftest } from "./selftest";
 import { applyEarlyAppSettings, registerSettingsIpc, readAppSettings } from "./settings-host";
 import { startSync, stopSync } from "./sync";
@@ -95,6 +96,7 @@ function startApp(): void {
 
   const show = () => {
     if (!mainWin || mainWin.isDestroyed()) mainWin = openMain(true);
+    if (!mainWin) return;
     if (mainWin.isMinimized()) mainWin.restore();
     mainWin.show();
     mainWin.focus();
@@ -111,8 +113,25 @@ function startApp(): void {
     app.quit();
   };
 
-  function openMain(visible: boolean): BrowserWindow {
-    const vaultPath = devVault ? path.resolve(devVault) : ensureMainVault();
+  /** The one vault's path, or null after telling the person why it can't be opened. */
+  function mainVaultPathOrExplain(): string | null {
+    try {
+      return devVault ? path.resolve(devVault) : ensureMainVault();
+    } catch (e: any) {
+      log("error", `main vault: ${e?.code ?? ""} ${e?.message ?? e}`);
+      dialog.showMessageBoxSync({
+        type: "error",
+        title: BRAND.displayName,
+        message: isAccessErrorCode(e) ? vaultAccessMessage(process.platform) : `${BRAND.displayName} couldn't open your notes folder.`,
+        detail: `${readRegistry().main}\n${e?.message ?? e}`,
+      });
+      return null;
+    }
+  }
+
+  function openMain(visible: boolean): BrowserWindow | null {
+    const vaultPath = mainVaultPathOrExplain();
+    if (!vaultPath) return null;
     const win = createVaultWindow({ vaultPath, isMain: true, show: visible, openFile: hub.pathArg(process.argv) ?? undefined, smokeTest });
     // Closing the window really closes it; when it was the last one the app quits (window-all-closed).
     for (const ev of ["show", "hide", "minimize", "restore"] as const) win.on(ev as any, () => hub.writeState(win));
@@ -159,11 +178,14 @@ function startApp(): void {
     quitting = true;
     hub.removeState();
     if (!syncStopped) {
-      // let the sync engine save its state (a few ms) before the process exits
+      // Windows write unsaved edits first (each answers or times out after 3 s), then the sync
+      // engine saves its state (a few ms) before the process exits.
       e.preventDefault();
       syncStopped = true;
       const done = () => app.quit();
-      Promise.race([Promise.all([stopSync(), stopAgents()]), new Promise((r) => setTimeout(r, 3000))]).then(done, done);
+      flushAllWindows()
+        .then(() => Promise.race([Promise.all([stopSync(), stopAgents()]), new Promise((r) => setTimeout(r, 3000))]))
+        .then(done, done);
     }
   });
   // Every OS, macOS included: no windows left means the app quits (sync and agent access stop in before-quit).
@@ -205,6 +227,7 @@ function startApp(): void {
     }
     // Hidden-start flags (--hide, --hidden) are ignored: the app always opens with its window shown.
     mainWin = openMain(true);
+    if (!mainWin) return quit(); // the folder can't be opened: the dialog said what to do
     hub.writeState(mainWin);
     if (!smokeTest) registerProtocols();
     const firstUri = uriArg(process.argv);

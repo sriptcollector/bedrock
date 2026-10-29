@@ -45,7 +45,19 @@ export function mountOnboarding(app: any): void {
     icon: "sparkles",
     callback: () => openOnboarding(app),
   });
-  if (shouldAutoOpen(app)) setTimeout(() => openOnboarding(app), 400);
+  if (shouldAutoOpen(app))
+    void isExistingVault(app).then((existing) => {
+      // Someone who already has notes or a look set up (an Obsidian vault, an earlier install)
+      // doesn't get the first-run guide on top of them; it stays in the command palette.
+      if (existing) localStorage.setItem(DONE_KEY, isoDate());
+      else setTimeout(() => openOnboarding(app), 400);
+    });
+}
+
+/** The vault has notes beyond the welcome note, or an appearance.json. */
+export async function isExistingVault(app: any): Promise<boolean> {
+  if (app.vault.getMarkdownFiles().some((f: any) => f.path !== "Welcome.md")) return true;
+  return !!(await app.vault.adapter.exists(`${app.vault.configDir}/appearance.json`).catch(() => false));
 }
 
 function shouldAutoOpen(app: any): boolean {

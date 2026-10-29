@@ -3,6 +3,7 @@
 // the vault config (appearance.json keys, see Vault.APPEARANCE_KEYS) and only non-default values
 // are written, like Obsidian.
 import { Events } from "../api/events";
+import { isAccessError, VaultAccessError } from "../../core/scan";
 
 export const DEFAULT_ACCENT = "#8a5cf5";
 
@@ -101,7 +102,8 @@ export class CustomCss extends Events {
           this.themeManifests[name] = { name, dir: this.themesDir };
         }
       }
-    } catch {
+    } catch (e) {
+      if (isAccessError(e)) throw new VaultAccessError(e); // not allowed to read: don't pretend there are no themes
       /* none */
     }
     this.themes.sort((x, y) => x.localeCompare(y));
@@ -113,7 +115,8 @@ export class CustomCss extends Events {
         .filter((f: string) => f.toLowerCase().endsWith(".css"))
         .map((f: string) => f.split("/").pop()!.slice(0, -4))
         .sort((x: string, y: string) => x.localeCompare(y));
-    } catch {
+    } catch (e) {
+      if (isAccessError(e)) throw new VaultAccessError(e);
       this.snippets = [];
     }
   }
@@ -184,17 +187,13 @@ export class CustomCss extends Events {
     const name = this.theme;
     if (name) {
       const a = this.app.vault.adapter;
-      try {
-        this.themeEl.textContent = await a.read(`${this.themesDir}/${name}/theme.css`);
-      } catch {
+      // A missing theme falls back to the default look; a theme we may not read is an error.
+      for (const p of [`${this.themesDir}/${name}/theme.css`, `${this.themesDir}/${name}/obsidian.css`, `${this.themesDir}/${name}.css`]) {
         try {
-          this.themeEl.textContent = await a.read(`${this.themesDir}/${name}/obsidian.css`);
-        } catch {
-          try {
-            this.themeEl.textContent = await a.read(`${this.themesDir}/${name}.css`);
-          } catch {
-            /* missing theme: default look */
-          }
+          this.themeEl.textContent = await a.read(p);
+          break;
+        } catch (e) {
+          if (isAccessError(e)) throw new VaultAccessError(e);
         }
       }
     }
@@ -213,7 +212,8 @@ export class CustomCss extends Events {
         const el = document.head.createEl("style", { attr: { "data-snippet": s } });
         el.textContent = css;
         this.snippetEls.set(s, el);
-      } catch {
+      } catch (e) {
+        if (isAccessError(e)) throw new VaultAccessError(e);
         /* skip */
       }
     }
@@ -274,13 +274,11 @@ export function quoteFonts(v: string): string {
     .join(", ");
 }
 
-export function hexToHsl(hex: string): { h: number; s: number; l: number } | null {
-  const m = /^#?([0-9a-f]{6})$/i.exec(hex || "");
-  if (!m) return null;
-  const h = m[1];
-  const r = parseInt(h.slice(0, 2), 16) / 255,
-    g = parseInt(h.slice(2, 4), 16) / 255,
-    b = parseInt(h.slice(4, 6), 16) / 255;
+/** Accent color to HSL: #rgb, #rgba, #rrggbb, #rrggbbaa (alpha ignored) or rgb()/rgba(). */
+export function hexToHsl(color: string): { h: number; s: number; l: number } | null {
+  const rgb = parseRgb((color || "").trim());
+  if (!rgb) return null;
+  const [r, g, b] = rgb.map((v) => v / 255);
   const max = Math.max(r, g, b),
     min = Math.min(r, g, b);
   const l = (max + min) / 2;
@@ -293,4 +291,24 @@ export function hexToHsl(hex: string): { h: number; s: number; l: number } | nul
     hue *= 60;
   }
   return { h: Math.round(hue), s: Math.round(s * 100), l: Math.round(l * 100) };
+}
+
+function parseRgb(c: string): [number, number, number] | null {
+  const hex = /^#?([0-9a-f]{3,4}|[0-9a-f]{6}|[0-9a-f]{8})$/i.exec(c);
+  if (hex) {
+    let h = hex[1];
+    if (h.length <= 4) h = [...h].map((x) => x + x).join("");
+    return [parseInt(h.slice(0, 2), 16), parseInt(h.slice(2, 4), 16), parseInt(h.slice(4, 6), 16)];
+  }
+  // rgb(1, 2, 3) / rgba(1, 2, 3, 0.5) / rgb(1 2 3 / 50%), channels as numbers or percentages.
+  const fn = /^rgba?\(\s*([^)]*)\)$/i.exec(c);
+  if (!fn) return null;
+  const parts = fn[1].split(/\s*[,/]\s*|\s+/).filter(Boolean);
+  if (parts.length !== 3 && parts.length !== 4) return null;
+  const ch = parts.slice(0, 3).map((p) => {
+    const m = /^(\d+(?:\.\d+)?|\.\d+)(%?)$/.exec(p);
+    if (!m) return NaN;
+    return Math.min(255, Math.max(0, m[2] ? (Number(m[1]) * 255) / 100 : Number(m[1])));
+  });
+  return ch.every(Number.isFinite) ? (ch as [number, number, number]) : null;
 }

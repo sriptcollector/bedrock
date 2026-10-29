@@ -61,6 +61,7 @@ export function mountSyncUi(app: any): SyncStatusItem {
   const isMain = app.boot?.isMainVault !== false;
   const client = new SyncClient();
   (app as any).sync = client; // used by tests and plugins that want to read the status
+  if (isMain) void client.call("setConfigDir", app.vault.configDir).catch(() => {});
 
   let migrationShown = false;
   client.onChange((s) => {

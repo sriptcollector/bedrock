@@ -15,6 +15,8 @@ import * as CMLint from "@codemirror/lint";
 import { IPC, type BootInfo } from "../shared/ipc";
 import * as api from "./api";
 import { App } from "./app";
+import { VaultAccessError } from "../core/scan";
+import { vaultAccessMessage } from "../shared/vault-access";
 
 async function boot(): Promise<void> {
   const info: BootInfo = await ipcRenderer.invoke(IPC.bootInfo);
@@ -36,12 +38,27 @@ async function boot(): Promise<void> {
   const app = new App(info, () => api, shared);
   (window as any).app = app;
   (window as any).moment = api.moment;
+  // The window is closing or the app is quitting: write unsaved edits first, then tell main
+  // (it closes after the answer or 3 s). beforeunload covers reloads and anything main misses.
+  ipcRenderer.on(IPC.flushPendingSaves, () => {
+    void app.flushPendingSaves().finally(() => ipcRenderer.send(IPC.flushedPendingSaves));
+  });
+  window.addEventListener("beforeunload", () => void app.flushPendingSaves());
   try {
     await app.start();
   } catch (e: any) {
     console.error(e);
     document.body.empty();
     const box = document.body.createDiv("bedrock-fatal");
+    if (e instanceof VaultAccessError) {
+      // Never show defaults over a vault we may not read: nothing has been written, retry or reopen.
+      box.createEl("h2", { text: "Your notes folder can't be opened" });
+      box.createEl("p", { text: vaultAccessMessage(info.platform) });
+      box.createEl("p", { text: info.vaultPath, cls: "u-muted" });
+      const retry = box.createEl("button", { text: "Retry", cls: "mod-cta" });
+      retry.addEventListener("click", () => location.reload());
+      return;
+    }
     box.createEl("h2", { text: "Something went wrong opening your vault" });
     box.createEl("p", { text: String(e?.message ?? e) });
     box.createEl("p", { text: "Try restarting the app. If it keeps happening, the vault folder may not be readable." });
