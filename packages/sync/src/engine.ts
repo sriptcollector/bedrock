@@ -26,7 +26,7 @@ import {
 } from './crypto.js';
 import { isIgnored, TEMP_PREFIX, type IgnoreOptions } from './ignore.js';
 import { LiveClient, type WebSocketCtor } from './live.js';
-import { isTextPath, MAX_MERGE_BYTES, mergeFile } from './merge.js';
+import { isSettingsJson, isTextPath, MAX_MERGE_BYTES, mergeFile } from './merge.js';
 import { baseName, conflictPath, dirOf, isUnder, nfc, pathKey, safePath, toPosix } from './paths.js';
 import { isEmptyDir, scanPaths, statEntry, walk, type Entry } from './scanner.js';
 import { StateStore, type FileRecord } from './state.js';
@@ -1046,6 +1046,23 @@ export class SyncEngine extends EventEmitter {
         this.state.update(rec, { lp: target });
       }
       this.setSynced(rec, c, meta);
+      return 'ok';
+    }
+    if (other && other.v === 0 && !other.ld && other.kind === 'file' && pathKey(other.lp) === pathKey(target)) {
+      // A file with a different copy on the server that this computer never synced (first sync, or
+      // the sync history was reset by a key change). This computer's copy stays where it is and
+      // becomes the next version; the server's copy goes next to it, except for settings files,
+      // where it would only be an older look (accent, theme) dropped in as clutter.
+      this.state.remove(other.id);
+      const rec = { ...other, id: c.fileId };
+      this.state.put(rec);
+      this.setSynced(rec, c, meta);
+      if (!isSettingsJson(target)) {
+        const cp = conflictPath(target, meta.device ?? '', meta.mtime, (p) => this.taken(p));
+        const e = await this.downloadTo(c, meta, cp);
+        this.addConflictCopy(cp, e, meta.hash);
+        this.emit('conflict', { path: target, conflictPath: cp });
+      }
       return 'ok';
     }
     const final = await this.claimPath(target, c.fileId, meta);

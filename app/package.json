@@ -1,7 +1,7 @@
 {
   "name": "bedrock",
   "productName": "Bedrock",
-  "version": "0.1.5",
+  "version": "0.1.6",
   "private": true,
   "description": "Bedrock notes app: free, open-source, works with Obsidian vaults and plugins. Bedrock by Toolbay.",
   "license": "MIT",
