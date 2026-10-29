@@ -86,6 +86,9 @@ export class TurnOnSyncModal extends Modal {
         text: "Choose a new sync passphrase. The synced copy in your Toolbay account is erased and replaced with the notes on this computer, under a new key. Your other computers keep their files and ask for the new passphrase; their notes upload again when they sync.",
       });
       el.createEl("p", { text: "Nothing on any computer is deleted." });
+      el.createEl("p", {
+        text: "Is sync still working on another computer? Then you don't need to start over: on that computer, open Settings › Sync › Change passphrase. It sets a new passphrase and keeps the synced copy.",
+      });
     } else {
       el.createEl("p", { text: `Choose a sync passphrase: at least ${MIN} characters. A few unrelated words is easy to remember and hard to guess. You'll type it once on each of your computers.` });
     }
@@ -138,6 +141,58 @@ export class TurnOnSyncModal extends Modal {
       btn.disabled = false;
       btn.textContent = label;
     }
+  }
+}
+
+/**
+ * Settings › Sync › Change passphrase. Needs no old passphrase: this computer already holds the
+ * key, so only the lock changes. The synced copy stays; nothing re-uploads.
+ */
+export class ChangePassphraseModal extends Modal {
+  constructor(
+    app: any,
+    private client: SyncClient,
+  ) {
+    super(app);
+    this.modalEl.addClass("bedrock-sync-turn-on");
+  }
+
+  onOpen(): void {
+    this.setTitle("Change sync passphrase");
+    const el = this.contentEl;
+    el.createEl("p", {
+      text: "This computer already has your sync key, so you don't need the old passphrase. Your synced notes stay exactly as they are; only the passphrase that unlocks them changes.",
+    });
+    el.createEl("p", { text: "Your other computers keep syncing without asking. A new computer will ask for the new passphrase." });
+    el.createEl("p", { cls: "mod-warning", text: FORGET_WARNING });
+    const field = (label: string) => {
+      const row = el.createDiv("sync-passphrase-field");
+      row.createEl("label", { text: label });
+      return row.createEl("input", { type: "password", attr: { autocomplete: "new-password", spellcheck: "false", "aria-label": label } });
+    };
+    const pass = field("New sync passphrase");
+    const again = field("Type it again");
+    pass.focus();
+    const btns = this.modalEl.createDiv("modal-button-container");
+    const go = btns.createEl("button", { cls: "mod-cta", text: "Change passphrase" });
+    const run = async () => {
+      if (pass.value.normalize("NFKC").trim().length < MIN) return void new Notice(`Use at least ${MIN} characters for your sync passphrase.`);
+      if (pass.value !== again.value) return void new Notice("The two passphrases don't match.");
+      go.disabled = true;
+      go.textContent = "Working…";
+      try {
+        await this.client.changePassphrase(pass.value);
+        this.close();
+        new Notice("Sync passphrase changed. Your synced notes are unchanged.");
+      } catch (e: any) {
+        new Notice(e?.message ?? String(e), 8000);
+        go.disabled = false;
+        go.textContent = "Change passphrase";
+      }
+    };
+    go.addEventListener("click", run);
+    again.addEventListener("keydown", (e) => e.key === "Enter" && run());
+    btns.createEl("button", { text: "Cancel" }).addEventListener("click", () => this.close());
   }
 }
 

@@ -446,6 +446,25 @@ export class SyncHost {
     return this.snapshot();
   }
 
+  /**
+   * Changes the sync passphrase without the old one: this computer already holds the opened vault
+   * key, so it re-locks that same key with `passphrase`. The key and the synced copy stay as they
+   * are; other computers that hold the key keep syncing, new computers unlock with the new one.
+   */
+  private async changePassphrase(passphrase: string): Promise<SyncSnapshot> {
+    const problem = passphraseProblem(passphrase ?? "");
+    if (problem) throw new Error(problem);
+    const store = this.keyStore();
+    const current = await store.getWrapped();
+    const cached = b64key(keychainGet(KEYCHAIN_SERVICE, KEYCHAIN_ACCOUNT));
+    if (!current || !cached || keyCheckOf(cached) !== current.key.keyCheck)
+      throw new Error("This computer doesn't have your sync key. Change the passphrase on a computer where sync is working.");
+    const theirs = await store.putWrapped(await wrapVaultKey(cached, passphrase), current.version);
+    if (theirs) throw new Error("Your sync passphrase was changed on another computer a moment ago. Try again.");
+    this.addLog({ time: Date.now(), action: "info", path: "", message: "Changed the sync passphrase. The synced copy and its key are unchanged." });
+    return this.snapshot();
+  }
+
   private async turnOff(): Promise<SyncSnapshot> {
     this.settings.enabled = false;
     this.writeSettings();
@@ -588,6 +607,8 @@ export class SyncHost {
         return this.turnOn(a[0] as SyncTurnOnMode, a[1] as string | undefined);
       case "turnOff":
         return this.turnOff();
+      case "changePassphrase":
+        return this.changePassphrase(a[0] as string);
       case "dismissMigration":
         this.saveMigration({ noticePending: false });
         this.pushUpdate();

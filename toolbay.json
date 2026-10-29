@@ -4,7 +4,7 @@
   "name": "Bedrock",
   "tagline": "Obsidian was charging. So we made it free.",
   "description": "Obsidian was charging, so we made it free too, sync included. Stop paying for dumb shit. Bedrock notes app: write in plain Markdown files on your own computer with links, live preview, properties and plugins. Opens existing Obsidian vaults and plugins. Optional sync to your other computers through your Toolbay account: off until you turn it on, and locked with a passphrase you choose, so Toolbay can't read your notes. No account needed to use it offline, no limits, no telemetry.",
-  "version": "0.1.6",
+  "version": "0.1.7",
   "repo": "sriptcollector/bedrock",
   "identifier": "ai.toolbay.bedrock",
   "license": "MIT",
@@ -25,7 +25,7 @@
   ],
   "platforms": {
     "windows-x86_64": {
-      "asset": "Bedrock_0.1.6_x64-setup.exe",
+      "asset": "Bedrock_0.1.7_x64-setup.exe",
       "kind": "nsis",
       "silentArgs": [
         "/S"
@@ -34,12 +34,12 @@
       "uninstaller": "Uninstall Bedrock.exe"
     },
     "darwin-aarch64": {
-      "asset": "Bedrock_0.1.6_arm64.dmg",
+      "asset": "Bedrock_0.1.7_arm64.dmg",
       "kind": "dmg",
       "app": "Bedrock.app"
     },
     "darwin-x86_64": {
-      "asset": "Bedrock_0.1.6_x64.dmg",
+      "asset": "Bedrock_0.1.7_x64.dmg",
       "kind": "dmg",
       "app": "Bedrock.app"
     }

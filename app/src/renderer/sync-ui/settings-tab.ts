@@ -6,7 +6,7 @@ import { Setting, SettingTab } from "../ui/setting";
 import { Notice } from "../ui/notice";
 import { formatBytes, formatTime, type SyncClient } from "./client";
 import { ActivityLogModal, DeletedFilesModal, ExcludedFoldersModal } from "./modals";
-import { FORGET_WARNING, SYNC_EXPLAINER, TurnOnSyncModal } from "./turn-on";
+import { ChangePassphraseModal, FORGET_WARNING, SYNC_EXPLAINER, TurnOnSyncModal } from "./turn-on";
 import type { SyncConfigCategories, SyncSettings, SyncSnapshot } from "../../shared/sync";
 
 const IMAGE = "bmp, png, jpg, jpeg, gif, svg, webp, avif";
@@ -88,6 +88,12 @@ export class SyncSettingTab extends SettingTab {
           await this.client.turnOff().catch((e) => new Notice(e.message));
         }),
       );
+
+    if (s.status !== "locked")
+      new Setting(el)
+        .setName("Sync passphrase")
+        .setDesc("Forgot it or want a new one? Change it here. This computer has your key, so you don't need the old passphrase and your synced notes stay as they are.")
+        .addButton((b) => b.setButtonText("Change passphrase").onClick(() => new ChangePassphraseModal(this.app, this.client).open()));
 
     const status = new Setting(el).setName("Sync status").setDesc(statusLine(s));
     status.settingEl.addClass("sync-status-setting");

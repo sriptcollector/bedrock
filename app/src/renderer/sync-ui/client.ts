@@ -48,6 +48,7 @@ export class SyncClient {
   keyInfo = () => this.call<SyncKeyInfo>("keyInfo");
   turnOn = (mode: SyncTurnOnMode, passphrase?: string) => this.call<SyncSnapshot>("turnOn", mode, passphrase);
   turnOff = () => this.call<SyncSnapshot>("turnOff");
+  changePassphrase = (passphrase: string) => this.call<SyncSnapshot>("changePassphrase", passphrase);
   dismissMigration = () => this.call<SyncSnapshot>("dismissMigration");
   setSettings = (p: Partial<SyncSettings>) => this.call<SyncSnapshot>("setSettings", p);
   usage = () => this.call<SyncUsage>("usage");
