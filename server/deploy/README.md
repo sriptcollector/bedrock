@@ -11,6 +11,7 @@ longer used (breached 2026-10-21).
 | HTTPS | Caddy (Let's Encrypt), websockets pass through |
 | Service | `bedrock-sync` systemd unit, user `bedrock`, port 8080 on 127.0.0.1 |
 | Data | `/var/lib/bedrock-sync` on the VM's disk (`bedrock-sync`, 30 GB, kept if the VM is deleted): SQLite + encrypted chunks (disk backend, no S3/R2 keys) |
+| Backups | Snapshot schedule `bedrock-sync-daily`: one snapshot a day at 10:00 UTC, kept 14 days (kept even if the disk is deleted) |
 | Settings | `/etc/bedrock-sync/sync.env` (no secrets: tokens are checked against toolbay.ai) |
 | Releases | `gs://westward-apps-prod-bedrock-sync/release.tgz`, read by service account `bedrock-sync-run` |
 
