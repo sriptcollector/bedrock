@@ -14,11 +14,11 @@ curl localhost:8080/healthz
 npm test -w server                                   # or: cd server && npx vitest run
 ```
 
-## Deploy (Railway)
+## Deploy
 
-Docker build from the **repo root**: `docker build -f server/Dockerfile .`
-On Railway: root directory `/`, config file `server/railway.json`, a volume mounted at `/data`,
-one replica. Step-by-step setup is in `docs/SYNC.md` section 10.
+Production runs on a Google VM (`sync.toolbay.ai`): see [`deploy/README.md`](deploy/README.md).
+The Dockerfile still builds from the **repo root** (`docker build -f server/Dockerfile .`) for
+local or container use; the old Railway setup (`railway.json`) is no longer used.
 
 ## Environment variables
 
