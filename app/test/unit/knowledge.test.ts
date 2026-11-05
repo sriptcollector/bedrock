@@ -254,6 +254,15 @@ describe("update and log_result", () => {
     await expect(ops.update({ path: "alpha", fields: { revenue: "lots" } })).rejects.toMatchObject({ code: "bad_request" });
   });
 
+  it("ranks the other strategies when one note's properties are broken, and names it", async () => {
+    write(vault, "Growth/Plays/Broken.md", "---\nsummary: a: b: c\n---\nBroken.\n");
+    const before = read(vault, "Growth/Plays/Broken.md");
+    const r = await ops.logResult({ experiment: "Spring ads", strategy: "Video ads", revenue: 10, verdict: "worked" });
+    expect(r.notRanked).toEqual(["Growth/Plays/Broken.md"]);
+    expect(r.strategiesTop.map((s) => s.strategy)).toEqual(["Video ads"]);
+    expect(read(vault, "Growth/Plays/Broken.md")).toBe(before);
+  });
+
   it("makes the experiment, then ranks strategies by net money", async () => {
     const r = await ops.logResult({ experiment: "Spring ads", strategy: "Video ads", venture: "Alpha", revenue: 500, spent: 100, hours: 4, verdict: "worked", note: "Worth it" });
     expect(r.experiment).toBe("Growth/Tests/2026-03-04 Spring ads.md");

@@ -271,7 +271,10 @@ export class KnowledgeOps extends AgentOps {
     return { path: p, type, changed };
   }
 
-  /** Money ranks the strategies: recompute each strategy from its experiments. */
+  /**
+   * Money ranks the strategies: recompute each strategy from its experiments. A note whose properties
+   * can't be changed (broken YAML) is left alone and named in `skipped`, so one bad note can't stop the rest.
+   */
   async rerankStrategies() {
     await this.refresh(true);
     const { experiments, strategies } = this.profile;
@@ -283,7 +286,8 @@ export class KnowledgeOps extends AgentOps {
       if (!strategy) continue;
       exps.push({ strategy, revenue: Number(fm.revenue) || 0, spent: Number(fm.spent) || 0, hours: Number(fm.hours) || 0, done: !!fm.verdict && fm.verdict !== "running" });
     }
-    const out: { strategy: string; net: number; status: string }[] = [];
+    const ranking: { strategy: string; net: number; status: string }[] = [];
+    const skipped: string[] = [];
     for (const k of [...this.entries.keys()]) {
       if (!k.startsWith(strategies + "/") || !isMd(k) || k.endsWith("/_vault.md")) continue;
       const name = basename(k).replace(/\.md$/i, "");
@@ -294,10 +298,15 @@ export class KnowledgeOps extends AgentOps {
       const net = revenue - spent;
       const finished = mine.filter((e) => e.done).length;
       const status = net > 0 ? "working" : finished === 0 ? "testing" : finished === 1 ? "losing" : "dropped";
-      for (const [key, value] of Object.entries({ revenue, spent, hours, net, per_hour: hours ? Math.round((net / hours) * 100) / 100 : 0, experiments: mine.length, status })) await this.setProperty({ path: k, key, value });
-      out.push({ strategy: name, net, status });
+      try {
+        for (const [key, value] of Object.entries({ revenue, spent, hours, net, per_hour: hours ? Math.round((net / hours) * 100) / 100 : 0, experiments: mine.length, status })) await this.setProperty({ path: k, key, value });
+        ranking.push({ strategy: name, net, status });
+      } catch (e) {
+        if (!(e instanceof AgentError)) throw e;
+        skipped.push(k);
+      }
     }
-    return out.sort((x, y) => y.net - x.net);
+    return { ranking: ranking.sort((x, y) => y.net - x.net), skipped };
   }
 
   /** Record money and time from a marketing or growth test and re-rank the strategies. */
@@ -314,8 +323,8 @@ export class KnowledgeOps extends AgentOps {
     for (const k of ["strategy", "venture", "revenue", "spent", "hours", "leads", "verdict"] as const) if (a[k] !== undefined) fields[k] = a[k];
     if (a.verdict && a.verdict !== "running") fields.ended = day;
     const r = await this.update({ path: p, fields, log: a.note });
-    const ranking = await this.rerankStrategies();
-    return { experiment: r.path, strategiesTop: ranking.slice(0, 5) };
+    const { ranking, skipped } = await this.rerankStrategies();
+    return { experiment: r.path, strategiesTop: ranking.slice(0, 5), notRanked: skipped };
   }
 
   // ---------- remember and decide
