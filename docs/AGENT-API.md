@@ -140,7 +140,7 @@ It stays in the app data folder, never in the vault, and nothing it does leaves 
 | `get_context` | Everything the vault knows about a topic in one call: project, best notes, preferences, likes/dislikes, results, accounts, key names, past chats. REST: `GET /v1/context?topic=…` (brief form) |
 | `remember` | Files a fact in the right place: preference, like, dislike, result, account, project log line, or inbox. Refuses text that looks like a secret |
 | `update` | Changes typed fields on a project, strategy, experiment, account, preference or inbox note, and checks the values |
-| `log_result` | Records money, time and leads for an experiment and re-ranks the strategies by net money |
+| `log_result` | Records money, time and leads for an experiment and re-ranks the strategies by net money. Only the strategy it's about can change status; a strategy with no experiments isn't touched |
 | `decide` | Lists inbox items waiting on a decision, or records one |
 | `list_vaults`, `create_vault` | Portals: folders holding a `_vault.md` note. `search` and `list_notes` also take `vault` |
 

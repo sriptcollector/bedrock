@@ -256,11 +256,34 @@ describe("update and log_result", () => {
 
   it("ranks the other strategies when one note's properties are broken, and names it", async () => {
     write(vault, "Growth/Plays/Broken.md", "---\nsummary: a: b: c\n---\nBroken.\n");
+    write(vault, "Growth/Tests/Old.md", '---\ntype: experiment\nstrategy: "[[Broken]]"\nrevenue: 5\n---\n');
     const before = read(vault, "Growth/Plays/Broken.md");
     const r = await ops.logResult({ experiment: "Spring ads", strategy: "Video ads", revenue: 10, verdict: "worked" });
     expect(r.notRanked).toEqual(["Growth/Plays/Broken.md"]);
     expect(r.strategiesTop.map((s) => s.strategy)).toEqual(["Video ads"]);
     expect(read(vault, "Growth/Plays/Broken.md")).toBe(before);
+  });
+
+  it("leaves every other strategy's status alone, and doesn't touch notes with no experiments", async () => {
+    write(vault, "Growth/Plays/Untested.md", "---\nstatus: untested\n---\nNo tests yet.\n");
+    write(vault, "Growth/Plays/Collected.md", "---\nstatus: collected\n---\nHas an old test.\n");
+    write(vault, "Growth/Tests/Old.md", '---\ntype: experiment\nstrategy: "[[Collected]]"\nrevenue: 0\nspent: 25\nverdict: failed\n---\n');
+    const untested = read(vault, "Growth/Plays/Untested.md");
+    const r = await ops.logResult({ experiment: "Spring ads", strategy: "Video ads", revenue: 500, verdict: "worked" });
+    expect(read(vault, "Growth/Plays/Untested.md")).toBe(untested);
+    expect(r.strategiesTop.find((s) => s.strategy === "Untested")).toEqual({ strategy: "Untested", net: 0, status: "untested" });
+    const collected = read(vault, "Growth/Plays/Collected.md");
+    expect(collected).toContain("status: collected");
+    expect(collected).toContain("net: -25");
+    expect(read(vault, "Growth/Plays/Video ads.md")).toContain("status: working");
+  });
+
+  it("keeps a strategy's status while its experiment is still running, then moves it on a verdict", async () => {
+    write(vault, "Growth/Plays/Pending.md", "---\nstatus: specced\n---\nPlanned.\n");
+    await ops.logResult({ experiment: "Slow test", strategy: "Pending", spent: 10, verdict: "running" });
+    expect(read(vault, "Growth/Plays/Pending.md")).toContain("status: specced");
+    await ops.logResult({ experiment: "Slow test", verdict: "failed" });
+    expect(read(vault, "Growth/Plays/Pending.md")).toContain("status: losing");
   });
 
   it("makes the experiment, then ranks strategies by net money", async () => {

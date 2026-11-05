@@ -122,6 +122,7 @@ const FIELD_SCHEMAS: Record<string, Record<string, "string" | "number" | "date" 
 
 const SECRET_RE = /(sk-|sk_live|re_[A-Za-z0-9]{6,}_|ghp_|AKIA|password\s*[:=])/i;
 const UNSAFE_NAME_RE = /[\\/:*?"<>|#^[\]]/g;
+const strategyName = (v: unknown) => String(v ?? "").replace(/^\[\[|\]\]$/g, "").split("|")[0];
 const asLink = (v: unknown) => (/^\[\[/.test(String(v)) ? String(v) : `[[${v}]]`);
 
 export class KnowledgeOps extends AgentOps {
@@ -267,22 +268,27 @@ export class KnowledgeOps extends AgentOps {
       changed.push(k);
     }
     if (a.log) await this.addLogLine(p, "Log", `- ${this.day()} ${a.log}`);
-    if (type === "experiment" && changed.some((k) => ["revenue", "spent", "hours", "verdict"].includes(k))) await this.rerankStrategies();
+    if (type === "experiment" && changed.some((k) => ["revenue", "spent", "hours", "verdict"].includes(k))) {
+      const after = (await this.metaOf(p)).meta.frontmatter ?? {};
+      await this.rerankStrategies(strategyName((after as Record<string, unknown>).strategy));
+    }
     return { path: p, type, changed };
   }
 
   /**
-   * Money ranks the strategies: recompute each strategy from its experiments. A note whose properties
-   * can't be changed (broken YAML) is left alone and named in `skipped`, so one bad note can't stop the rest.
+   * Money ranks the strategies: total each strategy's experiments into its money fields. A strategy
+   * with no experiments isn't touched, and only `touched` (the strategy this result is about) can
+   * change status, so a status set by hand survives every other strategy's results. A note whose
+   * properties can't be changed (broken YAML) is left alone and named in `skipped`.
    */
-  async rerankStrategies() {
+  async rerankStrategies(touched?: string) {
     await this.refresh(true);
     const { experiments, strategies } = this.profile;
     const exps: { strategy: string; revenue: number; spent: number; hours: number; done: boolean }[] = [];
     for (const k of this.entries.keys()) {
       if (!k.startsWith(experiments + "/") || !isMd(k)) continue;
       const fm = ((await this.metaOf(k)).meta.frontmatter ?? {}) as Record<string, any>;
-      const strategy = String(fm.strategy ?? "").replace(/^\[\[|\]\]$/g, "").split("|")[0];
+      const strategy = strategyName(fm.strategy);
       if (!strategy) continue;
       exps.push({ strategy, revenue: Number(fm.revenue) || 0, spent: Number(fm.spent) || 0, hours: Number(fm.hours) || 0, done: !!fm.verdict && fm.verdict !== "running" });
     }
@@ -291,15 +297,26 @@ export class KnowledgeOps extends AgentOps {
     for (const k of [...this.entries.keys()]) {
       if (!k.startsWith(strategies + "/") || !isMd(k) || k.endsWith("/_vault.md")) continue;
       const name = basename(k).replace(/\.md$/i, "");
+      const fm = ((await this.metaOf(k)).meta.frontmatter ?? {}) as Record<string, any>;
+      const current = typeof fm.status === "string" ? fm.status : "";
       const mine = exps.filter((e) => e.strategy.toLowerCase() === name.toLowerCase());
-      const revenue = mine.reduce((s, e) => s + e.revenue, 0);
-      const spent = mine.reduce((s, e) => s + e.spent, 0);
-      const hours = mine.reduce((s, e) => s + e.hours, 0);
+      if (!mine.length) {
+        ranking.push({ strategy: name, net: Number(fm.net) || 0, status: current });
+        continue;
+      }
+      const revenue = mine.reduce((t, e) => t + e.revenue, 0);
+      const spent = mine.reduce((t, e) => t + e.spent, 0);
+      const hours = mine.reduce((t, e) => t + e.hours, 0);
       const net = revenue - spent;
-      const finished = mine.filter((e) => e.done).length;
-      const status = net > 0 ? "working" : finished === 0 ? "testing" : finished === 1 ? "losing" : "dropped";
+      const fields: Record<string, string | number> = { revenue, spent, hours, net, per_hour: hours ? Math.round((net / hours) * 100) / 100 : 0, experiments: mine.length };
+      let status = current;
+      if (touched && name.toLowerCase() === touched.toLowerCase()) {
+        const finished = mine.filter((e) => e.done).length;
+        status = net > 0 ? "working" : finished === 0 ? current || "testing" : finished === 1 ? "losing" : "dropped";
+        fields.status = status;
+      }
       try {
-        for (const [key, value] of Object.entries({ revenue, spent, hours, net, per_hour: hours ? Math.round((net / hours) * 100) / 100 : 0, experiments: mine.length, status })) await this.setProperty({ path: k, key, value });
+        for (const [key, value] of Object.entries(fields)) if (fm[key] !== value) await this.setProperty({ path: k, key, value });
         ranking.push({ strategy: name, net, status });
       } catch (e) {
         if (!(e instanceof AgentError)) throw e;
@@ -323,7 +340,8 @@ export class KnowledgeOps extends AgentOps {
     for (const k of ["strategy", "venture", "revenue", "spent", "hours", "leads", "verdict"] as const) if (a[k] !== undefined) fields[k] = a[k];
     if (a.verdict && a.verdict !== "running") fields.ended = day;
     const r = await this.update({ path: p, fields, log: a.note });
-    const { ranking, skipped } = await this.rerankStrategies();
+    const fm = ((await this.metaOf(p)).meta.frontmatter ?? {}) as Record<string, unknown>;
+    const { ranking, skipped } = await this.rerankStrategies(strategyName(fm.strategy));
     return { experiment: r.path, strategiesTop: ranking.slice(0, 5), notRanked: skipped };
   }
 
