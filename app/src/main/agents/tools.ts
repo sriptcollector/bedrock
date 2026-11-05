@@ -4,6 +4,7 @@
 // No Electron imports: this file is bundled into the CLI too.
 import * as z from "zod";
 import { AgentError, type AgentOps } from "../../core/agent-ops";
+import type { KnowledgeOps } from "../../core/knowledge-ops";
 
 export interface ToolDef {
   name: string;
@@ -243,6 +244,133 @@ export const TOOLS: ToolDef[] = [
 ];
 
 export const TOOL_BY_NAME = new Map(TOOLS.map((t) => [t.name, t]));
+
+const knowledge = (ops: AgentOps) => ops as KnowledgeOps;
+
+/** Only added by enableKnowledgeTools(), so they exist only where knowledge.json turned them on. */
+const KNOWLEDGE_TOOLS: ToolDef[] = [
+  {
+    name: "get_context",
+    title: "Get context",
+    description:
+      "Everything the person's vault knows about a topic, project, service or task in one call: the matching project (its main note), the best notes across their vaults, " +
+      "their standing preferences, related likes/dislikes and results, matching accounts and API key names, and past chats about it. " +
+      "Call this first whenever you're unsure about anything of theirs, before asking them.",
+    shape: {
+      topic: z.string().min(1).describe('What you need context on, e.g. "website launch", "send email from a new app"'),
+      vault: z.string().optional().describe("Only look in this vault (name or path)"),
+      project: z.string().optional().describe("The project this is about, if known"),
+      brief: z.boolean().optional().describe("Short version (default false)"),
+    },
+    readOnly: true,
+    run: (ops, a) => knowledge(ops).getContext(a),
+  },
+  {
+    name: "remember",
+    title: "Remember",
+    description:
+      "Save something the person said or you learned in the right place: kind preference (a standing rule), like, dislike, result (numbers/outcomes), account, project (a log line on that project), or inbox (an idea to decide on). Guesses the kind when not given. Never pass secrets.",
+    shape: {
+      text: z.string().min(1).describe("What to remember, in plain words"),
+      kind: z.enum(["preference", "like", "dislike", "result", "account", "project", "inbox"]).optional(),
+      project: z.string().optional().describe("Project name, for kind project"),
+      title: z.string().optional().describe("Short title (default: first sentence)"),
+    },
+    readOnly: false,
+    run: (ops, a) => knowledge(ops).remember(a),
+  },
+  {
+    name: "update",
+    title: "Update typed fields",
+    description:
+      "Change fields on a project, strategy, experiment, account, preference or inbox note; values are checked (e.g. project status idea/active/paused/done/dropped, numbers, dates). Optional log adds a dated line under Log. Experiments re-rank the strategies by money.",
+    shape: {
+      path: z.string().min(1).describe('The note, e.g. "Projects/Alpha/Alpha.md" or "Alpha"'),
+      fields: z.record(z.string(), z.any()).describe('e.g. {"status": "paused", "last_activity": "2026-11-02"}'),
+      log: z.string().optional().describe("A dated line to add under ## Log"),
+    },
+    readOnly: false,
+    run: (ops, a) => knowledge(ops).update(a),
+  },
+  {
+    name: "log_result",
+    title: "Log a result",
+    description: "Record money, time and leads from a marketing or growth test (creates the experiment if new) and re-rank the strategies by net money. Returns the top strategies.",
+    shape: {
+      experiment: z.string().min(1).describe('Experiment name, e.g. "Alpha video ads"'),
+      strategy: z.string().optional().describe("Strategy it tests"),
+      venture: z.string().optional().describe("Project it's for"),
+      revenue: z.number().optional(),
+      spent: z.number().optional(),
+      hours: z.number().optional(),
+      leads: z.number().optional(),
+      verdict: z.enum(["running", "worked", "failed", "inconclusive"]).optional(),
+      note: z.string().optional().describe("What happened, one line"),
+    },
+    readOnly: false,
+    run: (ops, a) => knowledge(ops).logResult(a),
+  },
+  {
+    name: "decide",
+    title: "Decisions",
+    description: "Without arguments: what's waiting on the person (inbox items they haven't decided). With path and answer (yes/no/later): record their decision.",
+    shape: {
+      path: z.string().optional(),
+      answer: z.enum(["yes", "no", "later"]).optional(),
+      note: z.string().optional(),
+    },
+    readOnly: false,
+    run: (ops, a) => knowledge(ops).decide(a),
+  },
+  {
+    name: "list_vaults",
+    title: "List vaults",
+    description:
+      "The person's notes are organized into vaults you step into like portals (folders holding a _vault.md note). " +
+      "Call this first when you're unsure where something lives. Returns every vault with its description, parent vault and note count. " +
+      "Then search or list_notes with `vault` to look inside one, or search without it to look everywhere.",
+    shape: {},
+    readOnly: true,
+    run: (ops) => knowledge(ops).listVaults(),
+  },
+  {
+    name: "create_vault",
+    title: "Create a vault",
+    description:
+      "Create a new vault (a folder you step into like a portal), optionally inside another vault. A new project gets one inside its projects vault, " +
+      'with its main note at <projects>/<name>/<name>.md. Icon: a Lucide icon name (e.g. "rocket") or an emoji.',
+    shape: {
+      name: z.string().min(1).describe('Vault name, e.g. "Alpha"'),
+      parent: z.string().optional().describe('Vault to create it in (name or path), e.g. "Projects". Default: top level'),
+      icon: z.string().optional().describe('Lucide icon name or emoji (default "folder-open")'),
+      color: z.string().optional().describe('Accent color, e.g. "#40916c"'),
+      description: z.string().optional().describe("One line shown on its tile"),
+      order: z.number().optional().describe("Sort position among its siblings (lower first)"),
+    },
+    readOnly: false,
+    run: (ops, a) => knowledge(ops).createVault(a),
+  },
+];
+
+let mcpAllowList: Set<string> | null = null;
+
+/**
+ * Turn on the knowledge tools for this process (they run on a KnowledgeOps). Called once at startup
+ * when <app data>/agents/knowledge.json says so; without it the tool list stays exactly as above.
+ */
+export function enableKnowledgeTools(o: { mcpTools?: string[] | null } = {}): void {
+  mcpAllowList = o.mcpTools ? new Set(o.mcpTools) : null;
+  if (TOOL_BY_NAME.has("get_context")) return;
+  TOOLS.unshift(...KNOWLEDGE_TOOLS);
+  for (const t of KNOWLEDGE_TOOLS) TOOL_BY_NAME.set(t.name, t);
+  const vault = z.string().optional().describe('Only inside this vault, by name or path (e.g. "Alpha", "Projects/Alpha"). See list_vaults.');
+  for (const name of ["search", "list_notes"]) (TOOL_BY_NAME.get(name)!.shape as Record<string, z.ZodType>).vault = vault;
+}
+
+/** The tools offered over MCP: all of them unless knowledge.json narrows the list. */
+export function mcpTools(): ToolDef[] {
+  return mcpAllowList ? TOOLS.filter((t) => mcpAllowList!.has(t.name)) : TOOLS;
+}
 
 /** Validate the arguments for a tool (throws AgentError "bad_request" with a readable message). */
 export function validateArgs(tool: ToolDef, args: unknown): any {

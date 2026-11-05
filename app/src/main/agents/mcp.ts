@@ -5,7 +5,7 @@
 // No Electron imports (bundled into the CLI).
 import { McpServer, ResourceTemplate } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { BRAND } from "../../shared/brand";
-import { TOOLS, errorInfo } from "./tools";
+import { errorInfo, mcpTools } from "./tools";
 
 export type ToolCaller = (name: string, args: Record<string, unknown>) => Promise<unknown>;
 
@@ -28,7 +28,7 @@ export const SERVER_INSTRUCTIONS =
 export function createMcpServer(o: { call: ToolCaller; version: string }): McpServer {
   const server = new McpServer({ name: BRAND.name, title: BRAND.productTitle, version: o.version }, { instructions: SERVER_INSTRUCTIONS, capabilities: { tools: {}, resources: {} } });
 
-  for (const t of TOOLS) {
+  for (const t of mcpTools()) {
     server.registerTool(
       t.name,
       {

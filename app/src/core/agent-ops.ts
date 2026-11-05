@@ -64,7 +64,7 @@ export function cleanFolderPath(input: unknown): string {
 }
 
 const withMd = (p: string) => (extname(p) ? p : p + ".md");
-const isMd = (p: string) => /\.md$/i.test(p);
+export const isMd = (p: string) => /\.md$/i.test(p);
 
 // ------------------------------------------------------------------ writers
 
@@ -180,12 +180,12 @@ export class AgentOps {
   readonly root: string;
   writer: VaultWriter;
   app: AppHooks | null;
-  private entries = new Map<string, Entry>();
+  protected entries = new Map<string, Entry>();
   private folders = new Set<string>();
   private scannedAt = 0;
   private dirty = true;
   private queue: Promise<unknown> = Promise.resolve();
-  private now: () => Date;
+  protected now: () => Date;
   private rescanMs: number;
 
   constructor(o: AgentOpsOptions) {
@@ -224,11 +224,11 @@ export class AgentOps {
     return run;
   }
 
-  private async readText(p: string): Promise<string> {
+  protected async readText(p: string): Promise<string> {
     return fs.promises.readFile(this.abs(p), "utf8");
   }
 
-  private fileExists(p: string): boolean {
+  protected fileExists(p: string): boolean {
     try {
       return fs.statSync(this.abs(p)).isFile();
     } catch {
@@ -324,7 +324,7 @@ export class AgentOps {
     throw new AgentError("not_found", `There's no note called “${p}”. Use list_notes or search to find the right path.`);
   }
 
-  private async metaOf(p: string): Promise<{ text: string; meta: CachedMetadata }> {
+  protected async metaOf(p: string): Promise<{ text: string; meta: CachedMetadata }> {
     const text = await this.readText(p);
     return { text, meta: parseMetadata(text) };
   }

@@ -3,6 +3,7 @@
 //
 //   <app data>/agents/settings.json  {enabled, token, port}       (token: 0600 on macOS/Linux)
 //   <app data>/agents/running.json   {pid, port, vaultPath, version, startedAt}  while the app serves
+//   <app data>/agents/knowledge.json optional, turns on the knowledge tools (core/knowledge-ops.ts)
 //
 // <app data> = BEDROCK_USER_DATA, else %APPDATA%\<appId> (Windows),
 // ~/Library/Application Support/<appId> (macOS), $XDG_CONFIG_HOME/<appId> or ~/.config/<appId>.
@@ -10,6 +11,7 @@ import crypto from "node:crypto";
 import fs from "node:fs";
 import os from "node:os";
 import path from "node:path";
+import { knowledgeProfileFrom, type KnowledgeProfile } from "../../core/knowledge-ops";
 import { BRAND } from "../../shared/brand";
 
 export const DEFAULT_PORT = 27125;
@@ -39,6 +41,16 @@ export function appDataDir(): string {
 const dirOf = (dataDir: string) => path.join(dataDir, "agents");
 export const settingsPath = (dataDir: string) => path.join(dirOf(dataDir), "settings.json");
 export const runningPath = (dataDir: string) => path.join(dirOf(dataDir), "running.json");
+export const knowledgePath = (dataDir: string) => path.join(dirOf(dataDir), "knowledge.json");
+
+/** The knowledge tools' settings, or null (no file, not valid JSON, or "enabled": false): the tools stay off. */
+export function loadKnowledgeProfile(dataDir: string): KnowledgeProfile | null {
+  try {
+    return knowledgeProfileFrom(JSON.parse(fs.readFileSync(knowledgePath(dataDir), "utf8")));
+  } catch {
+    return null;
+  }
+}
 
 export function newToken(): string {
   return "bdk_" + crypto.randomBytes(32).toString("base64url");

@@ -8,13 +8,14 @@ import fs from "node:fs";
 import os from "node:os";
 import path from "node:path";
 import { AgentError, AgentOps, DiskWriter, type AppHooks, type VaultWriter } from "../../core/agent-ops";
+import { KnowledgeOps } from "../../core/knowledge-ops";
 import { BRAND } from "../../shared/brand";
 import { IPC } from "../../shared/ipc";
 import { log } from "../log";
 import { clientStates, connectClient, disconnectClient, snippets, type ClientId, type LaunchCommand } from "./clients";
 import { AgentHttpServer } from "./http";
-import { DEFAULT_PORT, loadSettings, newToken, removeRunning, saveSettings, writeRunning, type AgentSettings } from "./settings";
-import { runTool } from "./tools";
+import { DEFAULT_PORT, loadKnowledgeProfile, loadSettings, newToken, removeRunning, saveSettings, writeRunning, type AgentSettings } from "./settings";
+import { enableKnowledgeTools, runTool } from "./tools";
 
 export interface AgentState {
   enabled: boolean;
@@ -77,7 +78,9 @@ export class AgentHost {
         await this.ask("open", { path: p, ...opts });
       },
     };
-    this.ops = new AgentOps({ vaultPath: o.vaultPath, writer, app: hooks });
+    const knowledge = loadKnowledgeProfile(o.dataDir);
+    if (knowledge) enableKnowledgeTools(knowledge);
+    this.ops = knowledge ? new KnowledgeOps({ vaultPath: o.vaultPath, writer, app: hooks }, knowledge) : new AgentOps({ vaultPath: o.vaultPath, writer, app: hooks });
   }
 
   async start(): Promise<void> {

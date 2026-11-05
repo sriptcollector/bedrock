@@ -8,8 +8,9 @@
 import path from "node:path";
 import fs from "node:fs";
 import { AgentError, AgentOps } from "../core/agent-ops";
-import { runTool } from "../main/agents/tools";
-import { appDataDir, findMainVault, loadSettings, readRunning, sameDir } from "../main/agents/settings";
+import { KnowledgeOps, type KnowledgeProfile } from "../core/knowledge-ops";
+import { enableKnowledgeTools, runTool } from "../main/agents/tools";
+import { appDataDir, findMainVault, loadKnowledgeProfile, loadSettings, readRunning, sameDir } from "../main/agents/settings";
 import { BRAND } from "../shared/brand";
 
 declare const __APP_VERSION__: string;
@@ -29,6 +30,7 @@ export class Backend {
   readonly dataDir: string;
   readonly vaultPath: string;
   private ops: AgentOps | null = null;
+  private knowledge: KnowledgeProfile | null;
   private appCheck: { at: number; url: string | null; token: string | null } = { at: 0, url: null, token: null };
   lastMode: Mode = "disk";
 
@@ -37,6 +39,8 @@ export class Backend {
     const explicit = o.vault ?? process.env.BEDROCK_VAULT;
     const running = readRunning(this.dataDir);
     this.vaultPath = path.resolve(explicit || running?.vaultPath || findMainVault(this.dataDir));
+    this.knowledge = loadKnowledgeProfile(this.dataDir);
+    if (this.knowledge) enableKnowledgeTools(this.knowledge);
   }
 
   /** Is agent access switched on in Settings? (The stdio MCP server refuses to work when it's off.) */
@@ -46,7 +50,7 @@ export class Backend {
 
   private disk(): AgentOps {
     if (!fs.existsSync(this.vaultPath)) throw new AgentError("not_found", `The vault folder “${this.vaultPath}” doesn't exist. Open ${BRAND.displayName} once to create it, or pass --vault <folder>.`);
-    this.ops ??= new AgentOps({ vaultPath: this.vaultPath });
+    this.ops ??= this.knowledge ? new KnowledgeOps({ vaultPath: this.vaultPath }, this.knowledge) : new AgentOps({ vaultPath: this.vaultPath });
     return this.ops;
   }
 

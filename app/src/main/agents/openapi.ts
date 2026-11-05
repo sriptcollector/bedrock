@@ -3,7 +3,7 @@
 // docs/AGENT-API.md; a unit test checks the copy there is current.
 import * as z from "zod";
 import { BRAND } from "../../shared/brand";
-import { ROUTES } from "./http";
+import { activeRoutes } from "./http";
 import { TOOLS, TOOL_BY_NAME } from "./tools";
 import { DEFAULT_PORT } from "./settings";
 
@@ -18,7 +18,7 @@ function schemaOf(name: string): any {
 
 export function buildOpenApi(): any {
   const paths: Record<string, any> = {};
-  for (const r of ROUTES) {
+  for (const r of activeRoutes()) {
     const t = TOOL_BY_NAME.get(r.tool)!;
     const s = schemaOf(r.tool);
     for (const k of Object.keys(r.fixed ?? {})) delete s.properties?.[k];

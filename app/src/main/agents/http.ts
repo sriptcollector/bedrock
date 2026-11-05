@@ -26,6 +26,7 @@ type Route = { method: string; path: string; tool: string; from: "query" | "body
 /** REST routes: each maps to one tool. Documented in docs/AGENT-API.md (OpenAPI). */
 export const ROUTES: Route[] = [
   { method: "GET", path: "/v1/search", tool: "search", from: "query" },
+  { method: "GET", path: "/v1/context", tool: "get_context", from: "query", fixed: { brief: true } },
   { method: "GET", path: "/v1/notes", tool: "list_notes", from: "query" },
   { method: "GET", path: "/v1/note", tool: "read_note", from: "query" },
   { method: "POST", path: "/v1/note", tool: "create_note", from: "body" },
@@ -45,6 +46,9 @@ export const ROUTES: Route[] = [
   { method: "GET", path: "/v1/active", tool: "get_active_note", from: "none" },
   { method: "POST", path: "/v1/open", tool: "open_note", from: "body" },
 ];
+
+/** The routes whose tool exists here (get_context only with the knowledge tools on). */
+export const activeRoutes = (): Route[] => ROUTES.filter((r) => TOOL_BY_NAME.has(r.tool));
 
 function coerceQuery(tool: string, q: URLSearchParams): Record<string, unknown> {
   const shape = TOOL_BY_NAME.get(tool)?.shape ?? {};
@@ -200,9 +204,9 @@ export class AgentHttpServer {
         tool = generic[1];
         args = ((await this.readBody(req)) as any) ?? {};
       } else {
-        const route = ROUTES.find((r) => r.path === pathname && r.method === req.method);
+        const route = activeRoutes().find((r) => r.path === pathname && r.method === req.method);
         if (!route) {
-          const other = ROUTES.some((r) => r.path === pathname);
+          const other = activeRoutes().some((r) => r.path === pathname);
           return this.json(res, other ? 405 : 404, { error: other ? "method_not_allowed" : "not_found", message: other ? `${req.method} isn't supported on ${pathname}.` : `There's nothing at ${pathname}. See docs/AGENT-API.md.` });
         }
         tool = route.tool;

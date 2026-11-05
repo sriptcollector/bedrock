@@ -127,6 +127,52 @@ name ("Plan") resolves the way `[[links]]` do.
 **Resources:** every note is `bedrock://note/<path>` (URL-encoded segments), `text/markdown`;
 `resources/list` lists them.
 
+## Knowledge tools (optional, off by default)
+
+For people who run their vault as a second brain for an agent. Nothing here exists unless
+`<app data>/agents/knowledge.json` exists: without it the tool list, the REST routes and every result
+above stay exactly as they are. There's no switch in the app; it's a file you make on purpose.
+The app, the stdio server and the command line read it when they start, so restart them after a change.
+It stays in the app data folder, never in the vault, and nothing it does leaves the computer.
+
+| Tool | What it does |
+|---|---|
+| `get_context` | Everything the vault knows about a topic in one call: project, best notes, preferences, likes/dislikes, results, accounts, key names, past chats. REST: `GET /v1/context?topic=…` (brief form) |
+| `remember` | Files a fact in the right place: preference, like, dislike, result, account, project log line, or inbox. Refuses text that looks like a secret |
+| `update` | Changes typed fields on a project, strategy, experiment, account, preference or inbox note, and checks the values |
+| `log_result` | Records money, time and leads for an experiment and re-ranks the strategies by net money |
+| `decide` | Lists inbox items waiting on a decision, or records one |
+| `list_vaults`, `create_vault` | Portals: folders holding a `_vault.md` note. `search` and `list_notes` also take `vault` |
+
+Every key is optional; this file shows the defaults. Folders and notes are vault-relative:
+
+```json
+{
+  "projects": "Projects",
+  "preferences": "Preferences",
+  "strategies": "Strategies",
+  "experiments": "Experiments",
+  "accounts": "Accounts",
+  "services": "Accounts/Services",
+  "inbox": "Inbox",
+  "chats": "Chats",
+  "likes": "Likes.md",
+  "dislikes": "Dislikes.md",
+  "results": "Results.md",
+  "tasteHeading": "Remembered",
+  "resultsHeading": "Remembered",
+  "keysNote": null,
+  "skipInContext": ["Chats"],
+  "synonyms": {},
+  "ownerName": "Agent",
+  "contextHint": "read_note any path above for the full text.",
+  "mcpTools": null
+}
+```
+
+`synonyms` widens `get_context` (`{"email": ["smtp"]}`). `mcpTools` narrows what MCP offers to the names
+listed; the command line and REST keep every tool. `"enabled": false` turns it all off again.
+
 ## The `bedrock` command
 
 Installed with the app on Windows (`<install dir>\bin\bedrock.cmd`, added to your user PATH by the
@@ -1510,6 +1556,8 @@ out of date.
 <!-- openapi:end -->
 
 ## Code and tests
+
+Knowledge tools: `app/src/core/knowledge-ops.ts`, tests in `app/test/unit/knowledge.test.ts`.
 
 - `app/src/core/agent-ops.ts` – the operations (no Electron), path checks, link rewriting, property
   filters, daily notes, heading patches.
